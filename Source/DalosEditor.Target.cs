@@ -8,6 +8,7 @@ public class DalosEditorTarget : TargetRules
 	public DalosEditorTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Editor;
+		bUsesSteam = true;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 		ExtraModuleNames.Add("Dalos");
 	}
