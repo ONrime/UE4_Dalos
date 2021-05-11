@@ -16,7 +16,7 @@ class DALOS_API UOptionMenu_UserWidget : public UUserWidget
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerSettings")
-		ESlateVisibility WelcomeMessageVis = ESlateVisibility::Visible;
+	ESlateVisibility WelcomeMessageVis = ESlateVisibility::Visible;
 
 protected:
 

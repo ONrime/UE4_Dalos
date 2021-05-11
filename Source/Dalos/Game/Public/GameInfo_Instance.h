@@ -50,7 +50,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu", meta = (AllowPrivateAccess = "true"))
 		class UUserWidget* ServerMenu_WB;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu", meta = (AllowPrivateAccess = "true"))
-		class UUserWidget* OptionMenu_WB;
+		class UOptionMenu_UserWidget* OptionMenu_WB;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu", meta = (AllowPrivateAccess = "true"))
 		class UUserWidget* LodingScreen_WB;
 
