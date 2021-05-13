@@ -57,13 +57,16 @@ void UGameInfo_Instance::OnCreateSessionComplete(FName Server_Name, bool Succeed
 
 void UGameInfo_Instance::OnCreateSessionComplete_Lobby(FName Server_Name, bool Succeeded)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Lobby: OnCreateSessionComplete Succeeded %d"), Succeeded);
+	
 	if (Succeeded) {
-		//GetWorld()->ServerTravel("/Game/Maps/LobyMap.LobyMap?listen");
+		UE_LOG(LogTemp, Warning, TEXT("Lobby: OnCreateSessionComplete Succeeded"));
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("OnCreateSession: Succeeded"));
+		//GetWorld()->ServerTravel("/Game/Map/LobyMap.LobyMap?listen");
 		UGameplayStatics::OpenLevel(GetWorld(), LobbyName, true, "listen");
 	}
 	else {  // 세션을 만드는데 실패했을 때
-
+		UE_LOG(LogTemp, Warning, TEXT("Lobby: OnCreateSessionComplete Failed"));
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("OnCreateSession: Failed"));
 	}
 }
 
@@ -88,7 +91,7 @@ void UGameInfo_Instance::OnFindSessionsComplete(bool Succeeded)
 {
 
 	UE_LOG(LogTemp, Warning, TEXT("OnFindSessionsComplete: Succeeded %d"), Succeeded);
-	if (Succeeded) {
+	if (Succeeded && SessionSearch->SearchResults.Num() > 0) {
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("OnFindSessionsSucceeded"));
 		SessionsNum = SessionSearch->SearchResults.Num();
 		IsFindServer = true;
@@ -130,9 +133,11 @@ void UGameInfo_Instance::CreateServer(int32 Player_Num, FName Server_Name, bool 
 	SessionSettings.bIsLANMatch = false;
 	SessionSettings.bShouldAdvertise = true;
 	SessionSettings.bUsesPresence = true;
+	//SessionSettings.bUsesPresence = false;
+	//SessionSettings.bIsDedicated = true;
 	SessionSettings.NumPublicConnections = 5;
-
-	SessionInterface->CreateSession(Player_Num, "test", SessionSettings);
+	SessionInterface->DestroySession(Server_Name);
+	SessionInterface->CreateSession(Player_Num, Server_Name, SessionSettings);
 }
 
 
@@ -192,17 +197,13 @@ void UGameInfo_Instance::Launch_Lobby(int32 Player_Num, FName Server_Name, bool 
 
 void UGameInfo_Instance::Join_Server()
 {
-	/*if (ShowLodingScreen.IsBound()) {
-		ShowLodingScreen.Broadcast();
-		// Sessions, SessionInterface중에 하나 JoinSession 세팅하기
-
-	}*/
 	TArray<FOnlineSessionSearchResult> SearchResults = SessionSearch->SearchResults;
-	UE_LOG(LogTemp, Warning, TEXT("SearchResults Count: %d"), SearchResults.Num());
-	if (SearchResults.Num()) {
-		//ServerName= SearchResults[0]->
-		SessionInterface->JoinSession(0, "test", SearchResults[0]);
-	}
+	FString SessionId = SearchResults[0].Session.GetSessionIdStr();
+	UE_LOG(LogTemp, Warning, TEXT("SearchResults Count: %s"), *SessionId);
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Join Server"));
+	//ServerName= SearchResults[0]->
+	SessionInterface->JoinSession(0, "test", SearchResults[0]);
+
 }
 
 void UGameInfo_Instance::Find_Server()
@@ -218,6 +219,7 @@ void UGameInfo_Instance::Find_Server()
 		{
 			SessionSearch = MakeShareable(new FOnlineSessionSearch());
 			SessionSearch->bIsLanQuery = false;
+			//SessionSearch->dedica
 			SessionSearch->MaxSearchResults = 20;
 			SessionSearch->PingBucketSize = 50;
 			SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);

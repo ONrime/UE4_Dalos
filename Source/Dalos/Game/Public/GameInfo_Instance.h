@@ -82,7 +82,7 @@ public:
 		void Check_SaveGame();  // 저장 파일 확인 하기
 
 private:
-	FName LobbyName = "LobbyMap";
+	FName LobbyName = "LobyMap";
 	FString PlayerSettingsSave = "PlayerSettingsSave";
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Check", meta = (AllowPrivateAccess = "true"))
 		bool IsCreateSaveFile = false;

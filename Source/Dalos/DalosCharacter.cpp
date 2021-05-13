@@ -16,6 +16,7 @@ ADalosCharacter::ADalosCharacter()
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
+	RootComponent = GetCapsuleComponent();
 
 	// set our turn rates for input
 	BaseTurnRate = 45.f;
@@ -42,6 +43,15 @@ ADalosCharacter::ADalosCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+
+	GetMesh()->SetupAttachment(RootComponent);
+	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -97.0f));
+	GetMesh()->SetRelativeRotation(FRotator(0.0f, 270.0f, 0.0f));
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	static ConstructorHelpers::FClassFinder<UAnimInstance>Body_AnimBP(TEXT("AnimBlueprint'/Game/Mannequin/Animations/ThirdPerson_AnimBP.ThirdPerson_AnimBP_C'"));
+	if (Body_AnimBP.Succeeded()) { GetMesh()->SetAnimInstanceClass(Body_AnimBP.Class); }
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh>Body_SkeletalMesh(TEXT("SkeletalMesh'/Game/Mannequin/Character/Mesh/SK_Mannequin.SK_Mannequin'"));
+	if (Body_SkeletalMesh.Succeeded()) { GetMesh()->SetSkeletalMesh(Body_SkeletalMesh.Object); }
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
