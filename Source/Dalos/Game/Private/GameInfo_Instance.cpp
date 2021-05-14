@@ -220,9 +220,9 @@ void UGameInfo_Instance::Find_Server()
 			SessionSearch = MakeShareable(new FOnlineSessionSearch());
 			SessionSearch->bIsLanQuery = false;
 			//SessionSearch->dedica
-			SessionSearch->MaxSearchResults = 20;
-			SessionSearch->PingBucketSize = 50;
-			SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+			SessionSearch->MaxSearchResults = 50;
+			//SessionSearch->PingBucketSize = 50;
+			//SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 
 			TSharedRef<FOnlineSessionSearch> SearchSettingsRef = SessionSearch.ToSharedRef();
 
