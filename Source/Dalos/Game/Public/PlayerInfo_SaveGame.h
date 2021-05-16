@@ -19,7 +19,7 @@ public:
 	UPlayerInfo_SaveGame();
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite)
-	FPlayerInfo S_PlayerInfo;
+	FPlayerInfo S_playerInfo;
 
 protected:
 

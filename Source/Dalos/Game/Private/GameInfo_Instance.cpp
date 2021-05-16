@@ -33,36 +33,36 @@ UGameInfo_Instance::UGameInfo_Instance()
 
 void UGameInfo_Instance::Init()
 {
-	if (IOnlineSubsystem* SubSystem = IOnlineSubsystem::Get()) {
-		SessionInterface = SubSystem->GetSessionInterface();
-		if (SessionInterface.IsValid()) {
+	if (IOnlineSubsystem* subSystem = IOnlineSubsystem::Get()) {
+		sessionInterface = subSystem->GetSessionInterface();
+		if (sessionInterface.IsValid()) {
 			//SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UGameInfo_Instance::OnCreateSessionComplete);
-			SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UGameInfo_Instance::OnCreateSessionComplete_Lobby);
-			SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UGameInfo_Instance::OnJoinSessionComplete);
-			SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UGameInfo_Instance::OnFindSessionsComplete);
+			sessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UGameInfo_Instance::OnCreateSessionComplete_Lobby);
+			sessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UGameInfo_Instance::OnJoinSessionComplete);
+			sessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UGameInfo_Instance::OnFindSessionsComplete);
 		}
 	}
-	SessionSearch.Reset();
+	sessionSearch.Reset();
 	//GetEngine()->OnNetworkFailure().AddUObject(this, &UGameInfo_Instance::HandleNetworkError);
 }
 
-void UGameInfo_Instance::OnCreateSessionComplete(FName Server_Name, bool Succeeded)
+void UGameInfo_Instance::OnCreateSessionComplete(FName server_Name, bool succeeded)
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnCreateSessionComplete: Succeeded %d"), Succeeded);
-	if (Succeeded) {
+	UE_LOG(LogTemp, Warning, TEXT("OnCreateSessionComplete: Succeeded %d"), succeeded);
+	if (succeeded) {
 		GetWorld()->ServerTravel("/Game/Maps/LobyMap.LobyMap?listen");
 	}
 
 }
 
-void UGameInfo_Instance::OnCreateSessionComplete_Lobby(FName Server_Name, bool Succeeded)
+void UGameInfo_Instance::OnCreateSessionComplete_Lobby(FName server_Name, bool succeeded)
 {
 	
-	if (Succeeded) {
+	if (succeeded) {
 		UE_LOG(LogTemp, Warning, TEXT("Lobby: OnCreateSessionComplete Succeeded"));
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("OnCreateSession: Succeeded"));
 		//GetWorld()->ServerTravel("/Game/Map/LobyMap.LobyMap?listen");
-		UGameplayStatics::OpenLevel(GetWorld(), LobbyName, true, "listen");
+		UGameplayStatics::OpenLevel(GetWorld(), lobbyName, true, "listen");
 	}
 	else {  // 세션을 만드는데 실패했을 때
 		UE_LOG(LogTemp, Warning, TEXT("Lobby: OnCreateSessionComplete Failed"));
@@ -70,7 +70,7 @@ void UGameInfo_Instance::OnCreateSessionComplete_Lobby(FName Server_Name, bool S
 	}
 }
 
-void UGameInfo_Instance::OnJoinSessionComplete(FName Server_Name, EOnJoinSessionCompleteResult::Type type)
+void UGameInfo_Instance::OnJoinSessionComplete(FName server_Name, EOnJoinSessionCompleteResult::Type type)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("OnJoinSessionComplete"));
 	UE_LOG(LogTemp, Warning, TEXT("OnJoinSessionComplete: Succeeded %d"), type);
@@ -82,26 +82,26 @@ void UGameInfo_Instance::OnJoinSessionComplete(FName Server_Name, EOnJoinSession
 	}
 	if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0)) {
 		FString JoinAddress = "";
-		SessionInterface->GetResolvedConnectString(Server_Name, JoinAddress);
+		sessionInterface->GetResolvedConnectString(server_Name, JoinAddress);
 		PC->ClientTravel(JoinAddress, ETravelType::TRAVEL_Absolute);
 	}
 }
 
-void UGameInfo_Instance::OnFindSessionsComplete(bool Succeeded)
+void UGameInfo_Instance::OnFindSessionsComplete(bool succeeded)
 {
 
-	UE_LOG(LogTemp, Warning, TEXT("OnFindSessionsComplete: Succeeded %d"), Succeeded);
-	if (Succeeded && SessionSearch->SearchResults.Num() > 0) {
+	UE_LOG(LogTemp, Warning, TEXT("OnFindSessionsComplete: Succeeded %d"), succeeded);
+	if (succeeded && sessionSearch->SearchResults.Num() > 0) {
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("OnFindSessionsSucceeded"));
-		SessionsNum = SessionSearch->SearchResults.Num();
+		sessionsNum = sessionSearch->SearchResults.Num();
 		IsFindServer = true;
 		//Join_Server();
-		FindSessionSucceeded.Broadcast();
+		findSessionSucceeded.Broadcast();
 	}
 	else {
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("OnFindSessionsFailed"));
 		IsFindServer = false;
-		FindSessionFaild.Broadcast();
+		findSessionFaild.Broadcast();
 	}
 
 }
@@ -111,9 +111,9 @@ void UGameInfo_Instance::OnFindSessionsComplete(bool Succeeded)
 	//HandleNetworkError()
 }*/
 
-void UGameInfo_Instance::HandleNetworkError(ENetworkFailure::Type FailureType, bool bIsServer)
+void UGameInfo_Instance::HandleNetworkError(ENetworkFailure::Type FailureType, bool IsServer)
 {
-	if (!bIsServer) {
+	if (!IsServer) {
 		UE_LOG(LogTemp, Warning, TEXT("NetError: %s"), *NetErrorToString(FailureType));
 	}
 }
@@ -123,26 +123,26 @@ void UGameInfo_Instance::HandleTravelError(ETravelFailure::Type FailureType)
 	UE_LOG(LogTemp, Warning, TEXT("TravelError: %s"), *TravelErrorToString(FailureType));
 }
 
-void UGameInfo_Instance::CreateServer(int32 Player_Num, FName Server_Name, bool Lan)
+void UGameInfo_Instance::CreateServer(int32 Player_Num, FName Server_Name, bool Is_Lan)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("CreateServer"));
 	UE_LOG(LogTemp, Warning, TEXT("CreateServer"));
-	FOnlineSessionSettings SessionSettings;
-	SessionSettings.bAllowJoinInProgress = true;
-	SessionSettings.bIsDedicated = false;
-	SessionSettings.bIsLANMatch = false;
-	SessionSettings.bShouldAdvertise = true;
-	SessionSettings.bUsesPresence = true;
+	FOnlineSessionSettings sessionSettings;
+	sessionSettings.bAllowJoinInProgress = true;
+	sessionSettings.bIsDedicated = false;
+	sessionSettings.bIsLANMatch = false;
+	sessionSettings.bShouldAdvertise = true;
+	sessionSettings.bUsesPresence = true;
 	//SessionSettings.bUsesPresence = false;
 	//SessionSettings.bIsDedicated = true;
-	SessionSettings.NumPublicConnections = 5;
-	SessionInterface->DestroySession(Server_Name);
-	SessionInterface->CreateSession(Player_Num, Server_Name, SessionSettings);
+	sessionSettings.NumPublicConnections = 5;
+	sessionInterface->DestroySession(Server_Name);
+	sessionInterface->CreateSession(Player_Num, Server_Name, sessionSettings);
 }
 
 
 
-void UGameInfo_Instance::Show_MainMenu()
+void UGameInfo_Instance::ShowMainMenu()
 {
 	auto PlayerContoller = GetFirstLocalPlayerController();
 	if (MainMenu_WB == nullptr) {
@@ -152,7 +152,7 @@ void UGameInfo_Instance::Show_MainMenu()
 	PlayerContoller->bShowMouseCursor = true;
 }
 
-void UGameInfo_Instance::Show_HostMenu()
+void UGameInfo_Instance::ShowHostMenu()
 {
 	auto PlayerContoller = GetFirstLocalPlayerController();
 	if (HostMenu_WB == nullptr) {
@@ -162,7 +162,7 @@ void UGameInfo_Instance::Show_HostMenu()
 	PlayerContoller->bShowMouseCursor = true;
 }
 
-void UGameInfo_Instance::Show_ServerMenu()
+void UGameInfo_Instance::ShowServerMenu()
 {
 	auto PlayerContoller = GetFirstLocalPlayerController();
 	ServerMenu_WB = CreateWidget<UUserWidget>(PlayerContoller, ServerMenu_Class);
@@ -170,7 +170,7 @@ void UGameInfo_Instance::Show_ServerMenu()
 	PlayerContoller->bShowMouseCursor = true;
 }
 
-void UGameInfo_Instance::Show_OptionMenu()
+void UGameInfo_Instance::ShowOptionMenu()
 {
 	auto PlayerContoller = GetFirstLocalPlayerController();
 	if (OptionMenu_WB == nullptr) {
@@ -187,47 +187,47 @@ void UGameInfo_Instance::Show_OptionMenu()
 	}
 }
 
-void UGameInfo_Instance::Launch_Lobby(int32 Player_Num, FName Server_Name, bool Lan)
+void UGameInfo_Instance::LaunchLobby(int32 playerNum, FName server_Name, bool Is_Lan)
 {
-	MaxPlayer = Player_Num;
-	ServerName = Server_Name;
-	Show_LodingScreen();
-	CreateServer(Player_Num, Server_Name, Lan);
+	maxPlayer = playerNum;
+	serverName = server_Name;
+	ShowLodingScreen();
+	CreateServer(playerNum, server_Name, Is_Lan);
 }
 
-void UGameInfo_Instance::Join_Server()
+void UGameInfo_Instance::JoinServer()
 {
-	TArray<FOnlineSessionSearchResult> SearchResults = SessionSearch->SearchResults;
-	FString SessionId = SearchResults[0].Session.GetSessionIdStr();
-	UE_LOG(LogTemp, Warning, TEXT("SearchResults Count: %s"), *SessionId);
+	TArray<FOnlineSessionSearchResult> searchResults = sessionSearch->SearchResults;
+	FString sessionId = searchResults[0].Session.GetSessionIdStr();
+	UE_LOG(LogTemp, Warning, TEXT("SearchResults Count: %s"), *sessionId);
 	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Join Server"));
 	//ServerName= SearchResults[0]->
-	SessionInterface->JoinSession(0, "test", SearchResults[0]);
+	sessionInterface->JoinSession(0, "test", searchResults[0]);
 
 }
 
-void UGameInfo_Instance::Find_Server()
+void UGameInfo_Instance::FindServer()
 {
-	IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
+	IOnlineSubsystem* onlineSub = IOnlineSubsystem::Get();
 
-	if (OnlineSub)
+	if (onlineSub)
 	{
 		// Get the SessionInterface from our OnlineSubsystem
-		IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
+		IOnlineSessionPtr Sessions = onlineSub->GetSessionInterface();
 
-		if (SessionInterface.IsValid())
+		if (sessionInterface.IsValid())
 		{
-			SessionSearch = MakeShareable(new FOnlineSessionSearch());
-			SessionSearch->bIsLanQuery = false;
+			sessionSearch = MakeShareable(new FOnlineSessionSearch());
+			sessionSearch->bIsLanQuery = false;
 			//SessionSearch->dedica
-			SessionSearch->MaxSearchResults = 50;
+			sessionSearch->MaxSearchResults = 50;
 			//SessionSearch->PingBucketSize = 50;
 			//SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 
-			TSharedRef<FOnlineSessionSearch> SearchSettingsRef = SessionSearch.ToSharedRef();
+			TSharedRef<FOnlineSessionSearch> SearchSettingsRef = sessionSearch.ToSharedRef();
 
 			// Finally call the SessionInterface function. The Delegate gets called once this is finished
-			SessionInterface->FindSessions(0, SearchSettingsRef);
+			sessionInterface->FindSessions(0, SearchSettingsRef);
 		}
 	}
 	else
@@ -238,7 +238,7 @@ void UGameInfo_Instance::Find_Server()
 
 }
 
-void UGameInfo_Instance::Show_LodingScreen()
+void UGameInfo_Instance::ShowLodingScreen()
 {
 	auto PlayerContoller = GetFirstLocalPlayerController();
 	if (LodingScreen_WB == nullptr) {
@@ -254,12 +254,12 @@ void UGameInfo_Instance::Destroy_SessionCaller(APlayerController PC)
 
 void UGameInfo_Instance::Check_SaveGame()
 {
-	if (UGameplayStatics::DoesSaveGameExist(PlayerSettingsSave, 0)) {
-		Show_MainMenu();
+	if (UGameplayStatics::DoesSaveGameExist(playerSettingsSave, 0)) {
+		ShowMainMenu();
 		IsCreateSaveFile = true;
 	}
 	else {
-		Show_OptionMenu();
+		ShowOptionMenu();
 		auto PlayerContoller = GetFirstLocalPlayerController();
 		PlayerContoller->bShowMouseCursor = true;
 	}

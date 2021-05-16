@@ -22,37 +22,37 @@ public:
 	UGameInfo_Instance();
 
 protected:
-	IOnlineSessionPtr SessionInterface;
-	TSharedPtr<class FOnlineSessionSearch> SessionSearch;
+	IOnlineSessionPtr sessionInterface;
+	TSharedPtr<class FOnlineSessionSearch> sessionSearch;
 
 	virtual void Init() override;
-	virtual void OnCreateSessionComplete(FName Server_Name, bool Succeeded);
-	virtual void OnCreateSessionComplete_Lobby(FName Server_Name, bool Succeeded);
-	virtual void OnJoinSessionComplete(FName Server_Name, EOnJoinSessionCompleteResult::Type type);
-	virtual void OnFindSessionsComplete(bool Succeeded);
+	virtual void OnCreateSessionComplete(FName server_Name, bool succeeded);
+	virtual void OnCreateSessionComplete_Lobby(FName serverName, bool succeeded);
+	virtual void OnJoinSessionComplete(FName server_Name, EOnJoinSessionCompleteResult::Type type);
+	virtual void OnFindSessionsComplete(bool succeeded);
 	//virtual void HandleNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
-	virtual void HandleNetworkError(ENetworkFailure::Type FailureType, bool bIsServer); // 네트워크 에러 처리 및 메세지 출력
+	virtual void HandleNetworkError(ENetworkFailure::Type FailureType, bool IsServer); // 네트워크 에러 처리 및 메세지 출력
 	virtual void HandleTravelError(ETravelFailure::Type FailureType); // 이동시 에러 처리 및 메세지 출력
 
 	UFUNCTION(BlueprintCallable)
-		void CreateServer(int32 Player_Num, FName Server_Name, bool Lan);
+		void CreateServer(int32 playerNum, FName server_Name, bool is_Lan);
 
 public:
 	UPROPERTY(BlueprintAssignable, VisibleAnywhere, BlueprintCallable, Category = "Event")
-		FSessionDelegate FindSessionFaild;
+	FSessionDelegate findSessionFaild;
 	UPROPERTY(BlueprintAssignable, VisibleAnywhere, BlueprintCallable, Category = "Event")
-		FSessionDelegate FindSessionSucceeded;
+	FSessionDelegate findSessionSucceeded;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu", meta = (AllowPrivateAccess = "true"))
-		class UUserWidget* MainMenu_WB;
+	class UUserWidget* MainMenu_WB;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu", meta = (AllowPrivateAccess = "true"))
-		class UUserWidget* HostMenu_WB;
+	class UUserWidget* HostMenu_WB;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu", meta = (AllowPrivateAccess = "true"))
-		class UUserWidget* ServerMenu_WB;
+	class UUserWidget* ServerMenu_WB;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu", meta = (AllowPrivateAccess = "true"))
-		class UOptionMenu_UserWidget* OptionMenu_WB;
+	class UOptionMenu_UserWidget* OptionMenu_WB;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu", meta = (AllowPrivateAccess = "true"))
-		class UUserWidget* LodingScreen_WB;
+	class UUserWidget* LodingScreen_WB;
 
 	TSubclassOf<class UUserWidget> MainMenu_Class;
 	TSubclassOf<class UUserWidget> HostMenu_Class;
@@ -61,46 +61,46 @@ public:
 	TSubclassOf<class UUserWidget> LodingScreen_Class;
 
 	UFUNCTION(BlueprintCallable, Category = "Event")
-		void Show_MainMenu();  // 메인 메뉴 화면 전환 and 마우스 활성화
+	void ShowMainMenu();  // 메인 메뉴 화면 전환 and 마우스 활성화
 	UFUNCTION(BlueprintCallable, Category = "Event")
-		void Show_HostMenu();  // 호스트 메뉴 화면 전환 and 마우스 활성화
+	void ShowHostMenu();  // 호스트 메뉴 화면 전환 and 마우스 활성화
 	UFUNCTION(BlueprintCallable, Category = "Event")
-		void Show_ServerMenu();  // 서버 메뉴 화면 전환 and 마우스 활성화
+	void ShowServerMenu();  // 서버 메뉴 화면 전환 and 마우스 활성화
 	UFUNCTION(BlueprintCallable, Category = "Event")
-		void Show_OptionMenu();  // 옵션 메뉴 화면 전환 and 마우스 활성화
+	void ShowOptionMenu();  // 옵션 메뉴 화면 전환 and 마우스 활성화
 	UFUNCTION(BlueprintCallable, Category = "Event")
-		void Launch_Lobby(int32 Player_Num, FName Server_Name, bool Lan);  // 로비를 시작하고 호스트를 세팅한다.
+	void LaunchLobby(int32 playerNum, FName server_Name, bool Is_Lan);  // 로비를 시작하고 호스트를 세팅한다.
 	UFUNCTION(BlueprintCallable, Category = "Event")
-		void Join_Server();  // 서버에 들어가기
+	void JoinServer();  // 서버에 들어가기
 	UFUNCTION(BlueprintCallable, Category = "Event")
-		void Find_Server();  // 서버 찾기
+	void FindServer();  // 서버 찾기
 	UFUNCTION(BlueprintCallable, Category = "Event")
-		void Show_LodingScreen(); // 요구시 로딩 화면 출력
+	void ShowLodingScreen(); // 요구시 로딩 화면 출력
 		//UFUNCTION(BlueprintCallable, Category = "Event")
 	void Destroy_SessionCaller(class APlayerController PC); // 호출 시 세션 파괴
 	UFUNCTION(BlueprintCallable, Category = "Event")
-		void Check_SaveGame();  // 저장 파일 확인 하기
+	void Check_SaveGame();  // 저장 파일 확인 하기
 
 private:
-	FName LobbyName = "LobyMap";
-	FString PlayerSettingsSave = "PlayerSettingsSave";
+	FName lobbyName = "LobyMap";
+	FString playerSettingsSave = "PlayerSettingsSave";
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Check", meta = (AllowPrivateAccess = "true"))
-		bool IsCreateSaveFile = false;
+	bool IsCreateSaveFile = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Check", meta = (AllowPrivateAccess = "true"))
-		bool IsLan = false;
+	bool IsLan = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Check", meta = (AllowPrivateAccess = "true"))
-		bool IsFindServer = false;
+	bool IsFindServer = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Check", meta = (AllowPrivateAccess = "true"))
-		int32 SessionsNum = 0;
+	int32 sessionsNum = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ServerSetting", meta = (AllowPrivateAccess = "true"))
-		int32 MaxPlayer = 0;
+	int32 maxPlayer = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ServerSetting", meta = (AllowPrivateAccess = "true"))
-		FName ServerName;
+	FName serverName;
 
 	UFUNCTION(BlueprintPure)
-		FString NetErrorToString(ENetworkFailure::Type FailureType);
+	FString NetErrorToString(ENetworkFailure::Type FailureType);
 	UFUNCTION(BlueprintPure)
-		FString TravelErrorToString(ETravelFailure::Type FailureType);
+	FString TravelErrorToString(ETravelFailure::Type FailureType);
 
 };

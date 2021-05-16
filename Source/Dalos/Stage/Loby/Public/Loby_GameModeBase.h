@@ -17,8 +17,19 @@ class DALOS_API ALoby_GameModeBase : public AGameModeBase
 public:
 	ALoby_GameModeBase();
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void SwapCharacter(class APlayerController* controller, class ACharacter* character, bool changedStatus);
+	bool SwapCharacter_Validate(class APlayerController* controller, class ACharacter* character, bool changedStatus);
+	void SwapCharacter_Implementation(class APlayerController* controller, class ACharacter* character, bool changedStatus);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void EveryoneUpdate();
+	bool EveryoneUpdate_Validate();
+	void EveryoneUpdate_Implementation();
+
 protected:
 
 private:
+	
 
 };
