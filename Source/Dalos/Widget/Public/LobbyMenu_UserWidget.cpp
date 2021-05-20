@@ -12,5 +12,6 @@ void ULobbyMenu_UserWidget::GetLifetimeReplicatedProps(TArray< FLifetimeProperty
 	DOREPLIFETIME(ULobbyMenu_UserWidget, mapImage);
 	DOREPLIFETIME(ULobbyMenu_UserWidget, mapTime);
 	DOREPLIFETIME(ULobbyMenu_UserWidget, mapName);
+	DOREPLIFETIME(ULobbyMenu_UserWidget, playerDisplay);
 
 }

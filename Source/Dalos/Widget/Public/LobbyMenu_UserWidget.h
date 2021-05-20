@@ -36,6 +36,9 @@ public:
 	UPROPERTY(Replicated, Category = LobbyInfo, EditAnywhere, BlueprintReadWrite)
 	UTexture2D* mapImage;
 
+	UPROPERTY(Replicated, Category = LobbyInfo, EditAnywhere, BlueprintReadWrite)
+	FString playerDisplay;
+
 protected:
 
 private:

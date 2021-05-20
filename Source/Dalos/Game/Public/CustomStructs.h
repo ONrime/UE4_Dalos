@@ -22,15 +22,17 @@ struct FPlayerInfo
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FString playerName;
+	FString playerName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		UTexture2D* playerImage;
+	UTexture2D* playerImage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		class ACharacter* playerCharacter;
+	class ACharacter* playerCharacter;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		UTexture2D* playerCharacterImage;
+	UTexture2D* playerCharacterImage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FString playerStatus;
+	FString playerStatus;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString playerReadyStatus;
 
 
 };

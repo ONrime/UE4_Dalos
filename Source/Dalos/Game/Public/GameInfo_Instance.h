@@ -81,6 +81,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Event")
 	void Check_SaveGame();  // 저장 파일 확인 하기
 
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ServerSetting", meta = (AllowPrivateAccess = "true"))
+	int32 maxPlayer = 4;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ServerSetting", meta = (AllowPrivateAccess = "true"))
+	FName serverName;
+
 private:
 	FName lobbyName = "LobyMap";
 	FString playerSettingsSave = "PlayerSettingsSave";
@@ -92,11 +98,6 @@ private:
 	bool IsFindServer = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Check", meta = (AllowPrivateAccess = "true"))
 	int32 sessionsNum = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ServerSetting", meta = (AllowPrivateAccess = "true"))
-	int32 maxPlayer = 0;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ServerSetting", meta = (AllowPrivateAccess = "true"))
-	FName serverName;
 
 	UFUNCTION(BlueprintPure)
 	FString NetErrorToString(ENetworkFailure::Type FailureType);
