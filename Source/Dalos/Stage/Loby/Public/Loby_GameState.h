@@ -30,6 +30,8 @@ public:
 	TArray<class APlayerController*> allPlayerController;
 	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_UpdateConnetedPlayers, BlueprintReadWrite, Category = ServerSettings, meta = (AllowPrivateAccess = "true"))
 	TArray<FPlayerInfo> connetedPlayers;
+	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_UpdateConnetedTeam, BlueprintReadWrite, Category = ServerSettings, meta = (AllowPrivateAccess = "true"))
+	TArray<FPlayerTeamInfo> connetedPlayersTeam;
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = ServerSettings, meta = (AllowPrivateAccess = "true"))
 	TArray<class AActor*> allPlayerStart;
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = ServerSettings, meta = (AllowPrivateAccess = "true"))
@@ -41,6 +43,8 @@ public:
 
 	UFUNCTION()
 	void OnRep_UpdateConnetedPlayers();
+	UFUNCTION()
+	void OnRep_UpdateConnetedTeam();
 
 private:
 

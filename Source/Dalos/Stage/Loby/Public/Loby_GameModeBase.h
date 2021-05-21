@@ -69,9 +69,11 @@ public:
 
 
 private:
-
+	bool IsHost = false;
 	
-	
+	int32 redTeamCount = 0;
+	int32 blueTeamCount = 0;
 
+	void SaveTeamInfo(FString status);
 
 };

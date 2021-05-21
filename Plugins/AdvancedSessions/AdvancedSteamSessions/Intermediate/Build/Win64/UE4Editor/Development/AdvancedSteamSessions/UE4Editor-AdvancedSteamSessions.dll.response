@@ -35,8 +35,6 @@
 /NODEFAULTLIB:"LIBCPD"
 /FUNCTIONPADMIN
 "C:\ue4project\UnrealEngine-4.26\Engine\Intermediate\Build\Win64\UE4Editor\Development\Engine\SharedPCH.Engine.ShadowErrors.h.obj"
-"C:\GitHub\UE4_Dalos\Plugins\AdvancedSessions\AdvancedSteamSessions\Intermediate\Build\Win64\UE4Editor\Development\AdvancedSteamSessions\SteamRequestGroupOfficersCallbackProxy.cpp.obj"
-"C:\GitHub\UE4_Dalos\Plugins\AdvancedSessions\AdvancedSteamSessions\Intermediate\Build\Win64\UE4Editor\Development\AdvancedSteamSessions\SteamWSRequestUGCDetailsCallbackProxy.cpp.obj"
 "C:\GitHub\UE4_Dalos\Plugins\AdvancedSessions\AdvancedSteamSessions\Intermediate\Build\Win64\UE4Editor\Development\AdvancedSteamSessions\Module.AdvancedSteamSessions.cpp.obj"
 "C:\GitHub\UE4_Dalos\Plugins\AdvancedSessions\AdvancedSteamSessions\Intermediate\Build\Win64\UE4Editor\Development\AdvancedSteamSessions\Module.AdvancedSteamSessions.gen.cpp.obj"
 "C:\ue4project\UnrealEngine-4.26\Engine\Intermediate\Build\Win64\UE4Editor\Development\Default.rc2.res"

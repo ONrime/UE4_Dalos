@@ -30,18 +30,25 @@ public:
 	FPlayerInfo playerSettings;
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = PlayerInfo, meta = (AllowPrivateAccess = "true"))
 	TArray<FPlayerInfo> connectedPlayersInfo;
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = PlayerInfo, meta = (AllowPrivateAccess = "true"))
+	FPlayerTeamInfo playerTeamInfo;
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UFUNCTION(Client, Reliable, WithValidation)
-	void InitialSetup(const FString& playerStatus); // 초기화 및 세이브 게임 정보 확인하고 서버에 업데이트 하기
-	bool InitialSetup_Validate(const FString& playerStatus);
-	void InitialSetup_Implementation(const FString& playerStatus);
+	void InitialSetup(const FString& playerStatus, const FString& playerTeam); // 초기화 및 세이브 게임 정보 확인하고 서버에 업데이트 하기
+	bool InitialSetup_Validate(const FString& playerStatus, const FString& playerTeam);
+	void InitialSetup_Implementation(const FString& playerStatus, const FString& playerTeam);
 
 	UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable)
 	void CallUpdate(FPlayerInfo player_Info, bool IsChangedStatus); // 캐릭터 선택, 변경시 업데이트 및 접속자 모두에게 로비메뉴를 업데이트를 하라고 알림
 	bool CallUpdate_Validate(FPlayerInfo player_Info, bool IsChangedStatus);
 	void CallUpdate_Implementation(FPlayerInfo player_Info, bool IsChangedStatus);
+
+	UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable)
+	void CallTeamInfoUpdate(FPlayerTeamInfo team_Info); // 캐릭터 선택, 변경시 업데이트 및 접속자 모두에게 로비메뉴를 업데이트를 하라고 알림
+	bool CallTeamInfoUpdate_Validate(FPlayerTeamInfo team_Info);
+	void CallTeamInfoUpdate_Implementation(FPlayerTeamInfo team_Info);
 
 	UFUNCTION(Client, Reliable, WithValidation)
 	void SetupLobbyMenu(const FString& server_Name); // 로비 메뉴 설정 및 보여주기
@@ -74,6 +81,9 @@ public:
 	void UpdateNumberOfPlayers_Implementation(int16 CurrentPlayers, int16 MaxPlayers);
 
 	void SaveGameCheck();
+	void UpdateList();
+	void ClickRedButton();
+	void ClickBlueButton();
 	
 
 protected:

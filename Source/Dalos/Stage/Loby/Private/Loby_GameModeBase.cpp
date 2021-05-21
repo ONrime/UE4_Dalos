@@ -9,6 +9,7 @@
 #include "Dalos/DalosCharacter.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
+#include "Dalos/Game/Public/PlayerTeamInfo_SaveGame.h"
 
 ALoby_GameModeBase::ALoby_GameModeBase()
 {
@@ -31,48 +32,33 @@ void ALoby_GameModeBase::PostLogin(APlayerController* NewPlayer)
 	gameState->maxPlayers = gameIns->maxPlayer; // 4
 	//UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), gameState->allPlayerStart);
 
-	auto playerController = Cast<ALoby_PlayerController>(NewPlayer);
-	if (currentPlayers == 0) {
-		playerController->InitialSetup("Host");
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Join Host"));
-		UE_LOG(LogTemp, Warning, TEXT("Host is init"));
+	FString teamInfo = "";
+	if (redTeamCount <= blueTeamCount) {
+		redTeamCount++;
+		teamInfo = "Red";
+		//SaveTeamInfo("Red");
+		UE_LOG(LogTemp, Warning, TEXT("Red"));
 	}
 	else {
-		playerController->InitialSetup("Guest");
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Join Guest"));
-		UE_LOG(LogTemp, Warning, TEXT("Guest is init"));
+		blueTeamCount++;
+		//SaveTeamInfo("Blue");
+		UE_LOG(LogTemp, Warning, TEXT("Blue"));
+		teamInfo = "Blue";
+	}
+
+	auto playerController = Cast<ALoby_PlayerController>(NewPlayer);
+	if (!IsHost) {
+		IsHost = true;
+		playerController->InitialSetup("Host", teamInfo);
+	}
+	else {
+		playerController->InitialSetup("Guest", teamInfo);
 	}// 초기화 및 세이브 게임 정보 확인하고 서버에 업데이트 하기
 	 // 각 컨트롤(클라이언트)에 플레이어 수 업데이트 및 플레이어 인포 전달
 
 	playerController->SetupLobbyMenu(gameState->serverName); // 각 클라이언트의 로비 메뉴 활성화
 	playerController->UpdateLobbySettings(mapImage, mapName, mapTime); // 각 클라이언트의 기본 맵 이미지, 맵 이름, 맵 시간 전달 해서 설정
 	//RespawnPlayer(NewPlayer); // 플레이어 캐릭터 리스폰하기
-
-	/*if (HasAuthority()) {
-		allPlayerController.Add(NewPlayer);
-		auto gameIns = Cast<UGameInfo_Instance>(GetGameInstance());
-		serverName = gameIns->serverName.ToString();
-		maxPlayers = gameIns->maxPlayer; // maxPlayer = 4
-
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), allPlayerStart);
-
-		auto playerController = Cast<ALoby_PlayerController>(NewPlayer);
-		if (currentPlayers == 0) {
-			playerController->InitialSetup("Host");
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Join Host"));
-			UE_LOG(LogTemp, Warning, TEXT("Host is init"));
-		}else{ 
-			playerController->InitialSetup("Guest");
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Join Guest"));
-			UE_LOG(LogTemp, Warning, TEXT("Guest is init"));
-		}
-		//playerController->InitialSetup("");  // 초기화 및 세이브 게임 정보 확인하고 서버에 업데이트 하기
-		// 각 컨트롤(클라이언트)에 플레이어 수 업데이트 및 플레이어 인포 전달
-
-		playerController->SetupLobbyMenu(serverName); // 각 클라이언트의 로비 메뉴 활성화
-		playerController->UpdateLobbySettings(mapImage, mapName, mapTime); // 각 클라이언트의 기본 맵 이미지, 맵 이름, 맵 시간 전달 해서 설정
-		RespawnPlayer(NewPlayer); // 플레이어 캐릭터 리스폰하기
-	}*/
 }
 
 bool ALoby_GameModeBase::SwapCharacter_Validate(APlayerController* controller, ACharacter* character, bool changedStatus)
@@ -158,6 +144,16 @@ void ALoby_GameModeBase::LaunchCheck()
 			}
 		}
 		if(readyCount == gameState->currentPlayers) LaunchTheGame();
+	}
+}
+
+void ALoby_GameModeBase::SaveTeamInfo(FString status)
+{
+	UPlayerTeamInfo_SaveGame* SaveGameInstance = Cast<UPlayerTeamInfo_SaveGame>(UGameplayStatics::CreateSaveGameObject(UPlayerTeamInfo_SaveGame::StaticClass()));
+	if (SaveGameInstance)
+	{
+		SaveGameInstance->S_playerTeamInfo.TeamName = status;
+		UGameplayStatics::SaveGameToSlot(SaveGameInstance, TEXT("TeamInfoSave"), 0);
 	}
 }
 

@@ -33,6 +33,16 @@ public:
 	FString playerStatus;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString playerReadyStatus;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString playerTeamStatus;
+};
 
+USTRUCT(Atomic, BlueprintType)
+struct FPlayerTeamInfo
+{
+	GENERATED_USTRUCT_BODY()
 
+	public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString TeamName;
 };

@@ -45,9 +45,13 @@ void ALoby_GameState::OnRep_UpdateConnetedPlayers()
 			auto lobbyController = Cast<ALoby_PlayerController>(allPlayerController[i]);
 			if (lobbyController) {
 				lobbyController->AddPlayerInfo(); // 업데이트된 각 컨트롤러의 클라이언트에게 플레이어 인포 전달
+				lobbyController->UpdateList();
 			}
 		}
 	}
+}
+void ALoby_GameState::OnRep_UpdateConnetedTeam()
+{
 }
 void ALoby_GameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
@@ -55,6 +59,7 @@ void ALoby_GameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& Ou
 
 	DOREPLIFETIME(ALoby_GameState, allPlayerController);
 	DOREPLIFETIME(ALoby_GameState, connetedPlayers);
+	DOREPLIFETIME(ALoby_GameState, connetedPlayersTeam);
 	DOREPLIFETIME(ALoby_GameState, allPlayerStart);
 	DOREPLIFETIME(ALoby_GameState, serverName);
 	DOREPLIFETIME(ALoby_GameState, maxPlayers);

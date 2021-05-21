@@ -11,6 +11,7 @@
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/PlayerController.h"
 #include "Dalos/Widget/Public/LobbyMenu_UserWidget.h"
+#include "Dalos/Game/Public/PlayerInfo_SaveGame.h"
 
 ALoby_PlayerController::ALoby_PlayerController()
 {
@@ -19,17 +20,21 @@ ALoby_PlayerController::ALoby_PlayerController()
 	if (LOBBYMENU_WIDGET.Succeeded()) LobbyMenu_Class = LOBBYMENU_WIDGET.Class;
 	static ConstructorHelpers::FClassFinder<UUserWidget> LODINGSCREEN_WIDGET(TEXT("WidgetBlueprint'/Game/UI/Levels/LoadingScreen.LoadingScreen_C'"));
 	if (LODINGSCREEN_WIDGET.Succeeded()) LoddingScreen_Class = LODINGSCREEN_WIDGET.Class;
+
 }
 
-bool ALoby_PlayerController::InitialSetup_Validate(const FString& playerStatus)
+bool ALoby_PlayerController::InitialSetup_Validate(const FString& playerStatus, const FString& playerTeam)
 {
 	return  true;
 }
 
-void ALoby_PlayerController::InitialSetup_Implementation(const FString& playerStatus)
+void ALoby_PlayerController::InitialSetup_Implementation(const FString& playerStatus, const FString& playerTeam)
 {
 	SaveGameCheck(); // 세이브 가져오기
 	playerSettings.playerStatus = playerStatus;
+	playerSettings.playerTeamStatus = playerTeam;
+	//playerTeamInfo.TeamName = playerTeam;
+	//CallTeamInfoUpdate(playerTeamInfo);
 	CallUpdate(playerSettings, false); // 가져온 세이브 업데이트 하기
 }
 
@@ -40,9 +45,6 @@ bool ALoby_PlayerController::CallUpdate_Validate(FPlayerInfo player_Info, bool I
 
 void ALoby_PlayerController::CallUpdate_Implementation(FPlayerInfo player_Info, bool IsChangedStatus)
 {
-	if (!HasAuthority()) {
-		
-	}
 	playerSettings = player_Info;
 	auto gameState = Cast<ALoby_GameState>(UGameplayStatics::GetGameState(this));
 	gameState->EveryoneUpdate();
@@ -50,6 +52,16 @@ void ALoby_PlayerController::CallUpdate_Implementation(FPlayerInfo player_Info, 
 	/*auto lobbyMode = Cast<ALoby_GameModeBase>(UGameplayStatics::GetGameMode(this)); //
 	//lobbyMode->SwapCharacter(this, playerSettings.playerCharacter, IsChangedStatus); // 2vs2에서는 캐릭터를 바꿀 필요가 없다.
 	lobbyMode->EveryoneUpdate(); // 모두에게 업데이트를 해라(클라이언트)*/
+}
+
+bool ALoby_PlayerController::CallTeamInfoUpdate_Validate(FPlayerTeamInfo team_Info)
+{
+	return true;
+}
+
+void ALoby_PlayerController::CallTeamInfoUpdate_Implementation(FPlayerTeamInfo team_Info)
+{
+	playerTeamInfo = team_Info;
 }
 
 bool ALoby_PlayerController::SetupLobbyMenu_Validate(const FString& server_Name)
@@ -65,6 +77,18 @@ void ALoby_PlayerController::SetupLobbyMenu_Implementation(const FString& server
 		LobbyMenu_WB = CreateWidget<ULobbyMenu_UserWidget>(playerController, LobbyMenu_Class);
 		LobbyMenu_WB->serverName = server_Name;
 		LobbyMenu_WB->AddToViewport();
+		/*if (IsLocalController()) {
+			LobbyMenu_WB->RedButtonClick.AddUnique(this, &ALoby_PlayerController::ClickRedButton);
+			LobbyMenu_WB->RedButtonClick.AddDynamic(this, &ALoby_PlayerController::ClickRedButton);
+			LobbyMenu_WB->BlueButtonClick.AddDynamic(this, &ALoby_PlayerController::ClickBlueButton);
+		}*/
+		
+		/*if (!LobbyMenu_WB->RedButtonClick.IsBound()) {
+			
+		}
+		if (!LobbyMenu_WB->BlueButtonClick.IsBound()) {
+			
+		}*/
 	}
 	FInputModeGameAndUI mode;
 	mode.SetHideCursorDuringCapture(true);
@@ -139,6 +163,37 @@ void ALoby_PlayerController::Kicked_Implementation()
 
 void ALoby_PlayerController::SaveGameCheck()
 {
+	UPlayerInfo_SaveGame* LoadGameInstance = Cast<UPlayerInfo_SaveGame>(UGameplayStatics::CreateSaveGameObject(UPlayerInfo_SaveGame::StaticClass()));
+	LoadGameInstance = Cast<UPlayerInfo_SaveGame>(UGameplayStatics::LoadGameFromSlot("PlayerSettingsSave", 0));
+	if (LoadGameInstance)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SaveGameCheck"));
+		playerSettings.playerName=LoadGameInstance->S_playerInfo.playerName;
+		playerSettings.playerImage=LoadGameInstance->S_playerInfo.playerImage;
+	}
+	// 만약 없으면 세이브 하는 기능?
+}
+
+void ALoby_PlayerController::UpdateList()
+{
+	LobbyMenu_WB->ClearPlayerListCheck.Broadcast();
+	for (int i = 0; i < connectedPlayersInfo.Num(); i++) {
+		UE_LOG(LogTemp, Warning, TEXT("TeamName: %s"), *connectedPlayersInfo[i].playerTeamStatus);
+		LobbyMenu_WB->UpdatePlayerWindowCheck.Broadcast(connectedPlayersInfo[i]);
+	}
+	//LobbyMenu_WB->UpdatePlayerWindowCheck.Broadcast();
+}
+
+void ALoby_PlayerController::ClickRedButton()
+{
+	playerSettings.playerTeamStatus = "Red";
+	CallUpdate(playerSettings, false);
+}
+
+void ALoby_PlayerController::ClickBlueButton()
+{
+	playerSettings.playerTeamStatus = "Blue";
+	CallUpdate(playerSettings, false);
 }
 
 bool ALoby_PlayerController::UpdateNumberOfPlayers_Validate(int16 CurrentPlayers, int16 MaxPlayers)
@@ -164,5 +219,6 @@ void ALoby_PlayerController::GetLifetimeReplicatedProps(TArray< FLifetimePropert
 
 	DOREPLIFETIME(ALoby_PlayerController, playerSettings);
 	DOREPLIFETIME(ALoby_PlayerController, connectedPlayersInfo);
+	DOREPLIFETIME(ALoby_PlayerController, playerTeamInfo);
 
 }
