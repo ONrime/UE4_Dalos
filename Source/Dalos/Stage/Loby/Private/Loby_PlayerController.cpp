@@ -12,6 +12,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Dalos/Widget/Public/LobbyMenu_UserWidget.h"
 #include "Dalos/Game/Public/PlayerInfo_SaveGame.h"
+#include "Dalos/Widget/Public/LobbyCount_UserWidget.h"
 
 ALoby_PlayerController::ALoby_PlayerController()
 {
@@ -20,7 +21,8 @@ ALoby_PlayerController::ALoby_PlayerController()
 	if (LOBBYMENU_WIDGET.Succeeded()) LobbyMenu_Class = LOBBYMENU_WIDGET.Class;
 	static ConstructorHelpers::FClassFinder<UUserWidget> LODINGSCREEN_WIDGET(TEXT("WidgetBlueprint'/Game/UI/Levels/LoadingScreen.LoadingScreen_C'"));
 	if (LODINGSCREEN_WIDGET.Succeeded()) LoddingScreen_Class = LODINGSCREEN_WIDGET.Class;
-
+	static ConstructorHelpers::FClassFinder<UUserWidget> LOBBYCOUNT_WIDGET(TEXT("WidgetBlueprint'/Game/UI/Loby/PlayCount.PlayCount_C'"));
+	if (LOBBYCOUNT_WIDGET.Succeeded()) LobbyCount_Class = LOBBYCOUNT_WIDGET.Class;
 }
 
 bool ALoby_PlayerController::InitialSetup_Validate(const FString& playerStatus, const FString& playerTeam)
@@ -33,8 +35,7 @@ void ALoby_PlayerController::InitialSetup_Implementation(const FString& playerSt
 	SaveGameCheck(); // 세이브 가져오기
 	playerSettings.playerStatus = playerStatus;
 	playerSettings.playerTeamStatus = playerTeam;
-	//playerTeamInfo.TeamName = playerTeam;
-	//CallTeamInfoUpdate(playerTeamInfo);
+	playerSettings.playerReadyStatus = "Not Ready";
 	CallUpdate(playerSettings, false); // 가져온 세이브 업데이트 하기
 }
 
@@ -48,6 +49,10 @@ void ALoby_PlayerController::CallUpdate_Implementation(FPlayerInfo player_Info, 
 	playerSettings = player_Info;
 	auto gameState = Cast<ALoby_GameState>(UGameplayStatics::GetGameState(this));
 	gameState->EveryoneUpdate();
+	/*if (LobbyMenu_WB) {
+		LobbyMenu_WB->ClearPlayerListCheck.Broadcast();
+		LobbyMenu_WB->UpdatePlayerWindowCheck.Broadcast();
+	}*/
 
 	/*auto lobbyMode = Cast<ALoby_GameModeBase>(UGameplayStatics::GetGameMode(this)); //
 	//lobbyMode->SwapCharacter(this, playerSettings.playerCharacter, IsChangedStatus); // 2vs2에서는 캐릭터를 바꿀 필요가 없다.
@@ -77,18 +82,10 @@ void ALoby_PlayerController::SetupLobbyMenu_Implementation(const FString& server
 		LobbyMenu_WB = CreateWidget<ULobbyMenu_UserWidget>(playerController, LobbyMenu_Class);
 		LobbyMenu_WB->serverName = server_Name;
 		LobbyMenu_WB->AddToViewport();
-		/*if (IsLocalController()) {
-			LobbyMenu_WB->RedButtonClick.AddUnique(this, &ALoby_PlayerController::ClickRedButton);
-			LobbyMenu_WB->RedButtonClick.AddDynamic(this, &ALoby_PlayerController::ClickRedButton);
-			LobbyMenu_WB->BlueButtonClick.AddDynamic(this, &ALoby_PlayerController::ClickBlueButton);
-		}*/
-		
-		/*if (!LobbyMenu_WB->RedButtonClick.IsBound()) {
-			
-		}
-		if (!LobbyMenu_WB->BlueButtonClick.IsBound()) {
-			
-		}*/
+	}
+	if (LobbyCount_WB == nullptr) {
+		LobbyCount_WB = CreateWidget<ULobbyCount_UserWidget>(playerController, LobbyCount_Class);
+		LobbyCount_WB -> AddToViewport();
 	}
 	FInputModeGameAndUI mode;
 	mode.SetHideCursorDuringCapture(true);
@@ -159,6 +156,26 @@ bool ALoby_PlayerController::Kicked_Validate()
 void ALoby_PlayerController::Kicked_Implementation()
 {
 	UGameplayStatics::OpenLevel(GetWorld(), "MainMenuMap", true, "listen");
+}
+
+bool ALoby_PlayerController::PlayCountDown_Validate()
+{
+	return true;
+}
+
+void ALoby_PlayerController::PlayCountDown_Implementation()
+{
+	LobbyCount_WB->PlayCountDown();
+}
+
+bool ALoby_PlayerController::StopCountDown_Validate()
+{
+	return true;
+}
+
+void ALoby_PlayerController::StopCountDown_Implementation()
+{
+	LobbyCount_WB->StopCountDown();
 }
 
 void ALoby_PlayerController::SaveGameCheck()

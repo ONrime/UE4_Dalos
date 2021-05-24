@@ -35,6 +35,7 @@ void ALoby_GameState::EveryoneUpdate_Implementation()
 	}
 	auto gameMode = Cast<ALoby_GameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
 	if (gameMode) {
+		gameMode->StopCountDown();
 		gameMode->LaunchCheck();
 	}
 }

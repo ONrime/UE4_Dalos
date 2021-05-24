@@ -67,13 +67,19 @@ public:
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = ServerSettings, meta = (AllowPrivateAccess = "true"))
 	TArray<FPlayerInfo> connetedPlayers;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ServerSettings, meta = (AllowPrivateAccess = "true"))
+	int32 redTeamCount = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ServerSettings, meta = (AllowPrivateAccess = "true"))
+	int32 blueTeamCount = 0;
+
+	void StopCountDown();
 
 private:
 	bool IsHost = false;
-	
-	int32 redTeamCount = 0;
-	int32 blueTeamCount = 0;
 
-	void SaveTeamInfo(FString status);
+	FTimerHandle countDownTimer;
+	void StartCountDown();
+	int countNum = 5;
+	void MinCount();
 
 };

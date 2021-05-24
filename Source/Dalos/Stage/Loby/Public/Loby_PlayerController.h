@@ -21,10 +21,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets", meta = (AllowPrivateAccess = "true"))
 	class ULobbyMenu_UserWidget* LobbyMenu_WB;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets", meta = (AllowPrivateAccess = "true"))
+	class ULobbyCount_UserWidget* LobbyCount_WB;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets", meta = (AllowPrivateAccess = "true"))
 	class UUserWidget* LoddingScreen_WB;
 
 	TSubclassOf<class ULobbyMenu_UserWidget> LobbyMenu_Class;
 	TSubclassOf<class UUserWidget> LoddingScreen_Class;
+	TSubclassOf<class ULobbyCount_UserWidget> LobbyCount_Class;
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = PlayerInfo, meta = (AllowPrivateAccess = "true"))
 	FPlayerInfo playerSettings;
@@ -79,6 +82,16 @@ public:
 	void UpdateNumberOfPlayers(int16 CurrentPlayers, int16 MaxPlayers); // 접속 플레이어 숫자 표시 업데이트
 	bool UpdateNumberOfPlayers_Validate(int16 CurrentPlayers, int16 MaxPlayers);
 	void UpdateNumberOfPlayers_Implementation(int16 CurrentPlayers, int16 MaxPlayers);
+
+	UFUNCTION(Client, Reliable, WithValidation)
+	void PlayCountDown();
+	bool PlayCountDown_Validate();
+	void PlayCountDown_Implementation();
+
+	UFUNCTION(Client, Reliable, WithValidation)
+	void StopCountDown();
+	bool StopCountDown_Validate();
+	void StopCountDown_Implementation();
 
 	void SaveGameCheck();
 	void UpdateList();

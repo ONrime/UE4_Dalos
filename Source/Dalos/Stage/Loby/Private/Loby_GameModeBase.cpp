@@ -36,12 +36,10 @@ void ALoby_GameModeBase::PostLogin(APlayerController* NewPlayer)
 	if (redTeamCount <= blueTeamCount) {
 		redTeamCount++;
 		teamInfo = "Red";
-		//SaveTeamInfo("Red");
 		UE_LOG(LogTemp, Warning, TEXT("Red"));
 	}
 	else {
 		blueTeamCount++;
-		//SaveTeamInfo("Blue");
 		UE_LOG(LogTemp, Warning, TEXT("Blue"));
 		teamInfo = "Blue";
 	}
@@ -92,20 +90,6 @@ void ALoby_GameModeBase::EveryoneUpdate_Implementation()
 			lobbyController->AddPlayerInfo(); // 업데이트된 각 컨트롤러의 클라이언트에게 플레이어 인포 전달
 		}
 	}
-	/*currentPlayers = allPlayerController.Num();
-	if (currentPlayers > 0) {
-		connetedPlayers.Empty();
-		for (int i = 0; i < allPlayerController.Num(); i++) {
-			auto lobbyController = Cast<ALoby_PlayerController>(allPlayerController[i]);
-			connetedPlayers.Add(lobbyController->playerSettings);
-			lobbyController->UpdateNumberOfPlayers(currentPlayers, maxPlayers); // 각 컨트롤러에 플레이어 수 업데이트 하기
-		}
-
-		for (int i = 0; i < allPlayerController.Num(); i++) {
-			auto lobbyController = Cast<ALoby_PlayerController>(allPlayerController[i]);
-			lobbyController->AddPlayerInfo(connetedPlayers); // 업데이트된 각 컨트롤러의 클라이언트에게 플레이어 인포 전달
-		}
-	}*/
 }
 
 bool ALoby_GameModeBase::RespawnPlayer_Validate(APlayerController* controller)
@@ -128,13 +112,18 @@ void ALoby_GameModeBase::RespawnPlayer_Implementation(APlayerController* control
 
 void ALoby_GameModeBase::LaunchTheGame()
 {
-	UE_LOG(LogTemp, Warning, TEXT("LaunchTheGame"));
-
+	UE_LOG(LogTemp, Warning, TEXT("CountDownGame"));
+	auto gameState = Cast< ALoby_GameState>(GameState);
+	for (int i = 0; i < gameState->allPlayerController.Num(); i++) {
+		auto lobbyController = Cast<ALoby_PlayerController>(gameState->allPlayerController[i]);
+		lobbyController->PlayCountDown();
+	}
+	StartCountDown();
 }
 
 void ALoby_GameModeBase::LaunchCheck()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("LaunchCheck"));
+	UE_LOG(LogTemp, Warning, TEXT("LaunchCheck"));
 	auto gameState = Cast<ALoby_GameState>(GameState);
 	int readyCount = 0;
 	if (gameState) {
@@ -147,15 +136,35 @@ void ALoby_GameModeBase::LaunchCheck()
 	}
 }
 
-void ALoby_GameModeBase::SaveTeamInfo(FString status)
+void ALoby_GameModeBase::StartCountDown()
 {
-	UPlayerTeamInfo_SaveGame* SaveGameInstance = Cast<UPlayerTeamInfo_SaveGame>(UGameplayStatics::CreateSaveGameObject(UPlayerTeamInfo_SaveGame::StaticClass()));
-	if (SaveGameInstance)
-	{
-		SaveGameInstance->S_playerTeamInfo.TeamName = status;
-		UGameplayStatics::SaveGameToSlot(SaveGameInstance, TEXT("TeamInfoSave"), 0);
+	countNum = 5;
+	GetWorld()->GetTimerManager().SetTimer(countDownTimer, this, &ALoby_GameModeBase::MinCount, 1.0f, true);
+}
+
+void ALoby_GameModeBase::StopCountDown()
+{
+	if (GetWorld()->GetTimerManager().IsTimerActive(countDownTimer)) {
+		GetWorld()->GetTimerManager().ClearTimer(countDownTimer);
+	}
+	auto gameState = Cast< ALoby_GameState>(GameState);
+	if (gameState) {
+		for (int i = 0; i < gameState->allPlayerController.Num(); i++) {
+			auto lobbyController = Cast<ALoby_PlayerController>(gameState->allPlayerController[i]);
+			lobbyController->StopCountDown();
+		}
 	}
 }
+
+void ALoby_GameModeBase::MinCount()
+{
+	countNum -= 1;
+	if (countNum == 0) {
+		GetWorld()->GetTimerManager().ClearTimer(countDownTimer);
+		UE_LOG(LogTemp, Warning, TEXT("LaunchTheGame"));
+	}
+}
+
 
 void ALoby_GameModeBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
