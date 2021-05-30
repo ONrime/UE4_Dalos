@@ -89,7 +89,7 @@ void ALoby_PlayerController::SetupLobbyMenu_Implementation(const FString& server
 	}
 	FInputModeGameAndUI mode;
 	mode.SetHideCursorDuringCapture(true);
-	mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	mode.SetLockMouseToViewportBehavior(EMouseLockMode::LockOnCapture);
 	mode.SetWidgetToFocus(LobbyMenu_WB->GetCachedWidget());
 	SetInputMode(mode);
 }
@@ -178,6 +178,34 @@ void ALoby_PlayerController::StopCountDown_Implementation()
 	LobbyCount_WB->StopCountDown();
 }
 
+bool ALoby_PlayerController::GetChatMessage_Validate(const FString& textToSend)
+{
+	return true;
+}
+
+void ALoby_PlayerController::GetChatMessage_Implementation(const FString& textToSend)
+{
+	senderText = textToSend;
+	senderName = playerSettings.playerName;
+	auto gameState = Cast<ALoby_GameState>(UGameplayStatics::GetGameState(this));
+	for (int i = 0; i < gameState->allPlayerController.Num(); i++) {
+		auto controller = Cast<ALoby_PlayerController>(gameState->allPlayerController[i]);
+		controller->UpdateText(senderText, senderName);
+	}
+}
+
+bool ALoby_PlayerController::UpdateText_Validate(const FString& sender_Text, const FString& sender_Name)
+{
+	return true;
+}
+
+void ALoby_PlayerController::UpdateText_Implementation(const FString& sender_Text, const FString& sender_Name)
+{
+	if (LobbyMenu_WB->UpdateChat.IsBound()) {
+		LobbyMenu_WB->UpdateChat.Broadcast(sender_Name, sender_Text);
+	}
+}
+
 void ALoby_PlayerController::SaveGameCheck()
 {
 	UPlayerInfo_SaveGame* LoadGameInstance = Cast<UPlayerInfo_SaveGame>(UGameplayStatics::CreateSaveGameObject(UPlayerInfo_SaveGame::StaticClass()));
@@ -213,6 +241,26 @@ void ALoby_PlayerController::ClickBlueButton()
 	CallUpdate(playerSettings, false);
 }
 
+void ALoby_PlayerController::TogglePlayer()
+{
+	SetShowMouseCursor(false);
+	LobbyMenu_WB->WidgetVis = ESlateVisibility::Hidden;
+	FInputModeGameOnly mode;
+	mode.SetConsumeCaptureMouseDown(false);
+	SetInputMode(mode);
+}
+
+void ALoby_PlayerController::VisibleWidget()
+{
+	SetShowMouseCursor(true);
+	FInputModeGameAndUI mode;
+	mode.SetHideCursorDuringCapture(true);
+	mode.SetLockMouseToViewportBehavior(EMouseLockMode::LockOnCapture);
+	mode.SetWidgetToFocus(LobbyMenu_WB->GetCachedWidget());
+	LobbyMenu_WB->WidgetVis = ESlateVisibility::Visible;
+	SetInputMode(mode);
+}
+
 bool ALoby_PlayerController::UpdateNumberOfPlayers_Validate(int16 CurrentPlayers, int16 MaxPlayers)
 {
 	return true;
@@ -237,5 +285,7 @@ void ALoby_PlayerController::GetLifetimeReplicatedProps(TArray< FLifetimePropert
 	DOREPLIFETIME(ALoby_PlayerController, playerSettings);
 	DOREPLIFETIME(ALoby_PlayerController, connectedPlayersInfo);
 	DOREPLIFETIME(ALoby_PlayerController, playerTeamInfo);
+	DOREPLIFETIME(ALoby_PlayerController, senderText);
+	DOREPLIFETIME(ALoby_PlayerController, senderName);
 
 }

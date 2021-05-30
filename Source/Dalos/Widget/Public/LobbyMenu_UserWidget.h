@@ -14,6 +14,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FLobbyDelegate);
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDele_Dynamic_OneParam, int32, SomeParameter);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLobbyOneDelegate, FPlayerInfo, incomingPlayerInfo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FLobbyChatDelegate, FString, Sender, FString, Text);
 
 UCLASS()
 class DALOS_API ULobbyMenu_UserWidget : public UUserWidget
@@ -32,6 +33,8 @@ public:
 	FLobbyDelegate BlueButtonClick;
 	UPROPERTY(BlueprintAssignable, VisibleAnywhere, BlueprintCallable, Category = "Event")
 	FLobbyOneDelegate UpdatePlayerWindowCheck;
+	UPROPERTY(BlueprintAssignable, VisibleAnywhere, BlueprintCallable, Category = "Event")
+	FLobbyChatDelegate UpdateChat;
 
 	UPROPERTY(Replicated, Category = LobbyInfo, EditAnywhere, BlueprintReadWrite)
 	FString mapName;
@@ -42,6 +45,8 @@ public:
 
 	UPROPERTY(Replicated, Category = LobbyInfo, EditAnywhere, BlueprintReadWrite)
 	FString playerDisplay;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ESlateVisibility WidgetVis = ESlateVisibility::Visible;
 
 protected:
 

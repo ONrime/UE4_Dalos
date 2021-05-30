@@ -35,6 +35,10 @@ public:
 	TArray<FPlayerInfo> connectedPlayersInfo;
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = PlayerInfo, meta = (AllowPrivateAccess = "true"))
 	FPlayerTeamInfo playerTeamInfo;
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = Chat, meta = (AllowPrivateAccess = "true"))
+	FString senderText;
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = Chat, meta = (AllowPrivateAccess = "true"))
+	FString senderName;
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
@@ -93,12 +97,24 @@ public:
 	bool StopCountDown_Validate();
 	void StopCountDown_Implementation();
 
+	UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable)
+	void GetChatMessage(const FString& textToSend);
+	bool GetChatMessage_Validate(const FString& textToSend);
+	void GetChatMessage_Implementation(const FString& textToSend);
+
+	UFUNCTION(Client, Reliable, WithValidation) // 모든 플레이어 컨트롤러에게 체팅 업데이트
+	void UpdateText(const FString& sender_Text, const FString& sender_Name);
+	bool UpdateText_Validate(const FString& sender_Text, const FString& sender_Name);
+	void UpdateText_Implementation(const FString& sender_Text, const FString& sender_Name);
+
 	void SaveGameCheck();
 	void UpdateList();
 	void ClickRedButton();
 	void ClickBlueButton();
-	
+	void TogglePlayer();
+	void VisibleWidget();
 
+	
 protected:
 
 private:

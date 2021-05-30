@@ -8,6 +8,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Dalos/Stage/Loby/Public/Loby_PlayerController.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ADalosCharacter
@@ -53,6 +56,7 @@ ADalosCharacter::ADalosCharacter()
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>Body_SkeletalMesh(TEXT("SkeletalMesh'/Game/Mannequin/Character/Mesh/SK_Mannequin.SK_Mannequin'"));
 	if (Body_SkeletalMesh.Succeeded()) { GetMesh()->SetSkeletalMesh(Body_SkeletalMesh.Object); }
 
+
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 }
@@ -84,6 +88,8 @@ void ADalosCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInp
 
 	// VR headset functionality
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &ADalosCharacter::OnResetVR);
+
+	PlayerInputComponent->BindAction("Toggle", IE_Pressed, this, &ADalosCharacter::TogglePress);
 }
 
 
@@ -108,10 +114,32 @@ void ADalosCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Locati
 		StopJumping();
 }
 
+void ADalosCharacter::TogglePress()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Toggle"));
+	auto controller = Cast<ALoby_PlayerController>(GetController());
+	if(controller){
+		if (!IsToggle) {
+			IsToggle = true;
+			controller->TogglePlayer();
+			GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		}
+		else {
+			IsToggle = false;
+			controller->VisibleWidget();
+			GetCharacterMovement()->SetMovementMode(MOVE_None);
+		}
+	}
+	
+	
+	
+}
+
 void ADalosCharacter::TurnAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+	UE_LOG(LogTemp, Warning, TEXT("TurnAtRate: %f"), Rate);
 }
 
 void ADalosCharacter::LookUpAtRate(float Rate)
@@ -122,6 +150,7 @@ void ADalosCharacter::LookUpAtRate(float Rate)
 
 void ADalosCharacter::MoveForward(float Value)
 {
+	UE_LOG(LogTemp, Warning, TEXT("MoveForwardddd: %f"), Value);
 	if ((Controller != nullptr) && (Value != 0.0f))
 	{
 		// find out which way is forward
@@ -130,6 +159,7 @@ void ADalosCharacter::MoveForward(float Value)
 
 		// get forward vector
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		UE_LOG(LogTemp, Warning, TEXT("MoveForward: %f"), Direction.X);
 		AddMovementInput(Direction, Value);
 	}
 }
