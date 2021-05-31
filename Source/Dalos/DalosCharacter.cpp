@@ -8,6 +8,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Dalos/Stage/Loby/Public/Loby_PlayerController.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ADalosCharacter
@@ -16,6 +19,7 @@ ADalosCharacter::ADalosCharacter()
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
+	RootComponent = GetCapsuleComponent();
 
 	// set our turn rates for input
 	BaseTurnRate = 45.f;
@@ -42,6 +46,16 @@ ADalosCharacter::ADalosCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+
+	GetMesh()->SetupAttachment(RootComponent);
+	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -97.0f));
+	GetMesh()->SetRelativeRotation(FRotator(0.0f, 270.0f, 0.0f));
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	static ConstructorHelpers::FClassFinder<UAnimInstance>Body_AnimBP(TEXT("AnimBlueprint'/Game/Mannequin/Animations/ThirdPerson_AnimBP.ThirdPerson_AnimBP_C'"));
+	if (Body_AnimBP.Succeeded()) { GetMesh()->SetAnimInstanceClass(Body_AnimBP.Class); }
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh>Body_SkeletalMesh(TEXT("SkeletalMesh'/Game/Mannequin/Character/Mesh/SK_Mannequin.SK_Mannequin'"));
+	if (Body_SkeletalMesh.Succeeded()) { GetMesh()->SetSkeletalMesh(Body_SkeletalMesh.Object); }
+
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
@@ -74,6 +88,8 @@ void ADalosCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInp
 
 	// VR headset functionality
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &ADalosCharacter::OnResetVR);
+
+	PlayerInputComponent->BindAction("Toggle", IE_Pressed, this, &ADalosCharacter::TogglePress);
 }
 
 
@@ -98,10 +114,32 @@ void ADalosCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Locati
 		StopJumping();
 }
 
+void ADalosCharacter::TogglePress()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Toggle"));
+	auto controller = Cast<ALoby_PlayerController>(GetController());
+	if(controller){
+		if (!IsToggle) {
+			IsToggle = true;
+			controller->TogglePlayer();
+			GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		}
+		else {
+			IsToggle = false;
+			controller->VisibleWidget();
+			GetCharacterMovement()->SetMovementMode(MOVE_None);
+		}
+	}
+	
+	
+	
+}
+
 void ADalosCharacter::TurnAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+	UE_LOG(LogTemp, Warning, TEXT("TurnAtRate: %f"), Rate);
 }
 
 void ADalosCharacter::LookUpAtRate(float Rate)
@@ -112,6 +150,7 @@ void ADalosCharacter::LookUpAtRate(float Rate)
 
 void ADalosCharacter::MoveForward(float Value)
 {
+	UE_LOG(LogTemp, Warning, TEXT("MoveForwardddd: %f"), Value);
 	if ((Controller != nullptr) && (Value != 0.0f))
 	{
 		// find out which way is forward
@@ -120,6 +159,7 @@ void ADalosCharacter::MoveForward(float Value)
 
 		// get forward vector
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		UE_LOG(LogTemp, Warning, TEXT("MoveForward: %f"), Direction.X);
 		AddMovementInput(Direction, Value);
 	}
 }
