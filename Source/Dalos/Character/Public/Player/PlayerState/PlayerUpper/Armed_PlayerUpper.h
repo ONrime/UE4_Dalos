@@ -14,4 +14,18 @@ class DALOS_API UArmed_PlayerUpper : public UPlayerUpperStateBase
 {
 	GENERATED_BODY()
 	
+public:
+	UArmed_PlayerUpper();
+
+	virtual UPlayerUpperStateBase* HandleInput(class AMultiPlayerBase* player) override;
+	virtual UPlayerUpperStateBase* SendHandleInput(EPlayerPress press) override;
+	virtual void StateStart(class AMultiPlayerBase* player) override;
+	virtual void StateUpdate(class AMultiPlayerBase* player) override;
+	virtual void StateEnd(class AMultiPlayerBase* player) override;
+	virtual UClass* GetState() override;
+
+protected:
+
+private:
+
 };

@@ -14,4 +14,18 @@ class DALOS_API USplint_PlayerDown : public UPlayerDownStateBase
 {
 	GENERATED_BODY()
 	
+public:
+	USplint_PlayerDown();
+
+	virtual UPlayerDownStateBase* HandleInput(class AMultiPlayerBase* player) override;
+	virtual UPlayerDownStateBase* SendHandleInput(EPlayerPress press) override;
+	virtual void StateStart(class AMultiPlayerBase* player) override;
+	virtual void StateUpdate(class AMultiPlayerBase* player) override;
+	virtual void StateEnd(class AMultiPlayerBase* player) override;
+	virtual UClass* GetState() override;
+
+protected:
+
+private:
+
 };

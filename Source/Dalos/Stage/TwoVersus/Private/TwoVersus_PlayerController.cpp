@@ -3,3 +3,7 @@
 
 #include "Dalos/Stage/TwoVersus/Public/TwoVersus_PlayerController.h"
 
+ATwoVersus_PlayerController::ATwoVersus_PlayerController()
+{
+
+}

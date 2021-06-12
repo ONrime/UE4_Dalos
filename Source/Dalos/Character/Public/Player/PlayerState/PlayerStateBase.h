@@ -15,14 +15,10 @@ class DALOS_API UPlayerStateBase : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UPlayerStateBase();
-
-protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
+	//virtual UPlayerStateBase* HandleInput(class AMultiPlayerBase* player);
+	virtual void StateStart(class AMultiPlayerBase* player);
+	virtual void StateUpdate(class AMultiPlayerBase* player);
+	virtual void StateEnd(class AMultiPlayerBase* player);
+	virtual UClass* GetState();
 		
 };
