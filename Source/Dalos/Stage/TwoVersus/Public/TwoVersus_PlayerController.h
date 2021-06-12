@@ -15,6 +15,7 @@ class DALOS_API ATwoVersus_PlayerController : public APlayerController
 	GENERATED_BODY()
 	
 public:
+	ATwoVersus_PlayerController();
 
 protected:
 

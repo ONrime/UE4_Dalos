@@ -18,6 +18,7 @@ ALoby_GameModeBase::ALoby_GameModeBase()
 	DefaultPawnClass = ADalosCharacter::StaticClass();
 	PlayerControllerClass = ALoby_PlayerController::StaticClass();
 	GameStateClass = ALoby_GameState::StaticClass();
+	bUseSeamlessTravel = false;
 
 }
 
@@ -162,6 +163,8 @@ void ALoby_GameModeBase::MinCount()
 	if (countNum == 0) {
 		GetWorld()->GetTimerManager().ClearTimer(countDownTimer);
 		UE_LOG(LogTemp, Warning, TEXT("LaunchTheGame"));
+		GetWorld()->ServerTravel("/Game/Map/TestMap?Game=ATwoVersus_GameModeBase", true, false);
+		//GetWorld()->Exec(GetWorld(), TEXT("servertravel /Game/Map/TestMap"));
 	}
 }
 

@@ -8,27 +8,22 @@ UPlayerStateBase::UPlayerStateBase()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
 	// ...
 }
 
-
-// Called when the game starts
-void UPlayerStateBase::BeginPlay()
+void UPlayerStateBase::StateStart(AMultiPlayerBase* player)
 {
-	Super::BeginPlay();
-
-	// ...
-	
 }
-
-
-// Called every frame
-void UPlayerStateBase::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UPlayerStateBase::StateUpdate(AMultiPlayerBase* player)
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
+}
+void UPlayerStateBase::StateEnd(AMultiPlayerBase* player)
+{
 }
 
+UClass* UPlayerStateBase::GetState()
+{
+	return nullptr;
+}

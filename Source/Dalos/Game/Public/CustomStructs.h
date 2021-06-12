@@ -46,3 +46,19 @@ struct FPlayerTeamInfo
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString TeamName;
 };
+
+USTRUCT(Atomic, BlueprintType)
+struct FVelocityBlend
+{
+	GENERATED_USTRUCT_BODY()
+
+	public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float front;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float back;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float left;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float right;
+};

@@ -139,7 +139,7 @@ void ADalosCharacter::TurnAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
-	UE_LOG(LogTemp, Warning, TEXT("TurnAtRate: %f"), Rate);
+	//UE_LOG(LogTemp, Warning, TEXT("TurnAtRate: %f"), Rate);
 }
 
 void ADalosCharacter::LookUpAtRate(float Rate)
@@ -150,7 +150,7 @@ void ADalosCharacter::LookUpAtRate(float Rate)
 
 void ADalosCharacter::MoveForward(float Value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("MoveForwardddd: %f"), Value);
+	//UE_LOG(LogTemp, Warning, TEXT("MoveForwardddd: %f"), Value);
 	if ((Controller != nullptr) && (Value != 0.0f))
 	{
 		// find out which way is forward
@@ -159,7 +159,7 @@ void ADalosCharacter::MoveForward(float Value)
 
 		// get forward vector
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		UE_LOG(LogTemp, Warning, TEXT("MoveForward: %f"), Direction.X);
+		//UE_LOG(LogTemp, Warning, TEXT("MoveForward: %f"), Direction.X);
 		AddMovementInput(Direction, Value);
 	}
 }
