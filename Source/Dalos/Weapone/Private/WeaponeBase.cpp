@@ -47,23 +47,27 @@ void AWeaponeBase::StateStart(WEAPONSTATE state)
 	{
 	case WEAPONSTATE::EQUIP:
 		UE_LOG(LogTemp, Warning, TEXT("WEAPONSTATE::EQUIP"));
+		BodyMesh->SetOwnerNoSee(true);
 		BodyMesh->SetRelativeScale3D(FVector(1.0f, 1.0f, 1.0f));
 		BodyMesh->SetSimulatePhysics(false);
 		BodyMesh->SetCollisionProfileName("NoCollision");
 		break;
 	case WEAPONSTATE::BACKEQUIP:
 		UE_LOG(LogTemp, Warning, TEXT("WEAPONSTATE::BACKEQUIP"));
+		BodyMesh->SetOwnerNoSee(false);
 		BodyMesh->SetRelativeScale3D(FVector(1.0f, 1.0f, 1.0f));
 		BodyMesh->SetSimulatePhysics(false);
 		BodyMesh->SetCollisionProfileName("NoCollision");
 		break;
 	case WEAPONSTATE::DROP:
 		UE_LOG(LogTemp, Warning, TEXT("WEAPONSTATE::DROP"));
+		BodyMesh->SetOwnerNoSee(false);
 		BodyMesh->SetRelativeScale3D(FVector(1.0f, 1.0f, 1.0f));
 		BodyMesh->SetSimulatePhysics(true);
 		BodyMesh->SetCollisionProfileName("ItemObject");
 		break;
 	case WEAPONSTATE::THROW:
+		BodyMesh->SetOwnerNoSee(false);
 		BodyMesh->SetRelativeScale3D(FVector(1.0f, 1.0f, 1.0f));
 		BodyMesh->SetSimulatePhysics(true);
 		BodyMesh->SetCollisionProfileName("ItemObject");
@@ -77,19 +81,35 @@ void AWeaponeBase::InteractionStart_Implementation()
 {
 	InteractionUI->SetHiddenInGame(false);
 }
-
 void AWeaponeBase::InteractionUpdate_Implementation()
 {
 }
-
 void AWeaponeBase::InteractionEnd_Implementation()
 {
 	InteractionUI->SetHiddenInGame(true);
 }
 
+float AWeaponeBase::GetFireRecoilPitch()
+{
+	return 0.0f;
+}
+float AWeaponeBase::GetFireRecoilYaw()
+{
+	return 0.0f;
+}
+
 UClass* AWeaponeBase::GetStaticClass()
 {
 	return nullptr;
+}
+
+AWeaponeBase* AWeaponeBase::SpawnToHand(AActor* owner, FVector loc, FRotator rot)
+{
+	return nullptr;
+}
+
+void AWeaponeBase::ProjectileFire(FVector loc, FRotator rot, FRotator bulletRot)
+{
 }
 
 void AWeaponeBase::SetWeaponeState(WEAPONSTATE set) {

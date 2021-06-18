@@ -2,6 +2,7 @@
 
 
 #include "Dalos/Character/Public/Player/PlayerState/PlayerUpper/PlayerUpperStateBase.h"
+#include "Dalos/Weapone/Public/WeaponeBase.h"
 
 UPlayerUpperStateBase::UPlayerUpperStateBase()
 {
@@ -31,3 +32,8 @@ UClass* UPlayerUpperStateBase::GetState()
 {
 	return nullptr;
 }
+
+void UPlayerUpperStateBase::PlayerFire(AMultiPlayerBase* player, AWeaponeBase* equip, bool& IsAuto, float& count)
+{
+}
+

@@ -48,18 +48,34 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void PostInitializeComponents() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	
+	UPROPERTY()
+	class UPlayerArm_AnimInstance* armAnim;
+	UPROPERTY()
+	class UPlayerBody_AnimInstance* bodyAnim;
 	class AWeaponeBase* equipWeapone;
+	class AWeaponeBase* equipWeaponeArm;
 	class AWeaponeBase* backWeapone1;
 	class AWeaponeBase* backWeapone2;
 	class AWeaponeBase* lookWeapone;
 	bool InteractionCheck();
+	bool CrossHairCheck();
+	bool RecoilCheck();
 	void WeaponCheck(AWeaponeBase* check);  // 현제 들고 있는 무기들을 확인해서 장착할지 버릴지 결정한다.
 	void EquipGunOnHand(AWeaponeBase* equip);
 	UClass* equipWeaponeStaticClass = nullptr;
+	float recoilReturnPitch = 0.0f;
+	bool recoilReturn = false;
+	float recoilPitch = 0.0f;
+	FRotator recoilRot = FRotator::ZeroRotator;
+	FVector crossHairEndLoc = FVector::ZeroVector; // 총알과 쉴드를 위해 밖으로빼어 만든 위치
+	FVector recoilReturnLoc = FVector::ZeroVector;
+	FVector recoilReturnDir = FVector::ZeroVector;
+	FRotator bulletRot = FRotator::ZeroRotator;
 
 	UPROPERTY(Replicated)
 	float upperPitch = 0.0f;
@@ -75,6 +91,10 @@ protected:
 	UPROPERTY(EditAnywhere)
 	EPlayerPress playerPress;
 	FVector cameraLoc = FVector::ZeroVector;
+	bool IsFire = false;
+	bool IsFireAuto = false;
+	FTimerHandle fireTimer;
+	float threeCount = 0.0f;
 
 private:
 	// 상태
@@ -88,6 +108,10 @@ private:
 	void PlayerSecondGun();
 	void PlayerUnArmed();
 	void PlayerInteraction();
+	void PlayerADS();
+	void PlayerUnADS();
+	void PlayerFire();
+	void PlayerUnFire();
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
@@ -95,6 +119,7 @@ private:
 	void LookUpAtRate(float Rate);
 
 	void PlayerMove();
+	void FireAutoOn();
 
 
 public:
@@ -112,6 +137,9 @@ public:
 	float GetAimDirRight() { return aimDirRight; } float GetAimDirUp() { return aimDirUp; }
 	float GetInputDirForward() { return inputDirForward; } float GetInputDirRight() { return inputDirRight; }
 	EPlayerPress GetPlayerPress() { return playerPress; }
+	UPlayerArm_AnimInstance* GetArmAnim() { return armAnim; }
+
+	void FireBullet();
 
 	UFUNCTION(NetMulticast, Reliable, WithValidation)
 	void SendControllerRot(FRotator rot);
@@ -140,19 +168,10 @@ public:
 	void Server_SendWeaponeCheck(AWeaponeBase* check);
 	bool Server_SendWeaponeCheck_Validate(AWeaponeBase* check);
 	void Server_SendWeaponeCheck_Implementation(AWeaponeBase* check);
-	UFUNCTION(NetMulticast, Reliable, WithValidation)
-	void NetMulticast_SendWeaponeCheck(AWeaponeBase* check);
-	bool NetMulticast_SendWeaponeCheck_Validate(AWeaponeBase* check);
-	void NetMulticast_SendWeaponeCheck_Implementation(AWeaponeBase* check);
-
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_SendWeaponeChange(EPlayerPress press);
 	bool Server_SendWeaponeChange_Validate(EPlayerPress press);
 	void Server_SendWeaponeChange_Implementation(EPlayerPress press);
-	UFUNCTION(NetMulticast, Reliable, WithValidation)
-	void NetMulticast_SendWeaponeChange(EPlayerPress press);
-	bool NetMulticast_SendWeaponeChange_Validate(EPlayerPress press);
-	void NetMulticast_SendWeaponeChange_Implementation(EPlayerPress press);
 
 	bool IsMove = true;
 	bool IsPlayerCameraTurn = true;

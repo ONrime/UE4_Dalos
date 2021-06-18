@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Dalos/Character/Public/Player/PlayerState/PlayerUpper/PlayerUpperStateBase.h"
+#include "Components/TimelineComponent.h"
 #include "Armed_PlayerUpper.generated.h"
 
 /**
@@ -24,8 +25,18 @@ public:
 	virtual void StateEnd(class AMultiPlayerBase* player) override;
 	virtual UClass* GetState() override;
 
+	virtual void PlayerFire(class AMultiPlayerBase* player, class AWeaponeBase* equip, bool& IsAuto, float& count) override;
+
 protected:
 
 private:
+	UPROPERTY(EditAnywhere)
+	UCurveFloat* ADSCurve;
+	FTimeline ADSTimeline;
+	UFUNCTION()
+	void SetUnADS();
+	UFUNCTION()
+	void SetUnADSFinish();
 
+	class UCameraComponent* playerCamera;
 };

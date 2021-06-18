@@ -47,6 +47,9 @@ protected:
 	WEAPONSTATE WeaponeState;
 	WEAPONLEVER WeaponeLever;
 	bool IsEmpty = false;
+	bool IsReload = false;
+	float fireRecoilPitch = 0.0f;
+	float fireRecoilYaw = 0.0f;
 
 	virtual void StateStart(WEAPONSTATE state);
 
@@ -65,6 +68,12 @@ public:
 	WEAPONSTATE GetWeaponeState() { return WeaponeState; }; void SetWeaponeState(WEAPONSTATE set);
 	WEAPONLEVER GetWeaponeLever() { return WeaponeLever; }; void SetWeaponeLever(WEAPONLEVER set) { WeaponeLever = set; };
 	bool GetIsEmpty() { return IsEmpty; }; void SetIsEmpty(bool set) { IsEmpty = set; };
+	bool GetIsReload() { return IsReload; }; void SetIsReload(bool set) { IsReload = set; };
+	virtual float GetFireRecoilPitch(); 
+	virtual float GetFireRecoilYaw();
 	virtual UClass* GetStaticClass();
+	virtual AWeaponeBase* SpawnToHand(AActor* owner, FVector loc, FRotator rot);
+
+	virtual void ProjectileFire(FVector loc, FRotator rot, FRotator bulletRot);
 
 };

@@ -8,6 +8,11 @@
 #include "Dalos/Character/Public/Player/PlayerState/PlayerUpper/UnArmed_PlayerUpper.h"
 #include "Dalos/Character/Public/Player/PlayerState/PlayerDown/Standing_PlayerDown.h"
 #include "Dalos/Character/Public/Player/PlayerState/PlayerDown/Crouch_PlayerDown.h"
+#include "Dalos/Character/Public/Player/PlayerState/PlayerUpper/Armed_PlayerUpper.h"
+#include "Dalos/Character/Public/Player/PlayerState/PlayerUpper/ADS_PlayerUpper.h"
+#include "Dalos/Character/Public/Player/PlayerArm_AnimInstance.h"
+#include "Dalos/Character/Public/Player/PlayerBody_AnimInstance.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 
 AMultiPlayerBase::AMultiPlayerBase()
@@ -53,7 +58,7 @@ AMultiPlayerBase::AMultiPlayerBase()
 	ArmMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmMesh"));
 	ArmMesh->SetupAttachment(FollowCamera);
 	ArmMesh->SetCollisionProfileName("CharacterMesh");
-	ArmMesh->SetRelativeLocation(FVector(22.0f, 0.0f, -155.0f));
+	ArmMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -155.712738));
 	ArmMesh->SetRelativeRotation(FRotator(0.0f, 270.0f, 0.0f));
 	ArmMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	ArmMesh->SetHiddenInGame(false);
@@ -109,13 +114,55 @@ void AMultiPlayerBase::BeginPlay()
 
 }
 
+void AMultiPlayerBase::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	bodyAnim = Cast<UPlayerBody_AnimInstance>(BodyMesh->GetAnimInstance());
+	armAnim = Cast<UPlayerArm_AnimInstance>(ArmMesh->GetAnimInstance());
+
+	/*armAnim->playFire.BindLambda([this]()->void {
+		
+		});*/
+}
+
 void AMultiPlayerBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 	downState->StateUpdate(this);
+	upperState->StateUpdate(this);
 	
 	PlayerMove();
+	CrossHairCheck();
+	RecoilCheck();
+
+	if (IsFire && IsFireAuto) {
+		FireBullet();
+	}
+	if (recoilReturn && IsFire == false) {
+		float RecoilNowRotatorPitch = FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 360.0f), FVector2D(-90.0f, 90.0f), (Controller->GetControlRotation()).Pitch);
+		float RecoilRotatorPitch = FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 360.0f), FVector2D(-90.0f, 90.0f), recoilRot.Pitch);
+
+		if (RecoilNowRotatorPitch >= 85.0f && RecoilRotatorPitch <= -85.0f) {
+			recoilReturn = false;
+		}
+		if (RecoilRotatorPitch >= 80.0f && RecoilNowRotatorPitch <= -80.0f) {
+			if (RecoilRotatorPitch <= RecoilNowRotatorPitch) {
+				recoilReturn = false;
+				recoilRot = FRotator::ZeroRotator;
+			}
+		}
+		else {
+			if (RecoilRotatorPitch >= RecoilNowRotatorPitch) {
+				recoilReturn = false;
+				recoilRot = FRotator::ZeroRotator;
+			}
+		}
+		//UE_LOG(LogTemp, Warning, TEXT("RecodddilNowRotatorPitch: %f"), RecoilNowRotatorPitch);
+		//UE_LOG(LogTemp, Warning, TEXT("RecoilRotatorPitch: %f"), RecoilRotatorPitch);
+		AddControllerPitchInput(0.05f);
+	}
 	
 	if (HasAuthority()) { // 플레이어 전체 회전 (서버)
 		if (IsLocallyControlled()) {
@@ -138,6 +185,10 @@ void AMultiPlayerBase::Tick(float DeltaTime)
 		}
 		//UE_LOG(LogTemp, Warning, TEXT("cla_Updates: %s controllerRot %f"), *GetName(), controllerRot.Pitch);
 	}
+
+	if (upperStateNClass == UArmed_PlayerUpper::StaticClass()) {
+		//UE_LOG(LogTemp, Warning, TEXT("UArmed_PlayerUpper"));
+	}
 }
 
 void AMultiPlayerBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -151,11 +202,20 @@ void AMultiPlayerBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("SecondGun", EInputEvent::IE_Pressed, this, &AMultiPlayerBase::PlayerSecondGun);
 	PlayerInputComponent->BindAction("UnArmed", EInputEvent::IE_Pressed, this, &AMultiPlayerBase::PlayerUnArmed);
 	PlayerInputComponent->BindAction("Interaction", EInputEvent::IE_Pressed, this, &AMultiPlayerBase::PlayerInteraction);
+	PlayerInputComponent->BindAction("ADS", EInputEvent::IE_Pressed, this, &AMultiPlayerBase::PlayerADS);
+	PlayerInputComponent->BindAction("ADS", EInputEvent::IE_Released, this, &AMultiPlayerBase::PlayerUnADS);
+	PlayerInputComponent->BindAction("Fire", EInputEvent::IE_Pressed, this, &AMultiPlayerBase::PlayerFire);
+	PlayerInputComponent->BindAction("Fire", EInputEvent::IE_Released, this, &AMultiPlayerBase::PlayerUnFire);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AMultiPlayerBase::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AMultiPlayerBase::MoveRight);
 	PlayerInputComponent->BindAxis("Turn", this, &AMultiPlayerBase::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUp", this, &AMultiPlayerBase::LookUpAtRate);
+}
+
+void AMultiPlayerBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
 }
 
 bool AMultiPlayerBase::InteractionCheck()
@@ -165,7 +225,7 @@ bool AMultiPlayerBase::InteractionCheck()
 	FVector endTracer = startTracer + FollowCamera->GetForwardVector() * 160.0f;
 	TArray<AActor*> actorsToIgnore;
 	bool hitis = UKismetSystemLibrary::SphereTraceSingle(this, startTracer, endTracer, 20.0f, ETraceTypeQuery::TraceTypeQuery3, false, actorsToIgnore
-		, EDrawDebugTrace::ForOneFrame, outHit, true);
+		, EDrawDebugTrace::None, outHit, true);
 
 	if (hitis) {
 		if (outHit.GetActor()->GetClass()->GetSuperClass() == AWeaponeBase::StaticClass()) {
@@ -185,7 +245,80 @@ bool AMultiPlayerBase::InteractionCheck()
 
 	return hitis;
 }
+bool AMultiPlayerBase::CrossHairCheck()
+{
+	FHitResult outHit;
+	TArray<AActor*> actorsToIgnore;
+	FVector startTracer = FollowCamera->GetComponentLocation();
+	FVector endTracer = startTracer + FollowCamera->GetForwardVector() * 2500.0f;
+	FVector muzzleLoc = FVector::ZeroVector;
+	FVector bulletEndLoc = FVector::ZeroVector;
+	float distance = 0.0f;
+	FOutputDeviceNull aimRed;
 
+	bool hitis = UKismetSystemLibrary::LineTraceSingle(GetWorld(), startTracer, endTracer, ETraceTypeQuery::TraceTypeQuery4, false
+		, actorsToIgnore, EDrawDebugTrace::None, outHit, true);
+
+	if (equipWeapone != nullptr) {
+		muzzleLoc = equipWeapone->BodyMesh->GetSocketLocation("Muzzle");
+	}
+	else { muzzleLoc = FollowCamera->GetComponentLocation(); }
+
+	if (hitis) {
+		crossHairEndLoc = outHit.Location;
+		distance = outHit.Distance;
+	}
+	else {
+		crossHairEndLoc = endTracer;
+		distance = 2000.0f;
+	}
+	float radius = (FMath::Tan(FollowCamera->FieldOfView / 2.0f) * distance) / 30.0f; // 40을 바꾸기
+
+	float bulletEndLocationZ = FMath::RandRange((crossHairEndLoc + (FollowCamera->GetUpVector() * radius)).Z,
+		(crossHairEndLoc + (-(FollowCamera->GetUpVector()) * radius)).Z);
+	float bulletEndLocationY = FMath::RandRange((crossHairEndLoc + (FollowCamera->GetRightVector() * radius)).Y,
+		(crossHairEndLoc + (-(FollowCamera->GetRightVector()) * radius)).Y);
+	float bulletEndLocationX = crossHairEndLoc.X;
+
+	bulletEndLoc = FVector(bulletEndLocationX, bulletEndLocationY, bulletEndLocationZ);
+	if (upperState->GetState() == UADS_PlayerUpper::StaticClass()) {
+		bulletRot = FollowCamera->GetForwardVector().Rotation();
+	}
+	else { bulletRot = UKismetMathLibrary::FindLookAtRotation(muzzleLoc, bulletEndLoc); }
+
+	/*투영행렬을 이용하여 만들 수 있을것같다
+	기존에 있는 것 보다 정확하게 수치에 따라 변하도록 업그레이드를 했다
+	기존의 것은 거리에 따라 커지게는 만들었지만 일정하게 조절하지 못하게 만들었다.
+	이번에는 fov 수치를 이용해서 좀더 정확한 수치가 나오도록 업그레이드를 했다.*/
+
+	return hitis;
+}
+
+bool AMultiPlayerBase::RecoilCheck()
+{
+	FHitResult outHit;
+	TArray<AActor*> actorsToIgnore;
+	FVector startTracer = FollowCamera->GetComponentLocation();
+	FVector endTracer = startTracer + FollowCamera->GetForwardVector() * 2500.0f;
+	FVector cameraEnd = startTracer + FollowCamera->GetForwardVector() * 2500.0f;
+	FVector finalTracer = FVector::ZeroVector;
+	if (recoilReturnLoc != FVector::ZeroVector && IsFire) {
+		recoilReturn = true;
+		//UE_LOG(LogTemp, Warning, TEXT("recoilReturn: %f"), recoilReturnDir.Z);
+		/*if (((FollowCamera->GetForwardVector()).Z <= RecoilReturnDir.Z)) {
+			RecoilReturnDir.Z = (FollowCamera->GetForwardVector()).Z;
+			RecoilPitch = 0.0f;
+			RecoilReturn = false;
+		}*/
+		FVector dirdir = FVector(FollowCamera->GetForwardVector().X, FollowCamera->GetForwardVector().Y, recoilReturnDir.Z);
+		endTracer = startTracer + dirdir * 2500.0f;//RecoilReturnLocation;
+
+	}
+	bool hitis = UKismetSystemLibrary::LineTraceSingle(GetWorld(), startTracer, endTracer, ETraceTypeQuery::TraceTypeQuery4, false
+		, actorsToIgnore, EDrawDebugTrace::None, outHit, true);
+
+	return hitis;
+}
 void AMultiPlayerBase::WeaponCheck(AWeaponeBase* check)
 {
 	if (check != nullptr) {
@@ -233,6 +366,19 @@ void AMultiPlayerBase::EquipGunOnHand(AWeaponeBase* equip)
 	equipWeapone->SetOwner(this); // 여기 문제 영상 참고
 	equipWeapone->AttachToComponent(BodyMesh, FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("WeaponeLoc"));
 	equipWeaponeStaticClass = equipWeapone->GetStaticClass();
+
+	if (IsLocallyControlled()) {
+		if (equipWeaponeArm) {
+			equipWeaponeArm->Destroy();
+			equipWeaponeArm = nullptr;
+		}
+		equipWeaponeArm = equipWeapone->SpawnToHand(this, ArmMesh->GetSocketLocation(TEXT("WeaponeLoc")), ArmMesh->GetSocketRotation(TEXT("WeaponeLoc")));
+		equipWeaponeArm->SetWeaponeState(WEAPONSTATE::EQUIP);
+		equipWeaponeArm->BodyMesh->SetOnlyOwnerSee(true);
+		equipWeaponeArm->BodyMesh->SetOwnerNoSee(false);
+		equipWeaponeArm->SetOwner(this); // 여기 문제 영상 참고
+		equipWeaponeArm->AttachToComponent(ArmMesh, FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("WeaponeLoc"));
+	}
 	UE_LOG(LogTemp, Warning, TEXT("EquipGunOnHand"));
 	//EquipWeaponInAmmo = equip->InAmmo;
 	//EquipWeaponType = equip->GetWeaponType();
@@ -274,7 +420,6 @@ void AMultiPlayerBase::PlayerFirstGun()
 	}
 	else { NetMulticast_SendUpperPress(EPlayerPress::FIRSTGUN); }
 }
-
 void AMultiPlayerBase::PlayerSecondGun()
 {
 	if (backWeapone2) {
@@ -291,7 +436,6 @@ void AMultiPlayerBase::PlayerSecondGun()
 	}
 	else { NetMulticast_SendUpperPress(EPlayerPress::SECONDGUN); }
 }
-
 void AMultiPlayerBase::PlayerUnArmed()
 {
 	if (equipWeapone) {
@@ -320,6 +464,33 @@ void AMultiPlayerBase::PlayerInteraction()
 		}
 		else { NetMulticast_SendUpperPress(EPlayerPress::INTERACTION); }
 	}
+}
+
+void AMultiPlayerBase::PlayerADS()
+{
+	armAnim->StopAllMontages(0.1f);
+	UpperPress(nullptr);
+}
+void AMultiPlayerBase::PlayerUnADS()
+{
+	armAnim->StopAllMontages(0.1f);
+	UpperPress(nullptr);
+}
+
+void AMultiPlayerBase::PlayerFire()
+{
+	IsFire = true;
+	recoilPitch = 0.0f;
+	recoilReturnDir = FVector::ZeroVector;
+	recoilRot = FRotator::ZeroRotator;
+	upperState->PlayerFire(this, equipWeapone, IsFireAuto, threeCount);
+	//armAnim->PlayFireMontage();
+}
+void AMultiPlayerBase::PlayerUnFire()
+{
+	armAnim->StopFireMontage();
+	IsFire = false;
+	IsFireAuto = false;
 }
 
 void AMultiPlayerBase::MoveForward(float Value)
@@ -373,6 +544,11 @@ void AMultiPlayerBase::PlayerMove()
 	}
 }
 
+void AMultiPlayerBase::FireAutoOn()
+{
+	IsFireAuto = true;
+}
+
 void AMultiPlayerBase::TurnAtRate(float Rate)
 {
 	aimDirRight = Rate;
@@ -421,6 +597,42 @@ void AMultiPlayerBase::DownPress(UPlayerDownStateBase* state)
 		downState = temp;
 		downStateNClass = downState->GetState();
 		downState->StateStart(this);
+	}
+}
+
+void AMultiPlayerBase::FireBullet()
+{
+	if (equipWeapone) {
+		armAnim->PlayFireMontage();
+		//equipWeapone->PlayFireMontage();
+		/*if (EquipWeaponInAmmo > 1.0f) {
+			EquipWeaponInAmmo -= 1.0f;
+		}
+		else { equipWeapone->PlayEmptyMontage(); }*/
+
+		IsFireAuto = false;
+		recoilReturnLoc = FollowCamera->GetComponentLocation() + FollowCamera->GetForwardVector() * 2500.0f;
+		if (recoilRot == FRotator::ZeroRotator) {
+			recoilReturnDir = FollowCamera->GetForwardVector();
+			recoilRot = GetControlRotation();
+		}
+
+		float AddPitch = equipWeapone->GetFireRecoilPitch();
+		float AddYaw = equipWeapone->GetFireRecoilYaw();
+		recoilPitch += FMath::Abs(AddPitch);
+		AddControllerPitchInput(AddPitch);
+		AddControllerYawInput(AddYaw);
+
+		FVector muzzleLoc= equipWeaponeArm->BodyMesh->GetSocketLocation("Muzzle");
+		FRotator muzzleRot = FollowCamera->GetComponentRotation();
+		//UE_LOG(LogTemp, Warning, TEXT("MuzzleLocation: %f, %f, %f"), MuzzleLocation.X, MuzzleLocation.Y, MuzzleLocation.Z);
+
+		equipWeaponeArm->ProjectileFire(muzzleLoc, muzzleRot, bulletRot);
+		if (equipWeapone->GetWeaponeLever() == WEAPONLEVER::FULLAUTO) {
+			GetWorldTimerManager().SetTimer(fireTimer, this, &AMultiPlayerBase::FireAutoOn, 0.15f, false);
+		}
+		//EquipWeapon->SetIsFire(false);
+		//EnemyHearing->ReportNoiseEvent(this, GetActorLocation(), 1.0f, this, 10000.0f, FName("FireNoise"));
 	}
 }
 
@@ -499,20 +711,6 @@ void AMultiPlayerBase::Server_SendWeaponeCheck_Implementation(AWeaponeBase* chec
 		//if (HasAuthority()) NetMulticast_SendWeaponeCheck(check);
 	}
 }
-bool AMultiPlayerBase::NetMulticast_SendWeaponeCheck_Validate(AWeaponeBase* check)
-{
-	return true;
-}
-void AMultiPlayerBase::NetMulticast_SendWeaponeCheck_Implementation(AWeaponeBase* check)
-{
-	if (!IsLocallyControlled()) {
-		//Server_SendWeaponeCheck_Implementation(check);
-		if (check) {
-			WeaponCheck(check);
-		}
-	}
-}
-
 bool AMultiPlayerBase::Server_SendWeaponeChange_Validate(EPlayerPress press)
 {
 	return true;
@@ -549,44 +747,6 @@ void AMultiPlayerBase::Server_SendWeaponeChange_Implementation(EPlayerPress pres
 		break;
 	}
 	//if(HasAuthority()) NetMulticast_SendWeaponeChange(press);
-}
-bool AMultiPlayerBase::NetMulticast_SendWeaponeChange_Validate(EPlayerPress press)
-{
-	return true;
-}
-void AMultiPlayerBase::NetMulticast_SendWeaponeChange_Implementation(EPlayerPress press)
-{
-	if (!IsLocallyControlled()) {
-		switch (press) {
-		case EPlayerPress::FIRSTGUN:
-			if (backWeapone1) {
-				if (equipWeapone == backWeapone2) {
-					equipWeapone->AttachToComponent(BodyMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("BackWeapone2"));
-					equipWeapone->SetWeaponeState(WEAPONSTATE::BACKEQUIP);
-				}
-				EquipGunOnHand(backWeapone1);
-			}
-			break;
-		case EPlayerPress::SECONDGUN:
-			if (backWeapone2) {
-				if (equipWeapone == backWeapone1) {
-					equipWeapone->AttachToComponent(BodyMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("BackWeapone1"));
-					equipWeapone->SetWeaponeState(WEAPONSTATE::BACKEQUIP);
-				}
-				EquipGunOnHand(backWeapone2);
-			}
-			break;
-		case EPlayerPress::UNARMED:
-			if (equipWeapone) {
-				if (equipWeapone == backWeapone1) {
-					equipWeapone->AttachToComponent(BodyMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("BackWeapone1"));
-				}
-				else equipWeapone->AttachToComponent(BodyMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("BackWeapone2"));
-				equipWeapone->SetWeaponeState(WEAPONSTATE::BACKEQUIP);
-			}
-			break;
-		}
-	}
 }
 
 void AMultiPlayerBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const

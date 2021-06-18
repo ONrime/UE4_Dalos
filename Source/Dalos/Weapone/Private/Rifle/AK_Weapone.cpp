@@ -2,6 +2,7 @@
 
 
 #include "Dalos/Weapone/Public/Rifle/AK_Weapone.h"
+#include "Dalos/Projectile/Public/Rifle_ProjectileBase.h"
 
 AAK_Weapone::AAK_Weapone()
 {
@@ -33,14 +34,12 @@ AAK_Weapone::AAK_Weapone()
 		EmptyMontage = EMPTY_MONTAGE.Object;
 	}/**/
 	SetWeaponeState(WEAPONSTATE::DROP);
-	SetWeaponeLever(WEAPONLEVER::SINGLEFIRE);
+	SetWeaponeLever(WEAPONLEVER::FULLAUTO);
 	/*CrossHairRadius = 1.0f;
 	//InAmmo = FMath::FRandRange(2.0f, 5.0f);
 	MaxInAmmo = 7.0f;
 	InAmmo = MaxInAmmo;*/
 }
-
-
 
 void AAK_Weapone::BeginPlay()
 {
@@ -52,4 +51,37 @@ void AAK_Weapone::BeginPlay()
 UClass* AAK_Weapone::GetStaticClass()
 {
 	return AAK_Weapone::StaticClass();
+}
+
+AWeaponeBase* AAK_Weapone::SpawnToHand(AActor* owner, FVector loc, FRotator rot)
+{
+	UE_LOG(LogTemp, Warning, TEXT("SpawnToHand"));
+	FActorSpawnParameters spawnParameters;
+	spawnParameters.Owner = owner;
+	spawnParameters.Instigator = GetInstigator();
+
+	auto weapone = GetWorld()->SpawnActor<AAK_Weapone>(AAK_Weapone::StaticClass(), loc, rot, spawnParameters);
+	return weapone;
+}
+
+void AAK_Weapone::ProjectileFire(FVector loc, FRotator rot, FRotator bulletRot)
+{
+	FActorSpawnParameters spawnParameter;
+	spawnParameter.Owner = this;
+	spawnParameter.Instigator = GetInstigator();
+
+	auto projectile = GetWorld()->SpawnActor<ARifle_ProjectileBase>(ARifle_ProjectileBase::StaticClass(), loc, rot, spawnParameter);
+	if (projectile) {
+		projectile->SetProjectileVelocity(8000.0f);
+		projectile->ProjectileFire(bulletRot.Vector());
+	}
+}
+
+float AAK_Weapone::GetFireRecoilPitch()
+{
+	return FMath::RandRange(-0.2f, -0.5f);
+}
+float AAK_Weapone::GetFireRecoilYaw()
+{
+	return FMath::RandRange(-0.2f, 0.2f);
 }

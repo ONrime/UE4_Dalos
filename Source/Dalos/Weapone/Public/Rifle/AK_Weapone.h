@@ -24,6 +24,9 @@ private:
 
 public:
 	virtual UClass* GetStaticClass() override;
-
+	virtual AWeaponeBase* SpawnToHand(AActor* owner, FVector loc, FRotator rot) override;
+	virtual void ProjectileFire(FVector loc, FRotator rot, FRotator bulletRot) override;
+	virtual float GetFireRecoilPitch() override;
+	virtual float GetFireRecoilYaw() override;
 
 };

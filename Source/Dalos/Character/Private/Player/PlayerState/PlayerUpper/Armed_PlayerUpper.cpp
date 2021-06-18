@@ -6,11 +6,17 @@
 #include "Dalos/Character/Public/Player/PlayerState/PlayerUpper/ADS_PlayerUpper.h"
 #include "GameFramework/PlayerInput.h"
 #include "GameFramework/PlayerController.h"
+#include "Dalos/Weapone/Public/WeaponeBase.h"
 
 UArmed_PlayerUpper::UArmed_PlayerUpper()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	temp = nullptr;
+
+	static ConstructorHelpers::FObjectFinder<UCurveFloat>ADSCURVE(TEXT("CurveFloat'/Game/Curve/ADSChange.ADSChange'"));
+	if (ADSCURVE.Succeeded()) {
+		ADSCurve = ADSCURVE.Object;
+	}
 }
 
 UPlayerUpperStateBase* UArmed_PlayerUpper::HandleInput(AMultiPlayerBase* player)
@@ -43,19 +49,64 @@ UPlayerUpperStateBase* UArmed_PlayerUpper::SendHandleInput(EPlayerPress press)
 
 void UArmed_PlayerUpper::StateStart(AMultiPlayerBase* player)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Armed: StateStart"));
+	UE_LOG(LogTemp, Warning, TEXT("Armed: StateStart"));
+
+	playerCamera = player->FollowCamera;
+
+	if (ADSCurve != nullptr && player->upperStateBClass == UADS_PlayerUpper::StaticClass()) {
+		FOnTimelineFloat TimelineCallback;
+		TimelineCallback.BindUFunction(this, "SetUnADS");
+		FOnTimelineEventStatic TimelineFinishedCallback;
+		TimelineFinishedCallback.BindUFunction(this, "SetUnADSFinish");
+		ADSTimeline.AddInterpFloat(ADSCurve, TimelineCallback);
+		ADSTimeline.SetTimelineFinishedFunc(TimelineFinishedCallback);
+		ADSTimeline.SetPlayRate(4.0f);
+		ADSTimeline.PlayFromStart();
+	}
 }
 
 void UArmed_PlayerUpper::StateUpdate(AMultiPlayerBase* player)
 {
+	ADSTimeline.TickTimeline(GetWorld()->DeltaTimeSeconds);
 }
 
 void UArmed_PlayerUpper::StateEnd(AMultiPlayerBase* player)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Armed: StateEnd"));
+	UE_LOG(LogTemp, Warning, TEXT("Armed: StateEnd"));
 }
 
 UClass* UArmed_PlayerUpper::GetState()
 {
 	return UArmed_PlayerUpper::StaticClass();
+}
+
+void UArmed_PlayerUpper::PlayerFire(AMultiPlayerBase* player, AWeaponeBase* equip, bool& IsAuto, float& count)
+{
+	if (equip) {
+		if (equip->GetWeaponeLever() == WEAPONLEVER::FULLAUTO) {
+			IsAuto = true;
+			count = 0.0f;
+		}
+		else if (equip->GetWeaponeLever() == WEAPONLEVER::SINGLEFIRE) {
+			IsAuto = false;
+			count = 0.0f;
+		}
+		else {
+			IsAuto = true;
+			count = 3.0f;
+		}
+	}
+	player->FireBullet();
+}
+
+void UArmed_PlayerUpper::SetUnADS()
+{
+	if (playerCamera) {
+		playerCamera->SetFieldOfView(FMath::Lerp(50.0f, 90.0f, ADSTimeline.GetPlaybackPosition()));
+	}
+}
+
+void UArmed_PlayerUpper::SetUnADSFinish()
+{
+
 }

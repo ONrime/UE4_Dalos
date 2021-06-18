@@ -9,20 +9,43 @@
 /**
  * 
  */
+DECLARE_DELEGATE(FPlayerMontage);
+
 UCLASS()
 class DALOS_API UPlayerArm_AnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
 	
-	public:
-		UPlayerArm_AnimInstance();
-		virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+public:
+	UPlayerArm_AnimInstance();
+	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+	
+	FPlayerMontage playFire;
 
+	void PlayFireMontage();
+	void StopFireMontage();
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
 	float playerSpeed =0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
 	UClass* upperStateNClass;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
+	float inputDir = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
+	float dirForward = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
+	float dirRight = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
+	float aimDirRight = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
+	float aimDirUp = 0.0f;
+
+	int fireRandNum = 0;
+
+	UAnimMontage* AK_Fire1_Montage;
+	UAnimMontage* AK_Fire2_Montage;
+	UAnimMontage* AK_Fire_Montage;
+	UAnimMontage* AK_ADS_Fire_Montage;
 	
 };
