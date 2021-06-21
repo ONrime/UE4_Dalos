@@ -55,8 +55,15 @@ void UCrouch_PlayerDown::StateUpdate(AMultiPlayerBase* player)
 	float pelvisZ = 20.0f;
 
 	cameraLoc = player->GetTransform().InverseTransformPosition(player->GetMesh()->GetSocketLocation("CameraLoc"));
-	player->SpringArm->SetRelativeLocation(FVector(cameraLoc.X, cameraLoc.Y
-		, FMath::FInterpTo(player->SpringArm->GetRelativeLocation().Z, pelvisZ - pitch, GetWorld()->GetDeltaSeconds(), 5.0f)));
+	if (!player->GetIsCameraLock()) {
+		player->SpringArm->SetRelativeLocation(FVector(cameraLoc.X, cameraLoc.Y
+			, FMath::FInterpTo(player->SpringArm->GetRelativeLocation().Z, pelvisZ - pitch, GetWorld()->GetDeltaSeconds(), 5.0f)));
+	}
+	else {
+		player->SpringArm->SetRelativeLocation(FVector(cameraLoc.X, cameraLoc.Y
+			, FMath::FInterpTo(player->SpringArm->GetRelativeLocation().Z, cameraLoc.Z
+				, GetWorld()->GetDeltaSeconds(), 10.0f)));
+	}
 }
 
 void UCrouch_PlayerDown::StateEnd(AMultiPlayerBase* player)

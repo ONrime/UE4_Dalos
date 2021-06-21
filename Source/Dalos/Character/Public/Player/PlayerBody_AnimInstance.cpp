@@ -10,7 +10,10 @@
 
 UPlayerBody_AnimInstance::UPlayerBody_AnimInstance()
 {
-
+	static ConstructorHelpers::FObjectFinder<UAnimMontage>VAULT(TEXT("AnimMontage'/Game/Player/Anim/Body/Climb/Player_Vault_Montage.Player_Vault_Montage'"));
+	if (VAULT.Succeeded()) Vault_Montage = VAULT.Object;
+	static ConstructorHelpers::FObjectFinder<UAnimMontage>CLIMB(TEXT("AnimMontage'/Game/Player/Anim/Body/Climb/ALS_N_Mantle_1m_RH_Montage.ALS_N_Mantle_1m_RH_Montage'"));
+	if (CLIMB.Succeeded()) Climb_Montage = CLIMB.Object;
 }
 
 void UPlayerBody_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -35,6 +38,21 @@ void UPlayerBody_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 		//UE_LOG(LogTemp, Warning, TEXT("upperPitch: %f"), player->GetControllerRot().Pitch - player->GetActorRotation().Pitch);
 	}
+}
+
+void UPlayerBody_AnimInstance::PlayVaultMontage()
+{
+	Montage_Play(Vault_Montage, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, true);
+}
+
+void UPlayerBody_AnimInstance::PlayClimbMontage()
+{
+	Montage_Play(Climb_Montage, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, true);
+}
+
+void UPlayerBody_AnimInstance::StopMontage()
+{
+	Montage_Stop(0.2f);
 }
 
 float UPlayerBody_AnimInstance::TurnBodyYaw(AMultiPlayerBase* player)
@@ -97,6 +115,16 @@ FVelocityBlend UPlayerBody_AnimInstance::GetVeloctyBlend(FVector playerVelocity,
 	UE_LOG(LogTemp, Warning, TEXT("current.right: %f"), current.right);*/
 
 	return FVelocityBlend();
+}
+
+void UPlayerBody_AnimInstance::AnimNotify_ClimbEnd()
+{
+	if (vaultDelegate.IsBound()) vaultDelegate.Execute();
+}
+
+void UPlayerBody_AnimInstance::AnimNotify_VaultEnd()
+{
+	if (climbDelegate.IsBound()) climbDelegate.Execute();
 }
 
 void UPlayerBody_AnimInstance::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const

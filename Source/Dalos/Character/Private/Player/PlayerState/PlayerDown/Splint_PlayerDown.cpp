@@ -58,9 +58,17 @@ void USplint_PlayerDown::StateUpdate(AMultiPlayerBase* player)
 	// 카메라
 	 //  카메라 위치
 	cameraLoc = player->GetTransform().InverseTransformPosition(player->GetMesh()->GetSocketLocation("CameraLoc"));
-	player->SpringArm->SetRelativeLocation(FVector(cameraLoc.X, cameraLoc.Y
-		, FMath::FInterpTo(player->SpringArm->GetRelativeLocation().Z, pelvisZ - pitch
-			, GetWorld()->GetDeltaSeconds(), 10.0f)));
+	if (!player->GetIsCameraLock()) {
+		player->SpringArm->SetRelativeLocation(FVector(cameraLoc.X, cameraLoc.Y
+			, FMath::FInterpTo(player->SpringArm->GetRelativeLocation().Z, pelvisZ - pitch
+				, GetWorld()->GetDeltaSeconds(), 10.0f)));
+	}
+	else {
+		player->SpringArm->SetRelativeLocation(FVector(cameraLoc.X, cameraLoc.Y
+			, FMath::FInterpTo(player->SpringArm->GetRelativeLocation().Z, cameraLoc.Z
+				, GetWorld()->GetDeltaSeconds(), 10.0f)));
+	}
+	 //  카메라 회전
 	if (player->IsLocallyControlled()) {
 		splintShake = GetWorld()->GetFirstPlayerController()->PlayerCameraManager->PlayCameraShake(UPlayer_Splint_CameraShake::StaticClass(), 1.0f);
 	}

@@ -10,6 +10,9 @@
 /**
  * 
  */
+
+DECLARE_DELEGATE(FAnimNotifyDelegate);
+
 UCLASS()
 class DALOS_API UPlayerBody_AnimInstance : public UAnimInstance
 {
@@ -18,6 +21,14 @@ class DALOS_API UPlayerBody_AnimInstance : public UAnimInstance
 public:
 	UPlayerBody_AnimInstance();
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+
+	void PlayVaultMontage();
+	void PlayClimbMontage();
+	void StopMontage();
+
+	FAnimNotifyDelegate vaultDelegate;
+	FAnimNotifyDelegate climbDelegate;
+
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
@@ -45,8 +56,15 @@ private:
 	bool IsTurn = false;
 
 	float TurnBodyYaw(class AMultiPlayerBase* player);
-
 	FVelocityBlend GetVeloctyBlend(FVector playerVelocity, FRotator playerRotator, FVelocityBlend& current);
+
+	UAnimMontage* Vault_Montage;
+	UAnimMontage* Climb_Montage;
+
+	UFUNCTION()
+	void AnimNotify_ClimbEnd();
+	UFUNCTION()
+	void AnimNotify_VaultEnd();
 
 
 };

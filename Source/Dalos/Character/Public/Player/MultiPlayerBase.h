@@ -58,6 +58,8 @@ protected:
 	class UPlayerArm_AnimInstance* armAnim;
 	UPROPERTY()
 	class UPlayerBody_AnimInstance* bodyAnim;
+	UPROPERTY()
+	class UPlayerBody_AnimInstance* legAnim;
 	class AWeaponeBase* equipWeapone;
 	class AWeaponeBase* equipWeaponeArm;
 	class AWeaponeBase* backWeapone1;
@@ -92,6 +94,8 @@ protected:
 	UPROPERTY(EditAnywhere)
 	EPlayerPress playerPress;
 	FVector cameraLoc = FVector::ZeroVector;
+	bool IsCameraLock = false;
+
 	bool IsFire = false;
 	bool IsFireAuto = false;
 	FTimerHandle fireTimer;
@@ -131,6 +135,8 @@ private:
 	bool WallForwardTracer();
 	bool WallHeightTracer(FVector loc, FVector nomal);
 	bool WallBackHeightTracer(FVector loc);
+	void StopVault();
+	void StopClimb();
 
 public:
 	UPlayerUpperStateBase* GetUpperState() { return upperState; };
@@ -148,6 +154,7 @@ public:
 	float GetInputDirForward() { return inputDirForward; } float GetInputDirRight() { return inputDirRight; }
 	EPlayerPress GetPlayerPress() { return playerPress; }
 	UPlayerArm_AnimInstance* GetArmAnim() { return armAnim; }
+	bool GetIsCameraLock() { return IsCameraLock; }
 
 	void FireBullet();
 
@@ -187,6 +194,15 @@ public:
 	void Server_SendIsJumped(bool jumped);
 	bool Server_SendIsJumped_Validate(bool jumped);
 	void Server_SendIsJumped_Implementation(bool jumped);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SendValutCheck(bool check, FVector loc, FVector nomal, FVector heightLoc);
+	bool Server_SendValutCheck_Validate(bool check, FVector loc, FVector nomal, FVector heightLoc);
+	void Server_SendValutCheck_Implementation(bool check, FVector loc, FVector nomal, FVector heightLoc);
+	UFUNCTION(NetMulticast, Reliable, WithValidation)
+	void NetMulticast_SendValutCheck(bool check, FVector loc, FVector nomal, FVector heightLoc);
+	bool NetMulticast_SendValutCheck_Validate(bool check, FVector loc, FVector nomal, FVector heightLoc);
+	void NetMulticast_SendValutCheck_Implementation(bool check, FVector loc, FVector nomal, FVector heightLoc);
 
 	bool IsMove = true;
 	bool IsPlayerCameraTurn = true;

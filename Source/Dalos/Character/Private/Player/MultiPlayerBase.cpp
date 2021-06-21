@@ -113,6 +113,7 @@ void AMultiPlayerBase::BeginPlay()
 	upperState->StateStart(this);
 	downState->StateStart(this);
 
+
 }
 
 void AMultiPlayerBase::PostInitializeComponents()
@@ -121,6 +122,20 @@ void AMultiPlayerBase::PostInitializeComponents()
 
 	bodyAnim = Cast<UPlayerBody_AnimInstance>(BodyMesh->GetAnimInstance());
 	armAnim = Cast<UPlayerArm_AnimInstance>(ArmMesh->GetAnimInstance());
+	legAnim = Cast<UPlayerBody_AnimInstance>(GetMesh()->GetAnimInstance());
+
+	legAnim->vaultDelegate.BindLambda([this]()->void {
+		StopVault();
+		});
+	bodyAnim->vaultDelegate.BindLambda([this]()->void {
+		StopVault();
+		});
+	legAnim->climbDelegate.BindLambda([this]()->void {
+		StopClimb();
+		});
+	bodyAnim->climbDelegate.BindLambda([this]()->void {
+		StopClimb();
+		});
 
 	/*armAnim->playFire.BindLambda([this]()->void {
 		
@@ -137,6 +152,10 @@ void AMultiPlayerBase::Tick(float DeltaTime)
 	PlayerMove();
 	CrossHairCheck();
 	RecoilCheck();
+
+	/*if (WallForwardTracer() && WallHeightTracer(wallLoc, wallNomal) && !IsVault) {
+		WallBackHeightTracer(wallLoc);
+	}*/
 
 	//if (WallForwardTracer() && WallHeightTracer(wallLoc, wallNomal)) WallBackHeightTracer(wallLoc);
 
@@ -410,13 +429,9 @@ void AMultiPlayerBase::PlayerJump()
 
 	if (WallForwardTracer() && WallHeightTracer(wallLoc, wallNomal) && !IsVault) {
 		WallBackHeightTracer(wallLoc);
-		if (!IsWall) {
-			IsVault = true;
-			PlayerVault();
-		}
-		else {
-
-		}
+		IsVault = true;
+		PlayerVault();
+		Server_SendValutCheck(IsVault, wallLoc, wallNomal, wallHeight);
 	}
 }
 
@@ -541,21 +556,28 @@ void AMultiPlayerBase::PlayerVault()
 	//PlayerRotationYaw.Yaw = wallNomalXRotator.Yaw;
 	SetActorRotation(FRotator(0.0f, wallNomalXRotator.Yaw, 0.0f));
 
+	ArmMesh->SetOwnerNoSee(true);
+	BodyMesh->SetOwnerNoSee(false);
+	IsCameraLock = true;
+	if (equipWeaponeArm) equipWeaponeArm->SetHidden(true);
 	// 벽의 X,Y 좌표로 부터 플레이어가 정확하게 서야할(넘어가야할)위치를 찾는다.
 	//벽의 좌표를 뽑아낼때 정확한 위치가 아닌 벽의 중앙 위치만 뽑아 낼것이다.
 	//그래서 아래의 과정을 통해 플레이어 기준의 벽의 위치가 나온다.
-	FVector wallLocationXY = wallLoc + (FRotationMatrix::MakeFromX(wallNomal).GetUnitAxis(EAxis::X) * (70.0f));
+	FVector wallLocationXY = wallLoc + (FRotationMatrix::MakeFromX(wallNomal).GetUnitAxis(EAxis::X) * (40.0f));
 	// 플레이어가 넘어가야할 벽의 정확한 좌표
 	FVector wallLocationTracer = FVector::ZeroVector;
-	if (!IsWallThick) {
-		wallLocationTracer = FVector(wallLocationXY.X, wallLocationXY.Y, wallHeight.Z + 10.0f);
-		//armAnim->PlayVaultMontage();
-		//UE_LOG(LogTemp, Warning, TEXT("PlayVaultMontage"));
+	if (IsWallThick == false) {
+		//UE_LOG(LogTemp, Warning, TEXT("ClimbMontage"));
+		wallLocationTracer = FVector(wallLocationXY.X, wallLocationXY.Y, wallHeight.Z - 15.0f);
+		bodyAnim->PlayClimbMontage();
+		legAnim->PlayClimbMontage();
 	}
 	else {
-		wallLocationTracer = FVector(wallLocationXY.X, wallLocationXY.Y, wallHeight.Z + 0.0f);
-		//bodyAnim->PlayVaultThickMontage();
-		//UE_LOG(LogTemp, Warning, TEXT("PlayVaultThickMontage"));
+		//UE_LOG(LogTemp, Warning, TEXT("VaultMontage"));
+		wallLocationTracer = FVector(wallLocationXY.X, wallLocationXY.Y, wallHeight.Z - 25.0f);
+		bodyAnim->PlayVaultMontage();
+		legAnim->PlayVaultMontage();
+
 	}
 	// 플레이어의 위치를 조정한다.
 	SetActorLocation(wallLocationTracer);
@@ -622,9 +644,9 @@ bool AMultiPlayerBase::WallForwardTracer()
 {
 	TArray<AActor*> actorsToIgnore;
 	FHitResult outHit;
-	FVector startTracer = FollowCamera->GetComponentLocation();
-	FVector endTracer = FollowCamera->GetComponentLocation() + FollowCamera->GetForwardVector() * 40.0f;
-	bool IsHit = UKismetSystemLibrary::SphereTraceSingle(this, startTracer, endTracer, 30.0f, ETraceTypeQuery::TraceTypeQuery5, false
+	FVector startTracer = GetMesh()->GetComponentLocation() + FVector(0.0f, 0.0f, 80.0f);
+	FVector endTracer = startTracer + GetMesh() ->GetRightVector() * 40.0f;
+	bool IsHit = UKismetSystemLibrary::SphereTraceSingle(this, startTracer, endTracer, 20.0f, ETraceTypeQuery::TraceTypeQuery5, false
 		, actorsToIgnore, EDrawDebugTrace::ForOneFrame, outHit, true);
 
 	wallLoc = outHit.Location;
@@ -638,7 +660,7 @@ bool AMultiPlayerBase::WallHeightTracer(FVector loc, FVector nomal)
 	FHitResult outHit;
 	FVector endTracer = loc + (FRotationMatrix::MakeFromX(nomal).GetUnitAxis(EAxis::X) * (-10.0f));
 	FVector startTracer = endTracer + FVector(0.0f, 0.0f, 100.0f);
-	bool IsHit = UKismetSystemLibrary::SphereTraceSingle(this, startTracer, endTracer, 30.0f, ETraceTypeQuery::TraceTypeQuery5, false
+	bool IsHit = UKismetSystemLibrary::SphereTraceSingle(this, startTracer, endTracer, 20.0f, ETraceTypeQuery::TraceTypeQuery5, false
 		, actorsToIgnore, EDrawDebugTrace::ForOneFrame, outHit, true);
 
 	wallHeight = outHit.Location;
@@ -666,11 +688,38 @@ bool AMultiPlayerBase::WallBackHeightTracer(FVector loc)
 
 	wallBackHeight = outHit.Location;
 	if (!IsHit) {
-		IsWallThick = false;
+		IsWallThick = true;
 	}
-	else { IsWallThick = true; }
+	else { IsWallThick = false; }
 
 	return IsHit;
+}
+
+void AMultiPlayerBase::StopVault()
+{
+	ArmMesh->SetOwnerNoSee(false);
+	BodyMesh->SetOwnerNoSee(true);
+	bodyAnim->StopMontage();
+	legAnim->StopMontage();
+	IsCameraLock = false;
+	if (equipWeaponeArm) equipWeaponeArm->SetHidden(false);
+	GetCharacterMovement()->MovementMode = EMovementMode::MOVE_Walking;
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	IsVault = false;
+	//UE_LOG(LogTemp, Warning, TEXT("Vault"));
+}
+
+void AMultiPlayerBase::StopClimb()
+{
+	ArmMesh->SetOwnerNoSee(false);
+	BodyMesh->SetOwnerNoSee(true);
+	bodyAnim->StopMontage();
+	legAnim->StopMontage();
+	IsCameraLock = false;
+	if(equipWeaponeArm) equipWeaponeArm->SetHidden(false);
+	GetCharacterMovement()->MovementMode = EMovementMode::MOVE_Walking;
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	IsVault = false;
 }
 
 void AMultiPlayerBase::TurnAtRate(float Rate)
@@ -881,6 +930,47 @@ bool AMultiPlayerBase::Server_SendIsJumped_Validate(bool jumped)
 void AMultiPlayerBase::Server_SendIsJumped_Implementation(bool jumped)
 {
 	IsJumped = jumped;
+}
+
+bool AMultiPlayerBase::Server_SendValutCheck_Validate(bool check, FVector loc, FVector nomal, FVector heightLoc)
+{
+	return true;
+}
+
+void AMultiPlayerBase::Server_SendValutCheck_Implementation(bool check, FVector loc, FVector nomal, FVector heightLoc)
+{
+	/*IsVault = check;
+	wallLoc = loc;
+	wallNomal = nomal;
+	wallHeight = heightLoc;
+	PlayerVault();*/
+	if (WallForwardTracer() && WallHeightTracer(wallLoc, wallNomal) && !IsVault) {
+		WallBackHeightTracer(wallLoc);
+		IsVault = true;
+		PlayerVault();
+		//Server_SendValutCheck(IsVault, wallLoc, wallNomal, wallHeight);
+	}
+	NetMulticast_SendValutCheck(check, loc, nomal, heightLoc);
+}
+
+bool AMultiPlayerBase::NetMulticast_SendValutCheck_Validate(bool check, FVector loc, FVector nomal, FVector heightLoc)
+{
+	return true;
+}
+
+void AMultiPlayerBase::NetMulticast_SendValutCheck_Implementation(bool check, FVector loc, FVector nomal, FVector heightLoc)
+{
+	/*IsVault = check;
+	wallLoc = loc;
+	wallNomal = nomal;
+	wallHeight = heightLoc;
+	PlayerVault();*/
+	if (WallForwardTracer() && WallHeightTracer(wallLoc, wallNomal) && !IsVault) {
+		WallBackHeightTracer(wallLoc);
+		IsVault = true;
+		PlayerVault();
+		//Server_SendValutCheck(IsVault, wallLoc, wallNomal, wallHeight);
+	}
 }
 
 void AMultiPlayerBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const

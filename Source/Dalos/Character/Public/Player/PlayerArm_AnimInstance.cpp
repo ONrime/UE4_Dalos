@@ -93,5 +93,5 @@ void UPlayerArm_AnimInstance::PlayReloadMontage()
 
 void UPlayerArm_AnimInstance::StopReloadMontage()
 {
-	Montage_Stop(0.01f);
+	Montage_Stop(0.1f);
 }
