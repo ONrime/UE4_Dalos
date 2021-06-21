@@ -27,6 +27,8 @@ public:
 
 	virtual void TurnAtRate(class AMultiPlayerBase* player, float Rate);
 	virtual void LookUpAtRate(class AMultiPlayerBase* player, float Rate);
+	virtual UPlayerDownStateBase* PlayerJump(class AMultiPlayerBase* player);
+	virtual void PlayerMove(class AMultiPlayerBase* player, float inputValue, float inputDirRight);
 
 protected:
 	UPlayerDownStateBase* temp;

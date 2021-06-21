@@ -13,26 +13,26 @@ AAK_Weapone::AAK_Weapone()
 	BodyMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	//BodyMesh->SetCollisionProfileName(TEXT("Item"));
 
-	/*static ConstructorHelpers::FClassFinder<UAnimInstance>GUN_ANIM(TEXT("AnimBlueprint'/Game/IBWP3DPolicePistol/Meshes/Weapons/ABP_PolicePistol.ABP_PolicePistol_C'"));
+	static ConstructorHelpers::FClassFinder<UAnimInstance>GUN_ANIM(TEXT("AnimBlueprint'/Game/FPS_Weapon_Bundle/Animation/KA74U/KA74U_X_AnimBP.KA74U_X_AnimBP_C'"));
 	if (GUN_ANIM.Succeeded()) {
 		BodyMesh->SetAnimInstanceClass(GUN_ANIM.Class);
-	}*/
+	}
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>SKELETALGUN(TEXT("SkeletalMesh'/Game/FPS_Weapon_Bundle/Weapons/Meshes/KA74U/SK_KA74U_X.SK_KA74U_X'"));
 	if (SKELETALGUN.Succeeded()) {
 		BodyMesh->SetSkeletalMesh(SKELETALGUN.Object);
 	}
-	/*static ConstructorHelpers::FObjectFinder<UAnimMontage>FIRE_MONTAGE(TEXT("AnimMontage'/Game/IBWP3DPolicePistol/Animations/Weapons/ANIM_Police_Pistol-Fire_Montage1.ANIM_Police_Pistol-Fire_Montage1'"));
+	static ConstructorHelpers::FObjectFinder<UAnimMontage>FIRE_MONTAGE(TEXT("AnimMontage'/Game/FPS_Weapon_Bundle/Animation/KA74U/KA74U_X_Fire_Montage.KA74U_X_Fire_Montage'"));
 	if (FIRE_MONTAGE.Succeeded()) {
-		FireMontage = FIRE_MONTAGE.Object;
+		fireMontage = FIRE_MONTAGE.Object;
 	}
-	static ConstructorHelpers::FObjectFinder<UAnimMontage>RELOAD_MONTAGE(TEXT("AnimMontage'/Game/IBWP3DPolicePistol/Animations/Weapons/ANIM_Police_Pistol-Reload_Montage.ANIM_Police_Pistol-Reload_Montage'"));
+	static ConstructorHelpers::FObjectFinder<UAnimMontage>RELOAD_MONTAGE(TEXT("AnimMontage'/Game/FPS_Weapon_Bundle/Animation/KA74U/KA74U_X_Reload_Montage.KA74U_X_Reload_Montage'"));
 	if (RELOAD_MONTAGE.Succeeded()) {
-		ReloadMontage = RELOAD_MONTAGE.Object;
+		reloadMontage = RELOAD_MONTAGE.Object;
 	}
-	static ConstructorHelpers::FObjectFinder<UAnimMontage>EMPTY_MONTAGE(TEXT("AnimMontage'/Game/IBWP3DPolicePistol/Animations/Weapons/Pistol_Empty_Montage.Pistol_Empty_Montage'"));
+	/*static ConstructorHelpers::FObjectFinder<UAnimMontage>EMPTY_MONTAGE(TEXT("AnimMontage'/Game/IBWP3DPolicePistol/Animations/Weapons/Pistol_Empty_Montage.Pistol_Empty_Montage'"));
 	if (EMPTY_MONTAGE.Succeeded()) {
 		EmptyMontage = EMPTY_MONTAGE.Object;
-	}/**/
+	}*/
 	SetWeaponeState(WEAPONSTATE::DROP);
 	SetWeaponeLever(WEAPONLEVER::FULLAUTO);
 	/*CrossHairRadius = 1.0f;
@@ -84,4 +84,24 @@ float AAK_Weapone::GetFireRecoilPitch()
 float AAK_Weapone::GetFireRecoilYaw()
 {
 	return FMath::RandRange(-0.2f, 0.2f);
+}
+
+void AAK_Weapone::PlayFireMontage()
+{
+	BodyMesh->GetAnimInstance()->Montage_Play(fireMontage);
+}
+
+void AAK_Weapone::StopFireMontage()
+{
+	BodyMesh->GetAnimInstance()->Montage_Stop(0.1f);
+}
+
+void AAK_Weapone::PlayReloadMontage()
+{
+	BodyMesh->GetAnimInstance()->Montage_Play(reloadMontage);
+}
+
+void AAK_Weapone::StopReloadMontage()
+{
+	BodyMesh->GetAnimInstance()->Montage_Stop(0.1f);
 }

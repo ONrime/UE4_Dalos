@@ -50,6 +50,8 @@ protected:
 	bool IsReload = false;
 	float fireRecoilPitch = 0.0f;
 	float fireRecoilYaw = 0.0f;
+	UAnimMontage* fireMontage;
+	UAnimMontage* reloadMontage;
 
 	virtual void StateStart(WEAPONSTATE state);
 
@@ -75,5 +77,9 @@ public:
 	virtual AWeaponeBase* SpawnToHand(AActor* owner, FVector loc, FRotator rot);
 
 	virtual void ProjectileFire(FVector loc, FRotator rot, FRotator bulletRot);
+	virtual void PlayFireMontage();
+	virtual void StopFireMontage();
+	virtual void PlayReloadMontage();
+	virtual void StopReloadMontage();
 
 };

@@ -13,6 +13,7 @@
 UENUM(BlueprintType)
 enum class EPlayerPress : uint8 {
 	CROUCH UMETA(DisplayName = "Crouch"),
+	JUMP UMETA(DisplayName = "Jump"),
 	SPLINT UMETA(DisplayName = "Splint"),
 	ADS UMETA(DisplayName = "ADS"),
 	FIRSTGUN UMETA(DisplayName = "FirstGun"),
@@ -96,6 +97,11 @@ protected:
 	FTimerHandle fireTimer;
 	float threeCount = 0.0f;
 
+	FVector wallLoc = FVector::ZeroVector;
+	FVector wallHeight = FVector::ZeroVector;
+	FVector wallBackHeight = FVector::ZeroVector;
+	FVector wallNomal = FVector::ZeroVector;
+
 private:
 	// ป๓ลย
 	class UPlayerUpperStateBase* upperState = nullptr;
@@ -112,6 +118,8 @@ private:
 	void PlayerUnADS();
 	void PlayerFire();
 	void PlayerUnFire();
+	void PlayerReload();
+	void PlayerVault();
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
@@ -120,7 +128,9 @@ private:
 
 	void PlayerMove();
 	void FireAutoOn();
-
+	bool WallForwardTracer();
+	bool WallHeightTracer(FVector loc, FVector nomal);
+	bool WallBackHeightTracer(FVector loc);
 
 public:
 	UPlayerUpperStateBase* GetUpperState() { return upperState; };
@@ -173,8 +183,18 @@ public:
 	bool Server_SendWeaponeChange_Validate(EPlayerPress press);
 	void Server_SendWeaponeChange_Implementation(EPlayerPress press);
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SendIsJumped(bool jumped);
+	bool Server_SendIsJumped_Validate(bool jumped);
+	void Server_SendIsJumped_Implementation(bool jumped);
+
 	bool IsMove = true;
 	bool IsPlayerCameraTurn = true;
 	bool IsPlayerRotationYawSpeedSlow = false;
+	UPROPERTY(Replicated)
+	bool IsJumped = false;
+	bool IsWall = false;
+	bool IsWallThick = false;
+	bool IsVault = false;
 
 };

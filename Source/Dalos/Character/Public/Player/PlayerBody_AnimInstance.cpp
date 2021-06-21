@@ -30,9 +30,9 @@ void UPlayerBody_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		downStateNClass = player->downStateNClass;
 		upperStateNClass = player->upperStateNClass;
 
-		if (downStateNClass == UCrouch_PlayerDown::StaticClass()) {
-			UE_LOG(LogTemp, Warning, TEXT("UCrouch_PlayerDownddd"));
-		}
+		IsJumped = player->IsJumped;
+		IsFalling = player->GetMovementComponent()->IsFalling();
+
 		//UE_LOG(LogTemp, Warning, TEXT("upperPitch: %f"), player->GetControllerRot().Pitch - player->GetActorRotation().Pitch);
 	}
 }

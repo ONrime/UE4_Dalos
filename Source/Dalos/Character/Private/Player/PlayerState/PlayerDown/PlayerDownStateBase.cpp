@@ -53,3 +53,15 @@ void UPlayerDownStateBase::LookUpAtRate(AMultiPlayerBase* player, float Rate)
 		player->SpringArm->bUsePawnControlRotation = false;
 	}
 }
+
+UPlayerDownStateBase* UPlayerDownStateBase::PlayerJump(AMultiPlayerBase* player)
+{
+	player->bPressedJump = true;
+	player->JumpKeyHoldTime = 0.0f;
+	return nullptr;
+}
+
+void UPlayerDownStateBase::PlayerMove(AMultiPlayerBase* player, float inputValue, float inputDirRight)
+{
+
+}

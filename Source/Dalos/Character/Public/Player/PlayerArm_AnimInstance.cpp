@@ -17,6 +17,8 @@ UPlayerArm_AnimInstance::UPlayerArm_AnimInstance()
 	if (AK_FIRE.Succeeded()) AK_Fire_Montage = AK_FIRE.Object;
 	static ConstructorHelpers::FObjectFinder<UAnimMontage>AK_ADS_FIRE(TEXT("AnimMontage'/Game/Player/Anim/Arm/Armed/AK/Fire/Armed_AK_Fire_C_ADS_Arm_Montage.Armed_AK_Fire_C_ADS_Arm_Montage'"));
 	if (AK_ADS_FIRE.Succeeded()) AK_ADS_Fire_Montage = AK_ADS_FIRE.Object;
+	static ConstructorHelpers::FObjectFinder<UAnimMontage>AK_RELOAD(TEXT("AnimMontage'/Game/Player/Anim/Arm/Armed/AK/Armed_AK_Reload_Arm_Montage.Armed_AK_Reload_Arm_Montage'"));
+	if (AK_RELOAD.Succeeded()) AK_Reload_Montage = AK_RELOAD.Object;
 }
 
 void UPlayerArm_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -28,7 +30,11 @@ void UPlayerArm_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		auto player = Cast<AMultiPlayerBase>(pawn);
 		playerSpeed = player->GetVelocity().Size();
 
+		IsJumped = player->IsJumped;
+		IsFalling = player->GetMovementComponent()->IsFalling();
+
 		upperStateNClass = player->upperStateNClass;
+		downStateNClass= player->downStateNClass;
 
 		FVector playerVelocity = player->GetVelocity();
 		playerVelocity.Normalize();
@@ -52,17 +58,6 @@ void UPlayerArm_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 void UPlayerArm_AnimInstance::PlayFireMontage()
 {
-	/*fireRandNum = FMath::RandRange(1.0f, 2.0f);
-	switch (fireRandNum) {
-	case 1:
-		Montage_Play(AK_Fire1_Montage, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, true);
-		break;
-	case 2:
-		Montage_Play(AK_Fire2_Montage, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, true);
-		break;
-	}*/
-	
-
 	fireRandNum = FMath::RandRange(1, 3);
 	FString hitString = "Fire";
 	hitString.AppendInt(fireRandNum);
@@ -89,4 +84,14 @@ void UPlayerArm_AnimInstance::StopFireMontage()
 		Montage_JumpToSection("End", AK_Fire2_Montage);
 		break;
 	}*/
+}
+
+void UPlayerArm_AnimInstance::PlayReloadMontage()
+{
+	Montage_Play(AK_Reload_Montage, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, true);
+}
+
+void UPlayerArm_AnimInstance::StopReloadMontage()
+{
+	Montage_Stop(0.01f);
 }

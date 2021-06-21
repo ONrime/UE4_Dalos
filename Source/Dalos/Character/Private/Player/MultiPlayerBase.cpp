@@ -10,6 +10,7 @@
 #include "Dalos/Character/Public/Player/PlayerState/PlayerDown/Crouch_PlayerDown.h"
 #include "Dalos/Character/Public/Player/PlayerState/PlayerUpper/Armed_PlayerUpper.h"
 #include "Dalos/Character/Public/Player/PlayerState/PlayerUpper/ADS_PlayerUpper.h"
+#include "Dalos/Character/Public/Player/PlayerState/PlayerDown/Splint_PlayerDown.h"
 #include "Dalos/Character/Public/Player/PlayerArm_AnimInstance.h"
 #include "Dalos/Character/Public/Player/PlayerBody_AnimInstance.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -137,6 +138,13 @@ void AMultiPlayerBase::Tick(float DeltaTime)
 	CrossHairCheck();
 	RecoilCheck();
 
+	//if (WallForwardTracer() && WallHeightTracer(wallLoc, wallNomal)) WallBackHeightTracer(wallLoc);
+
+	if (IsJumped && GetMovementComponent()->IsFalling() == false) IsJumped = false;
+	if (GetVelocity().Size() < 0.3f && downStateNClass == USplint_PlayerDown::StaticClass()) {
+		DownPress(NewObject<UStanding_PlayerDown>(this, UStanding_PlayerDown::StaticClass()));
+	}
+
 	if (IsFire && IsFireAuto) {
 		FireBullet();
 	}
@@ -169,7 +177,6 @@ void AMultiPlayerBase::Tick(float DeltaTime)
 			InteractionCheck();
 		}
 		else {
-			
 		}
 		controllerRot = GetControlRotation();
 		SendControllerRot(controllerRot);
@@ -181,7 +188,6 @@ void AMultiPlayerBase::Tick(float DeltaTime)
 			InteractionCheck();
 		}
 		else {
-			
 		}
 		//UE_LOG(LogTemp, Warning, TEXT("cla_Updates: %s controllerRot %f"), *GetName(), controllerRot.Pitch);
 	}
@@ -202,6 +208,7 @@ void AMultiPlayerBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("SecondGun", EInputEvent::IE_Pressed, this, &AMultiPlayerBase::PlayerSecondGun);
 	PlayerInputComponent->BindAction("UnArmed", EInputEvent::IE_Pressed, this, &AMultiPlayerBase::PlayerUnArmed);
 	PlayerInputComponent->BindAction("Interaction", EInputEvent::IE_Pressed, this, &AMultiPlayerBase::PlayerInteraction);
+	PlayerInputComponent->BindAction("Reload", EInputEvent::IE_Pressed, this, &AMultiPlayerBase::PlayerReload);
 	PlayerInputComponent->BindAction("ADS", EInputEvent::IE_Pressed, this, &AMultiPlayerBase::PlayerADS);
 	PlayerInputComponent->BindAction("ADS", EInputEvent::IE_Released, this, &AMultiPlayerBase::PlayerUnADS);
 	PlayerInputComponent->BindAction("Fire", EInputEvent::IE_Pressed, this, &AMultiPlayerBase::PlayerFire);
@@ -396,12 +403,30 @@ void AMultiPlayerBase::PlayerCrouch()
 
 void AMultiPlayerBase::PlayerJump()
 {
+	IsJumped = true;
+	Server_SendIsJumped(IsJumped);
+	auto jump = downState->PlayerJump(this);
+	if (jump != nullptr) DownPress(jump);
 
+	if (WallForwardTracer() && WallHeightTracer(wallLoc, wallNomal) && !IsVault) {
+		WallBackHeightTracer(wallLoc);
+		if (!IsWall) {
+			IsVault = true;
+			PlayerVault();
+		}
+		else {
+
+		}
+	}
 }
 
 void AMultiPlayerBase::PlayerSplint()
 {
 	DownPress(nullptr);
+	if (!HasAuthority()) {
+		Server_SendDownPress(EPlayerPress::SPLINT);
+	}
+	else { NetMulticast_SendDownPress(EPlayerPress::SPLINT); }
 }
 
 void AMultiPlayerBase::PlayerFirstGun()
@@ -493,6 +518,49 @@ void AMultiPlayerBase::PlayerUnFire()
 	IsFireAuto = false;
 }
 
+void AMultiPlayerBase::PlayerReload()
+{
+	if (equipWeapone) {
+		armAnim->PlayReloadMontage();
+		equipWeapone->PlayReloadMontage();
+		equipWeaponeArm->PlayReloadMontage();
+	}
+}
+
+void AMultiPlayerBase::PlayerVault()
+{
+	if (bodyAnim == nullptr || GetMesh() == nullptr) {
+		return;
+	}
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCharacterMovement()->MovementMode = EMovementMode::MOVE_Flying;
+
+	// WallNomal로 뽑아낸 벽의 방향을 Z축 으로 180도 회전하여 플레이어가 바라 보는 방향으로 바꿔서 WallNomalXRotator저장한다.
+	FRotator wallNomalXRotator = FRotator(wallNomal.Rotation().Pitch, wallNomal.Rotation().Yaw - 180.0f, wallNomal.Rotation().Roll);;
+	//UE_LOG(LogTemp, Warning, TEXT("WallNomalXRotator: %f, %f, %f "), WallNomalXRotator.Roll, WallNomalXRotator.Pitch, WallNomalXRotator.Yaw);
+	//PlayerRotationYaw.Yaw = wallNomalXRotator.Yaw;
+	SetActorRotation(FRotator(0.0f, wallNomalXRotator.Yaw, 0.0f));
+
+	// 벽의 X,Y 좌표로 부터 플레이어가 정확하게 서야할(넘어가야할)위치를 찾는다.
+	//벽의 좌표를 뽑아낼때 정확한 위치가 아닌 벽의 중앙 위치만 뽑아 낼것이다.
+	//그래서 아래의 과정을 통해 플레이어 기준의 벽의 위치가 나온다.
+	FVector wallLocationXY = wallLoc + (FRotationMatrix::MakeFromX(wallNomal).GetUnitAxis(EAxis::X) * (70.0f));
+	// 플레이어가 넘어가야할 벽의 정확한 좌표
+	FVector wallLocationTracer = FVector::ZeroVector;
+	if (!IsWallThick) {
+		wallLocationTracer = FVector(wallLocationXY.X, wallLocationXY.Y, wallHeight.Z + 10.0f);
+		//armAnim->PlayVaultMontage();
+		//UE_LOG(LogTemp, Warning, TEXT("PlayVaultMontage"));
+	}
+	else {
+		wallLocationTracer = FVector(wallLocationXY.X, wallLocationXY.Y, wallHeight.Z + 0.0f);
+		//bodyAnim->PlayVaultThickMontage();
+		//UE_LOG(LogTemp, Warning, TEXT("PlayVaultThickMontage"));
+	}
+	// 플레이어의 위치를 조정한다.
+	SetActorLocation(wallLocationTracer);
+}
+
 void AMultiPlayerBase::MoveForward(float Value)
 {
 	if (IsMove) {
@@ -541,12 +609,68 @@ void AMultiPlayerBase::PlayerMove()
 		//UE_LOG(LogTemp, Warning, TEXT("Input: %f"), FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 1.0f), FVector2D(0.0f, PlayerSpeed), InputDir));
 		AddMovementInput(moveDir, FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 1.0f), FVector2D(0.0f, PlayerSpeed), inputDir) * 0.008f);
 		//MoveDir.Set(0.0f, 0.0f, 0.0f);
+		downState->PlayerMove(this, inputDir, inputDirRight);
 	}
 }
 
 void AMultiPlayerBase::FireAutoOn()
 {
 	IsFireAuto = true;
+}
+
+bool AMultiPlayerBase::WallForwardTracer()
+{
+	TArray<AActor*> actorsToIgnore;
+	FHitResult outHit;
+	FVector startTracer = FollowCamera->GetComponentLocation();
+	FVector endTracer = FollowCamera->GetComponentLocation() + FollowCamera->GetForwardVector() * 40.0f;
+	bool IsHit = UKismetSystemLibrary::SphereTraceSingle(this, startTracer, endTracer, 30.0f, ETraceTypeQuery::TraceTypeQuery5, false
+		, actorsToIgnore, EDrawDebugTrace::ForOneFrame, outHit, true);
+
+	wallLoc = outHit.Location;
+	wallNomal = outHit.Normal;
+	if(IsHit) WallHeightTracer(outHit.Location, outHit.Normal);
+	return IsHit;
+}
+bool AMultiPlayerBase::WallHeightTracer(FVector loc, FVector nomal)
+{
+	TArray<AActor*> actorsToIgnore;
+	FHitResult outHit;
+	FVector endTracer = loc + (FRotationMatrix::MakeFromX(nomal).GetUnitAxis(EAxis::X) * (-10.0f));
+	FVector startTracer = endTracer + FVector(0.0f, 0.0f, 100.0f);
+	bool IsHit = UKismetSystemLibrary::SphereTraceSingle(this, startTracer, endTracer, 30.0f, ETraceTypeQuery::TraceTypeQuery5, false
+		, actorsToIgnore, EDrawDebugTrace::ForOneFrame, outHit, true);
+
+	wallHeight = outHit.Location;
+	if (wallHeight.Z >= startTracer.Z - 2.0f) {
+		return false;
+	}
+	//UE_LOG(LogTemp, Warning, TEXT("WallHeight: %f, %f, %f"), WallHeight.X, WallHeight.Y, WallHeight.Z);
+	//UE_LOG(LogTemp, Warning, TEXT("WallLocation: %f, %f, %f"), WallLocation.X, WallLocation.Y, WallLocation.Z);
+
+	float minHeight = wallHeight.Z - loc.Z;
+	if (minHeight > 60.0f) {
+		IsWall = true;
+	}
+	else { IsWall = false; }
+	return IsHit;
+}
+bool AMultiPlayerBase::WallBackHeightTracer(FVector loc)
+{
+	TArray<AActor*> actorsToIgnore;
+	FHitResult outHit;
+	FVector endTracer = loc + GetActorForwardVector() * 90.0f;
+	FVector startTracer = endTracer + FVector(0.0f, 0.0f, 100.0f);
+	bool IsHit = UKismetSystemLibrary::SphereTraceSingle(this, startTracer, endTracer, 15.0f, ETraceTypeQuery::TraceTypeQuery5, false
+		, actorsToIgnore, EDrawDebugTrace::ForOneFrame, outHit, true);
+
+	wallBackHeight = outHit.Location;
+	if (!IsHit) {
+		IsWallThick = false;
+	}
+	else { IsWallThick = true; }
+
+	return IsHit;
 }
 
 void AMultiPlayerBase::TurnAtRate(float Rate)
@@ -604,7 +728,8 @@ void AMultiPlayerBase::FireBullet()
 {
 	if (equipWeapone) {
 		armAnim->PlayFireMontage();
-		//equipWeapone->PlayFireMontage();
+		equipWeapone->PlayFireMontage();
+		equipWeaponeArm->PlayFireMontage();
 		/*if (EquipWeaponInAmmo > 1.0f) {
 			EquipWeaponInAmmo -= 1.0f;
 		}
@@ -749,10 +874,21 @@ void AMultiPlayerBase::Server_SendWeaponeChange_Implementation(EPlayerPress pres
 	//if(HasAuthority()) NetMulticast_SendWeaponeChange(press);
 }
 
+bool AMultiPlayerBase::Server_SendIsJumped_Validate(bool jumped)
+{
+	return  true;
+}
+void AMultiPlayerBase::Server_SendIsJumped_Implementation(bool jumped)
+{
+	IsJumped = jumped;
+}
+
 void AMultiPlayerBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(AMultiPlayerBase, upperPitch, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(AMultiPlayerBase, IsJumped, COND_SkipOwner);
+	//DOREPLIFETIME_CONDITION(AMultiPlayerBase, PlayerSpeed, COND_SkipOwner);
 	//DOREPLIFETIME_CONDITION(AMultiPlayerBase, controllerRot, COND_SkipOwner);
 }

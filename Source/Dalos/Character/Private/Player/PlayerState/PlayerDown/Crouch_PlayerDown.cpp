@@ -19,8 +19,9 @@ UPlayerDownStateBase* UCrouch_PlayerDown::HandleInput(AMultiPlayerBase* player)
 	auto playerInput = Cast<UPlayerInput>(playerController->PlayerInput);
 	TArray<FInputActionKeyMapping> actionCrouch = playerInput->GetKeysForAction(TEXT("Crouch"));
 	TArray<FInputActionKeyMapping> actionSplint = playerInput->GetKeysForAction(TEXT("Splint"));
+	TArray<FInputActionKeyMapping> actionJump = playerInput->GetKeysForAction(TEXT("Jump"));
 
-	if (playerInput->IsPressed(actionCrouch[0].Key)) {
+	if (playerInput->IsPressed(actionCrouch[0].Key) || playerInput->IsPressed(actionJump[0].Key)) {
 		temp = NewObject<UStanding_PlayerDown>(this, UStanding_PlayerDown::StaticClass());
 	}
 	else if (playerInput->IsPressed(actionSplint[0].Key)) {
@@ -32,7 +33,7 @@ UPlayerDownStateBase* UCrouch_PlayerDown::HandleInput(AMultiPlayerBase* player)
 
 UPlayerDownStateBase* UCrouch_PlayerDown::SendHandleInput(EPlayerPress press)
 {
-	if (press == EPlayerPress::CROUCH) {
+	if (press == EPlayerPress::CROUCH || press == EPlayerPress::JUMP) {
 		temp = NewObject<UStanding_PlayerDown>(this, UStanding_PlayerDown::StaticClass());
 	}
 	else if (press == EPlayerPress::SPLINT) {
@@ -44,6 +45,7 @@ UPlayerDownStateBase* UCrouch_PlayerDown::SendHandleInput(EPlayerPress press)
 void UCrouch_PlayerDown::StateStart(AMultiPlayerBase* player)
 {
 	//UE_LOG(LogTemp, Warning, TEXT("Crouch: StateStart"));
+	player->PlayerSpeed = 50.0f;
 }
 
 void UCrouch_PlayerDown::StateUpdate(AMultiPlayerBase* player)
@@ -65,4 +67,9 @@ void UCrouch_PlayerDown::StateEnd(AMultiPlayerBase* player)
 UClass* UCrouch_PlayerDown::GetState()
 {
 	return UCrouch_PlayerDown::StaticClass();
+}
+
+UPlayerDownStateBase* UCrouch_PlayerDown::PlayerJump(AMultiPlayerBase* player)
+{
+	return NewObject<UStanding_PlayerDown>(this, UStanding_PlayerDown::StaticClass());
 }

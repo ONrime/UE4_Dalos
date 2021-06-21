@@ -24,6 +24,8 @@ public:
 	virtual void StateEnd(class AMultiPlayerBase* player) override;
 	virtual UClass* GetState() override;
 
+	virtual UPlayerDownStateBase* PlayerJump(class AMultiPlayerBase* player) override;
+
 protected:
 
 private:

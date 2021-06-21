@@ -24,12 +24,20 @@ public:
 
 	void PlayFireMontage();
 	void StopFireMontage();
+	void PlayReloadMontage();
+	void StopReloadMontage();
 
 private:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
+	bool IsFalling = false;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
+	bool IsJumped = false;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
 	float playerSpeed =0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
 	UClass* upperStateNClass;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
+	UClass* downStateNClass;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
 	float inputDir = 0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
@@ -47,5 +55,6 @@ private:
 	UAnimMontage* AK_Fire2_Montage;
 	UAnimMontage* AK_Fire_Montage;
 	UAnimMontage* AK_ADS_Fire_Montage;
+	UAnimMontage* AK_Reload_Montage;
 	
 };

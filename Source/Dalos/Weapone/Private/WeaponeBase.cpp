@@ -112,6 +112,22 @@ void AWeaponeBase::ProjectileFire(FVector loc, FRotator rot, FRotator bulletRot)
 {
 }
 
+void AWeaponeBase::PlayFireMontage()
+{
+}
+
+void AWeaponeBase::StopFireMontage()
+{
+}
+
+void AWeaponeBase::PlayReloadMontage()
+{
+}
+
+void AWeaponeBase::StopReloadMontage()
+{
+}
+
 void AWeaponeBase::SetWeaponeState(WEAPONSTATE set) {
 	WeaponeState = set;
 	StateStart(WeaponeState);

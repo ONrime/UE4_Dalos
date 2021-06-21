@@ -25,10 +25,19 @@ public:
 	virtual UClass* GetState() override;
 
 	virtual void TurnAtRate(class AMultiPlayerBase* player, float Rate) override;
+	virtual void PlayerMove(class AMultiPlayerBase* player, float inputValue, float inputDirRight) override;
 
 protected:
 
 private:
 	FVector cameraLoc = FVector::ZeroVector;
+	FRotator cameraRot = FRotator::ZeroRotator;
+
+	float pitch = 0.0f;
+	float pelvisZ = 0.0f;
+	float cameraMoveChagneRoll = 0.0f;
+	float cameraTurnChagneRoll = 0.0f;
+
+	class UCameraShakeBase* walkShake;
 
 };

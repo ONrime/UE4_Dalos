@@ -29,4 +29,9 @@ public:
 	virtual float GetFireRecoilPitch() override;
 	virtual float GetFireRecoilYaw() override;
 
+	virtual void PlayFireMontage() override;
+	virtual void StopFireMontage() override;
+	virtual void PlayReloadMontage() override;
+	virtual void StopReloadMontage() override;
+
 };
