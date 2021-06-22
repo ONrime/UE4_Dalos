@@ -165,7 +165,7 @@ void AMultiPlayerBase::Tick(float DeltaTime)
 	}
 
 	if (IsFire && IsFireAuto) {
-		FireBullet();
+		FireBullet(equipWeaponeArm->BodyMesh->GetSocketLocation("Muzzle"), FollowCamera->GetComponentRotation(), bulletRot);
 	}
 	if (recoilReturn && IsFire == false) {
 		float RecoilNowRotatorPitch = FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 360.0f), FVector2D(-90.0f, 90.0f), (Controller->GetControlRotation()).Pitch);
@@ -431,7 +431,7 @@ void AMultiPlayerBase::PlayerJump()
 		WallBackHeightTracer(wallLoc);
 		IsVault = true;
 		PlayerVault();
-		Server_SendValutCheck(IsVault, wallLoc, wallNomal, wallHeight);
+		Server_SendValutCheck();
 	}
 }
 
@@ -441,7 +441,7 @@ void AMultiPlayerBase::PlayerSplint()
 	if (!HasAuthority()) {
 		Server_SendDownPress(EPlayerPress::SPLINT);
 	}
-	else { NetMulticast_SendDownPress(EPlayerPress::SPLINT); }
+	else {  NetMulticast_SendDownPress(EPlayerPress::SPLINT); }
 }
 
 void AMultiPlayerBase::PlayerFirstGun()
@@ -458,7 +458,10 @@ void AMultiPlayerBase::PlayerFirstGun()
 		Server_SendUpperPress(EPlayerPress::FIRSTGUN);
 		Server_SendWeaponeChange(EPlayerPress::FIRSTGUN);
 	}
-	else { NetMulticast_SendUpperPress(EPlayerPress::FIRSTGUN); }
+	else { 
+		NetMulticast_SendUpperPress(EPlayerPress::FIRSTGUN);
+		NetMulticast_SendWeaponeChange(EPlayerPress::FIRSTGUN);
+	}
 }
 void AMultiPlayerBase::PlayerSecondGun()
 {
@@ -474,7 +477,10 @@ void AMultiPlayerBase::PlayerSecondGun()
 		Server_SendUpperPress(EPlayerPress::SECONDGUN);
 		Server_SendWeaponeChange(EPlayerPress::SECONDGUN);
 	}
-	else { NetMulticast_SendUpperPress(EPlayerPress::SECONDGUN); }
+	else { 
+		NetMulticast_SendUpperPress(EPlayerPress::SECONDGUN); 
+		NetMulticast_SendWeaponeChange(EPlayerPress::SECONDGUN);
+	}
 }
 void AMultiPlayerBase::PlayerUnArmed()
 {
@@ -490,19 +496,25 @@ void AMultiPlayerBase::PlayerUnArmed()
 		Server_SendUpperPress(EPlayerPress::UNARMED);
 		Server_SendWeaponeChange(EPlayerPress::UNARMED);
 	}
-	else { NetMulticast_SendUpperPress(EPlayerPress::UNARMED); }
+	else { 
+		NetMulticast_SendUpperPress(EPlayerPress::UNARMED); 
+		NetMulticast_SendWeaponeChange(EPlayerPress::UNARMED);
+	}
 }
 
 void AMultiPlayerBase::PlayerInteraction()
 {
 	if (lookWeapone) {
 		WeaponCheck(lookWeapone);
-		if (!HasAuthority()) Server_SendWeaponeCheck(lookWeapone);
 		UpperPress(nullptr);
 		if (!HasAuthority()) {
+			Server_SendWeaponeCheck(lookWeapone);
 			Server_SendUpperPress(EPlayerPress::INTERACTION);
 		}
-		else { NetMulticast_SendUpperPress(EPlayerPress::INTERACTION); }
+		else { 
+			NetMulticast_SendWeaponeCheck(lookWeapone);
+			NetMulticast_SendUpperPress(EPlayerPress::INTERACTION); 
+		}
 	}
 }
 
@@ -523,7 +535,10 @@ void AMultiPlayerBase::PlayerFire()
 	recoilPitch = 0.0f;
 	recoilReturnDir = FVector::ZeroVector;
 	recoilRot = FRotator::ZeroRotator;
-	upperState->PlayerFire(this, equipWeapone, IsFireAuto, threeCount);
+	if (equipWeapone && equipWeaponeArm) {
+		upperState->PlayerFire(this, equipWeapone, IsFireAuto, threeCount
+			, equipWeaponeArm->BodyMesh->GetSocketLocation("Muzzle"), FollowCamera->GetComponentRotation(), bulletRot);
+	}
 	//armAnim->PlayFireMontage();
 }
 void AMultiPlayerBase::PlayerUnFire()
@@ -708,7 +723,6 @@ void AMultiPlayerBase::StopVault()
 	IsVault = false;
 	//UE_LOG(LogTemp, Warning, TEXT("Vault"));
 }
-
 void AMultiPlayerBase::StopClimb()
 {
 	ArmMesh->SetOwnerNoSee(false);
@@ -773,7 +787,7 @@ void AMultiPlayerBase::DownPress(UPlayerDownStateBase* state)
 	}
 }
 
-void AMultiPlayerBase::FireBullet()
+void AMultiPlayerBase::FireBullet(FVector muzzleLoc, FRotator muzzleRot, FRotator bulletRotation)
 {
 	if (equipWeapone) {
 		armAnim->PlayFireMontage();
@@ -797,16 +811,26 @@ void AMultiPlayerBase::FireBullet()
 		AddControllerPitchInput(AddPitch);
 		AddControllerYawInput(AddYaw);
 
-		FVector muzzleLoc= equipWeaponeArm->BodyMesh->GetSocketLocation("Muzzle");
-		FRotator muzzleRot = FollowCamera->GetComponentRotation();
+		//FVector muzzleLoc= equipWeaponeArm->BodyMesh->GetSocketLocation("Muzzle");
+		//FRotator muzzleRot = FollowCamera->GetComponentRotation();
 		//UE_LOG(LogTemp, Warning, TEXT("MuzzleLocation: %f, %f, %f"), MuzzleLocation.X, MuzzleLocation.Y, MuzzleLocation.Z);
 
-		equipWeaponeArm->ProjectileFire(muzzleLoc, muzzleRot, bulletRot);
+		equipWeaponeArm->ProjectileFire(muzzleLoc, muzzleRot, bulletRotation);
 		if (equipWeapone->GetWeaponeLever() == WEAPONLEVER::FULLAUTO) {
 			GetWorldTimerManager().SetTimer(fireTimer, this, &AMultiPlayerBase::FireAutoOn, 0.15f, false);
 		}
 		//EquipWeapon->SetIsFire(false);
 		//EnemyHearing->ReportNoiseEvent(this, GetActorLocation(), 1.0f, this, 10000.0f, FName("FireNoise"));
+		if (HasAuthority()) {
+			UE_LOG(LogTemp, Warning, TEXT("HasAuthority"));
+			NetMulticast_SendFireBullet(bulletRotation);
+		}
+		else {
+			UE_LOG(LogTemp, Warning, TEXT("NotHasAuthority"));
+			Server_SendFireBullet(bulletRotation);
+
+		}
+		
 	}
 }
 
@@ -882,8 +906,16 @@ void AMultiPlayerBase::Server_SendWeaponeCheck_Implementation(AWeaponeBase* chec
 {
 	if (check) {
 		WeaponCheck(check);
-		//if (HasAuthority()) NetMulticast_SendWeaponeCheck(check);
+		NetMulticast_SendWeaponeCheck(check);
 	}
+}
+bool AMultiPlayerBase::NetMulticast_SendWeaponeCheck_Validate(AWeaponeBase* check)
+{
+	return true;
+}
+void AMultiPlayerBase::NetMulticast_SendWeaponeCheck_Implementation(AWeaponeBase* check)
+{
+	if (!HasAuthority()) WeaponCheck(check);
 }
 bool AMultiPlayerBase::Server_SendWeaponeChange_Validate(EPlayerPress press)
 {
@@ -920,7 +952,45 @@ void AMultiPlayerBase::Server_SendWeaponeChange_Implementation(EPlayerPress pres
 		}
 		break;
 	}
-	//if(HasAuthority()) NetMulticast_SendWeaponeChange(press);
+	NetMulticast_SendWeaponeChange(press);
+}
+bool AMultiPlayerBase::NetMulticast_SendWeaponeChange_Validate(EPlayerPress press)
+{
+	return true;
+}
+void AMultiPlayerBase::NetMulticast_SendWeaponeChange_Implementation(EPlayerPress press)
+{
+	if (!HasAuthority()) {
+		switch (press) {
+		case EPlayerPress::FIRSTGUN:
+			if (backWeapone1) {
+				if (equipWeapone == backWeapone2) {
+					equipWeapone->AttachToComponent(BodyMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("BackWeapone2"));
+					equipWeapone->SetWeaponeState(WEAPONSTATE::BACKEQUIP);
+				}
+				EquipGunOnHand(backWeapone1);
+			}
+			break;
+		case EPlayerPress::SECONDGUN:
+			if (backWeapone2) {
+				if (equipWeapone == backWeapone1) {
+					equipWeapone->AttachToComponent(BodyMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("BackWeapone1"));
+					equipWeapone->SetWeaponeState(WEAPONSTATE::BACKEQUIP);
+				}
+				EquipGunOnHand(backWeapone2);
+			}
+			break;
+		case EPlayerPress::UNARMED:
+			if (equipWeapone) {
+				if (equipWeapone == backWeapone1) {
+					equipWeapone->AttachToComponent(BodyMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("BackWeapone1"));
+				}
+				else equipWeapone->AttachToComponent(BodyMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("BackWeapone2"));
+				equipWeapone->SetWeaponeState(WEAPONSTATE::BACKEQUIP);
+			}
+			break;
+		}
+	}
 }
 
 bool AMultiPlayerBase::Server_SendIsJumped_Validate(bool jumped)
@@ -932,44 +1002,83 @@ void AMultiPlayerBase::Server_SendIsJumped_Implementation(bool jumped)
 	IsJumped = jumped;
 }
 
-bool AMultiPlayerBase::Server_SendValutCheck_Validate(bool check, FVector loc, FVector nomal, FVector heightLoc)
+bool AMultiPlayerBase::Server_SendValutCheck_Validate()
 {
 	return true;
 }
-
-void AMultiPlayerBase::Server_SendValutCheck_Implementation(bool check, FVector loc, FVector nomal, FVector heightLoc)
+void AMultiPlayerBase::Server_SendValutCheck_Implementation()
 {
-	/*IsVault = check;
-	wallLoc = loc;
-	wallNomal = nomal;
-	wallHeight = heightLoc;
-	PlayerVault();*/
 	if (WallForwardTracer() && WallHeightTracer(wallLoc, wallNomal) && !IsVault) {
 		WallBackHeightTracer(wallLoc);
 		IsVault = true;
 		PlayerVault();
-		//Server_SendValutCheck(IsVault, wallLoc, wallNomal, wallHeight);
 	}
-	NetMulticast_SendValutCheck(check, loc, nomal, heightLoc);
+	NetMulticast_SendValutCheck();
 }
-
-bool AMultiPlayerBase::NetMulticast_SendValutCheck_Validate(bool check, FVector loc, FVector nomal, FVector heightLoc)
+bool AMultiPlayerBase::NetMulticast_SendValutCheck_Validate()
 {
 	return true;
 }
-
-void AMultiPlayerBase::NetMulticast_SendValutCheck_Implementation(bool check, FVector loc, FVector nomal, FVector heightLoc)
+void AMultiPlayerBase::NetMulticast_SendValutCheck_Implementation()
 {
-	/*IsVault = check;
-	wallLoc = loc;
-	wallNomal = nomal;
-	wallHeight = heightLoc;
-	PlayerVault();*/
 	if (WallForwardTracer() && WallHeightTracer(wallLoc, wallNomal) && !IsVault) {
 		WallBackHeightTracer(wallLoc);
 		IsVault = true;
 		PlayerVault();
-		//Server_SendValutCheck(IsVault, wallLoc, wallNomal, wallHeight);
+	}
+}
+
+bool AMultiPlayerBase::Server_SendFireBullet_Validate(FRotator rot)
+{
+	return true;
+}
+void AMultiPlayerBase::Server_SendFireBullet_Implementation(FRotator rot)
+{
+	//FireBullet(equipWeapone->BodyMesh->GetSocketLocation("Muzzle"), FollowCamera->GetComponentRotation(), rot);
+	if (equipWeapone && !IsLocallyControlled()) {
+		//armAnim->PlayFireMontage();
+		equipWeapone->PlayFireMontage();
+		/*if (EquipWeaponInAmmo > 1.0f) {
+			EquipWeaponInAmmo -= 1.0f;
+		}
+		else { equipWeapone->PlayEmptyMontage(); }*/
+
+		IsFireAuto = false;
+
+		equipWeapone->ProjectileFire(equipWeapone->BodyMesh->GetSocketLocation("Muzzle")
+			, FollowCamera->GetComponentRotation(), rot);
+		if (equipWeapone->GetWeaponeLever() == WEAPONLEVER::FULLAUTO) {
+			GetWorldTimerManager().SetTimer(fireTimer, this, &AMultiPlayerBase::FireAutoOn, 0.15f, false);
+		}
+		//EquipWeapon->SetIsFire(false);
+		//EnemyHearing->ReportNoiseEvent(this, GetActorLocation(), 1.0f, this, 10000.0f, FName("FireNoise"));
+		NetMulticast_SendFireBullet(rot);
+	}
+}
+bool AMultiPlayerBase::NetMulticast_SendFireBullet_Validate(FRotator rot)
+{
+	return true;
+}
+void AMultiPlayerBase::NetMulticast_SendFireBullet_Implementation(FRotator rot)
+{
+	//FireBullet(equipWeapone->BodyMesh->GetSocketLocation("Muzzle"), FollowCamera->GetComponentRotation(), rot);
+	if (equipWeapone && !IsLocallyControlled() && !HasAuthority()) {
+		//armAnim->PlayFireMontage();
+		equipWeapone->PlayFireMontage();
+		/*if (EquipWeaponInAmmo > 1.0f) {
+			EquipWeaponInAmmo -= 1.0f;
+		}
+		else { equipWeapone->PlayEmptyMontage(); }*/
+
+		IsFireAuto = false;
+
+		equipWeapone->ProjectileFire(equipWeapone->BodyMesh->GetSocketLocation("Muzzle")
+			, rot, rot);
+		if (equipWeapone->GetWeaponeLever() == WEAPONLEVER::FULLAUTO) {
+			GetWorldTimerManager().SetTimer(fireTimer, this, &AMultiPlayerBase::FireAutoOn, 0.15f, false);
+		}
+		//EquipWeapon->SetIsFire(false);
+		//EnemyHearing->ReportNoiseEvent(this, GetActorLocation(), 1.0f, this, 10000.0f, FName("FireNoise"));
 	}
 }
 

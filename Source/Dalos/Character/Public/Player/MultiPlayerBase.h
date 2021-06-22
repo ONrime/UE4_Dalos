@@ -55,16 +55,16 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UPROPERTY()
-	class UPlayerArm_AnimInstance* armAnim;
+	class UPlayerArm_AnimInstance* armAnim = nullptr;
 	UPROPERTY()
-	class UPlayerBody_AnimInstance* bodyAnim;
+	class UPlayerBody_AnimInstance* bodyAnim = nullptr;
 	UPROPERTY()
-	class UPlayerBody_AnimInstance* legAnim;
-	class AWeaponeBase* equipWeapone;
-	class AWeaponeBase* equipWeaponeArm;
-	class AWeaponeBase* backWeapone1;
-	class AWeaponeBase* backWeapone2;
-	class AWeaponeBase* lookWeapone;
+	class UPlayerBody_AnimInstance* legAnim = nullptr;
+	class AWeaponeBase* equipWeapone = nullptr;
+	class AWeaponeBase* equipWeaponeArm = nullptr;
+	class AWeaponeBase* backWeapone1 = nullptr;
+	class AWeaponeBase* backWeapone2 = nullptr;
+	class AWeaponeBase* lookWeapone = nullptr;
 	bool InteractionCheck();
 	bool CrossHairCheck();
 	bool RecoilCheck();
@@ -156,7 +156,7 @@ public:
 	UPlayerArm_AnimInstance* GetArmAnim() { return armAnim; }
 	bool GetIsCameraLock() { return IsCameraLock; }
 
-	void FireBullet();
+	void FireBullet(FVector muzzleLoc, FRotator muzzleRot, FRotator bulletRotation);
 
 	UFUNCTION(NetMulticast, Reliable, WithValidation)
 	void SendControllerRot(FRotator rot);
@@ -185,10 +185,18 @@ public:
 	void Server_SendWeaponeCheck(AWeaponeBase* check);
 	bool Server_SendWeaponeCheck_Validate(AWeaponeBase* check);
 	void Server_SendWeaponeCheck_Implementation(AWeaponeBase* check);
+	UFUNCTION(NetMulticast, Reliable, WithValidation)
+	void NetMulticast_SendWeaponeCheck(AWeaponeBase* check);
+	bool NetMulticast_SendWeaponeCheck_Validate(AWeaponeBase* check);
+	void NetMulticast_SendWeaponeCheck_Implementation(AWeaponeBase* check);
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_SendWeaponeChange(EPlayerPress press);
 	bool Server_SendWeaponeChange_Validate(EPlayerPress press);
 	void Server_SendWeaponeChange_Implementation(EPlayerPress press);
+	UFUNCTION(NetMulticast, Reliable, WithValidation)
+	void NetMulticast_SendWeaponeChange(EPlayerPress press);
+	bool NetMulticast_SendWeaponeChange_Validate(EPlayerPress press);
+	void NetMulticast_SendWeaponeChange_Implementation(EPlayerPress press);
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_SendIsJumped(bool jumped);
@@ -196,13 +204,22 @@ public:
 	void Server_SendIsJumped_Implementation(bool jumped);
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_SendValutCheck(bool check, FVector loc, FVector nomal, FVector heightLoc);
-	bool Server_SendValutCheck_Validate(bool check, FVector loc, FVector nomal, FVector heightLoc);
-	void Server_SendValutCheck_Implementation(bool check, FVector loc, FVector nomal, FVector heightLoc);
+	void Server_SendValutCheck();
+	bool Server_SendValutCheck_Validate();
+	void Server_SendValutCheck_Implementation();
 	UFUNCTION(NetMulticast, Reliable, WithValidation)
-	void NetMulticast_SendValutCheck(bool check, FVector loc, FVector nomal, FVector heightLoc);
-	bool NetMulticast_SendValutCheck_Validate(bool check, FVector loc, FVector nomal, FVector heightLoc);
-	void NetMulticast_SendValutCheck_Implementation(bool check, FVector loc, FVector nomal, FVector heightLoc);
+	void NetMulticast_SendValutCheck();
+	bool NetMulticast_SendValutCheck_Validate();
+	void NetMulticast_SendValutCheck_Implementation();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SendFireBullet(FRotator rot);
+	bool Server_SendFireBullet_Validate(FRotator rot);
+	void Server_SendFireBullet_Implementation(FRotator rot);
+	UFUNCTION(NetMulticast, Reliable, WithValidation)
+	void NetMulticast_SendFireBullet(FRotator rot);
+	bool NetMulticast_SendFireBullet_Validate(FRotator rot);
+	void NetMulticast_SendFireBullet_Implementation(FRotator rot);
 
 	bool IsMove = true;
 	bool IsPlayerCameraTurn = true;

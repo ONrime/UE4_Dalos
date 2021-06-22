@@ -12,6 +12,9 @@ AProjectileBase::AProjectileBase()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
+	//SetReplicates(true);
+	//SetReplicateMovement(true);
+
 	BodyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MESHBODY"));
 	RootComponent = BodyMesh;
 	BodyMesh->SetRelativeScale3D(FVector(2.0f, 0.025f, 0.025f));
@@ -45,6 +48,7 @@ void AProjectileBase::Tick(float DeltaTime)
 }
 void AProjectileBase::ProjectileFire(FVector FireDir)
 {
+	UE_LOG(LogTemp, Warning, TEXT("ProjectileFire"));
 	Movement->Velocity = FireDir * Movement->InitialSpeed;
 }
 void AProjectileBase::SetProjectileVelocity(float Velocity)
