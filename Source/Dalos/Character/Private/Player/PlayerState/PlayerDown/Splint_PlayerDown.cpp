@@ -4,6 +4,7 @@
 #include "Dalos/Character/Public/Player/PlayerState/PlayerDown/Splint_PlayerDown.h"
 #include "Dalos/Character/Public/Player/PlayerState/PlayerDown/Standing_PlayerDown.h"
 #include "Dalos/Character/Public/Player/PlayerState/PlayerDown/Crouch_PlayerDown.h"
+#include "Dalos/Character/Public/Player/PlayerState/PlayerDown/Sliding_PlayerDown.h"
 #include "GameFramework/PlayerInput.h"
 #include "GameFramework/PlayerController.h"
 #include "Dalos/CameraShake/Public/Player_Splint_CameraShake.h"
@@ -22,7 +23,7 @@ UPlayerDownStateBase* USplint_PlayerDown::HandleInput(AMultiPlayerBase* player)
 	TArray<FInputActionKeyMapping> actionSplint = playerInput->GetKeysForAction(TEXT("Splint"));
 
 	if (playerInput->IsPressed(actionCrouch[0].Key)) {
-		//temp = NewObject<UStanding_PlayerDown>(this, UStanding_PlayerDown::StaticClass()); // 슬라이딩
+		temp = NewObject<USliding_PlayerDown>(this, USliding_PlayerDown::StaticClass()); // 슬라이딩
 	}
 	else if (playerInput->IsPressed(actionSplint[0].Key)) {
 		temp = NewObject<UStanding_PlayerDown>(this, UStanding_PlayerDown::StaticClass());
@@ -34,7 +35,7 @@ UPlayerDownStateBase* USplint_PlayerDown::HandleInput(AMultiPlayerBase* player)
 UPlayerDownStateBase* USplint_PlayerDown::SendHandleInput(EPlayerPress press)
 {
 	if (press == EPlayerPress::CROUCH) {
-		//temp = NewObject<UStanding_PlayerDown>(this, UStanding_PlayerDown::StaticClass()); // 슬라이딩
+		temp = NewObject<USliding_PlayerDown>(this, USliding_PlayerDown::StaticClass()); // 슬라이딩
 	}
 	else if (press == EPlayerPress::SPLINT) {
 		temp = NewObject<UStanding_PlayerDown>(this, UStanding_PlayerDown::StaticClass());

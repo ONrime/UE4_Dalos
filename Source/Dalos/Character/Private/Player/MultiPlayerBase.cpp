@@ -11,6 +11,7 @@
 #include "Dalos/Character/Public/Player/PlayerState/PlayerUpper/Armed_PlayerUpper.h"
 #include "Dalos/Character/Public/Player/PlayerState/PlayerUpper/ADS_PlayerUpper.h"
 #include "Dalos/Character/Public/Player/PlayerState/PlayerDown/Splint_PlayerDown.h"
+#include "Dalos/Character/Public/Player/PlayerState/PlayerDown/Sliding_PlayerDown.h"
 #include "Dalos/Character/Public/Player/PlayerArm_AnimInstance.h"
 #include "Dalos/Character/Public/Player/PlayerBody_AnimInstance.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -158,6 +159,10 @@ void AMultiPlayerBase::Tick(float DeltaTime)
 	}*/
 
 	//if (WallForwardTracer() && WallHeightTracer(wallLoc, wallNomal)) WallBackHeightTracer(wallLoc);
+
+	if (downStateNClass == USliding_PlayerDown::StaticClass() && GetVelocity().Size() < 80.0f) {
+		DownPress(NewObject<UStanding_PlayerDown>(this, UStanding_PlayerDown::StaticClass()));
+	}
 
 	if (IsJumped && GetMovementComponent()->IsFalling() == false) IsJumped = false;
 	if (GetVelocity().Size() < 0.3f && downStateNClass == USplint_PlayerDown::StaticClass()) {
