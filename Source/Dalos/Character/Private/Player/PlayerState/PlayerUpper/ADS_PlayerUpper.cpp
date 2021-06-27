@@ -69,6 +69,38 @@ void UADS_PlayerUpper::StateStart(AMultiPlayerBase* player)
 void UADS_PlayerUpper::StateUpdate(AMultiPlayerBase* player)
 {
 	ADSTimeline.TickTimeline(GetWorld()->DeltaTimeSeconds);
+	if (player->HasAuthority()) {
+		player->IsHandUp = HandUpTracer(player);
+	}
+
+	/*if (player->IsHandUp && !player->IsCoverLeft) {
+		player->IsCoverLeft = CoverTracer(player
+			, player->GetMesh()->GetSocketLocation("Cover_Left")+ player->GetMesh()->GetRightVector() * -5.0f
+			, player->coverAngle, 1.0f);
+
+		coverAngle = player->coverAngle;
+	}
+	if (player->IsCoverLeft) {
+		player->coverAngle = FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 50.0f), FVector2D(coverAngle, -15.0f), Yaw);
+	}
+
+	if (player->IsHandUp && !player->IsCoverRight) {
+
+	}
+	else {
+		player->IsCoverRight = CoverTracer(player);
+	}
+
+	if (Player->IsHandUp == true && Player->IsCoverAim_L == false) {
+		Player->IsCoverAim_L = CoverAimTracer(Player
+			, Player->ArmMesh->GetSocketLocation("Cover_Left") + Player->GetMesh()->GetRightVector() * -5.0f, Player->CoverAngle_L, 1.0f);
+		CoverYaw_L = FMath::Abs(Player->GetYaw());
+		Player->SetPlayerRotationYawSpeedSlowOn(true);
+		CoverAngle_L = Player->CoverAngle_L;
+	}
+	if (Player->IsCoverAim_L == true) {
+		Player->CoverAngle_L = FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 50.0f), FVector2D(CoverAngle_L, -15.0f), Yaw);
+	}*/
 }
 
 void UADS_PlayerUpper::StateEnd(AMultiPlayerBase* player)
@@ -100,6 +132,25 @@ void UADS_PlayerUpper::PlayerFire(AMultiPlayerBase* player, AWeaponeBase* equip,
 	}
 	
 }
+
+bool UADS_PlayerUpper::HandUpTracer(AMultiPlayerBase* player)
+{
+	TArray<AActor*> actorstoIgnore;
+	FHitResult outHit;
+	FVector startTrace = player->GetMesh()->GetSocketLocation("HandLoc");
+	FVector endTrace = startTrace + player->FollowCamera->GetForwardVector() * 75.0f;
+	bool IsHit = UKismetSystemLibrary::SphereTraceSingle(this, startTrace, endTrace, 8.0f, ETraceTypeQuery::TraceTypeQuery1
+		, false, actorstoIgnore, EDrawDebugTrace::ForOneFrame, outHit, true);
+
+	return IsHit;
+}
+
+
+bool UADS_PlayerUpper::CoverTracer(AMultiPlayerBase* Player, FVector start, float& angle, float dir)
+{
+	return false;
+}
+
 
 void UADS_PlayerUpper::SetADS()
 {

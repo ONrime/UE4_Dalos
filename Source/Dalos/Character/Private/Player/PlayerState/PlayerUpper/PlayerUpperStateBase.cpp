@@ -37,3 +37,8 @@ void UPlayerUpperStateBase::PlayerFire(AMultiPlayerBase* player, AWeaponeBase* e
 {
 }
 
+bool UPlayerUpperStateBase::HandUpTracer(AMultiPlayerBase* player)
+{
+	return false;
+}
+

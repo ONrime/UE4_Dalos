@@ -161,7 +161,7 @@ void AMultiPlayerBase::Tick(float DeltaTime)
 	//if (WallForwardTracer() && WallHeightTracer(wallLoc, wallNomal)) WallBackHeightTracer(wallLoc);
 
 	if (downStateNClass == USliding_PlayerDown::StaticClass() && GetVelocity().Size() < 80.0f) {
-		DownPress(NewObject<UStanding_PlayerDown>(this, UStanding_PlayerDown::StaticClass()));
+		DownPress(NewObject<UCrouch_PlayerDown>(this, UCrouch_PlayerDown::StaticClass()));
 	}
 
 	if (IsJumped && GetMovementComponent()->IsFalling() == false) IsJumped = false;
@@ -1093,6 +1093,10 @@ void AMultiPlayerBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& O
 
 	DOREPLIFETIME_CONDITION(AMultiPlayerBase, upperPitch, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(AMultiPlayerBase, IsJumped, COND_SkipOwner);
+	DOREPLIFETIME(AMultiPlayerBase, IsHandUp);
+	DOREPLIFETIME(AMultiPlayerBase, IsCoverLeft);
+	DOREPLIFETIME(AMultiPlayerBase, IsCoverRight);
+	DOREPLIFETIME(AMultiPlayerBase, coverAngle);
 	//DOREPLIFETIME_CONDITION(AMultiPlayerBase, PlayerSpeed, COND_SkipOwner);
 	//DOREPLIFETIME_CONDITION(AMultiPlayerBase, controllerRot, COND_SkipOwner);
 }

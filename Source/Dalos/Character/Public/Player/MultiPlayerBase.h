@@ -153,8 +153,10 @@ public:
 	float GetAimDirRight() { return aimDirRight; } float GetAimDirUp() { return aimDirUp; }
 	float GetInputDirForward() { return inputDirForward; } float GetInputDirRight() { return inputDirRight; }
 	EPlayerPress GetPlayerPress() { return playerPress; }
-	UPlayerArm_AnimInstance* GetArmAnim() { return armAnim; }
 	bool GetIsCameraLock() { return IsCameraLock; }
+	class UPlayerBody_AnimInstance* GetBodyAnim() { return bodyAnim; }
+	class UPlayerBody_AnimInstance* GetLegAnim() { return legAnim; }
+	class UPlayerArm_AnimInstance* GetArmAnim() { return armAnim; }
 
 	void FireBullet(FVector muzzleLoc, FRotator muzzleRot, FRotator bulletRotation);
 
@@ -229,5 +231,13 @@ public:
 	bool IsWall = false;
 	bool IsWallThick = false;
 	bool IsVault = false;
+	UPROPERTY(Replicated)
+	bool IsHandUp = false;
+	UPROPERTY(Replicated)
+	bool IsCoverLeft = false;
+	UPROPERTY(Replicated)
+	bool IsCoverRight = false;
+	UPROPERTY(Replicated)
+	float coverAngle = 0.0f;
 
 };

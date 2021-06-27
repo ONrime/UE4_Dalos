@@ -14,6 +14,8 @@ UPlayerBody_AnimInstance::UPlayerBody_AnimInstance()
 	if (VAULT.Succeeded()) Vault_Montage = VAULT.Object;
 	static ConstructorHelpers::FObjectFinder<UAnimMontage>CLIMB(TEXT("AnimMontage'/Game/Player/Anim/Body/Climb/ALS_N_Mantle_1m_RH_Montage.ALS_N_Mantle_1m_RH_Montage'"));
 	if (CLIMB.Succeeded()) Climb_Montage = CLIMB.Object;
+	static ConstructorHelpers::FObjectFinder<UAnimMontage>SLIDING(TEXT("AnimMontage'/Game/Player/Anim/Body/Sliding_Body_Montage.Sliding_Body_Montage'"));
+	if (SLIDING.Succeeded()) Sliding_Montage = SLIDING.Object;
 }
 
 void UPlayerBody_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -35,6 +37,7 @@ void UPlayerBody_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 		IsJumped = player->IsJumped;
 		IsFalling = player->GetMovementComponent()->IsFalling();
+		IsHandUp = player->IsHandUp;
 
 		//UE_LOG(LogTemp, Warning, TEXT("upperPitch: %f"), player->GetControllerRot().Pitch - player->GetActorRotation().Pitch);
 	}
@@ -48,6 +51,11 @@ void UPlayerBody_AnimInstance::PlayVaultMontage()
 void UPlayerBody_AnimInstance::PlayClimbMontage()
 {
 	Montage_Play(Climb_Montage, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, true);
+}
+
+void UPlayerBody_AnimInstance::PlaySlidingMontage()
+{
+	Montage_Play(Sliding_Montage, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, true);
 }
 
 void UPlayerBody_AnimInstance::StopMontage()

@@ -5,6 +5,8 @@
 #include "Dalos/Character/Public/Player/PlayerState/PlayerDown/Standing_PlayerDown.h"
 #include "Dalos/Character/Public/Player/PlayerState/PlayerDown/Splint_PlayerDown.h"
 #include "Dalos/Character/Public/Player/PlayerState/PlayerDown/Crouch_PlayerDown.h"
+#include "Dalos/Character/Public/Player/PlayerBody_AnimInstance.h"
+#include "Dalos/Character/Public/Player/PlayerArm_AnimInstance.h"
 #include "GameFramework/PlayerInput.h"
 #include "GameFramework/PlayerController.h"
 #include "Camera/CameraShake.h"
@@ -47,6 +49,8 @@ void USliding_PlayerDown::StateStart(AMultiPlayerBase* player)
 	pelvisZ = 20.0f;
 	player->IsMove = false;
 	player->AddMovementInput(player->GetMesh()->GetRightVector(), 30.0f);
+	player->GetBodyAnim()->PlaySlidingMontage();
+	player->GetLegAnim()->PlaySlidingMontage();
 }
 
 void USliding_PlayerDown::StateUpdate(AMultiPlayerBase* player)
@@ -81,6 +85,8 @@ void USliding_PlayerDown::StateEnd(AMultiPlayerBase* player)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Sliding: StateEnd"));
 	player->IsMove = true;
+	player->GetBodyAnim()->StopMontage();
+	player->GetLegAnim()->StopMontage();
 }
 
 UClass* USliding_PlayerDown::GetState()

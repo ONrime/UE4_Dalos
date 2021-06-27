@@ -24,6 +24,7 @@ public:
 
 	void PlayVaultMontage();
 	void PlayClimbMontage();
+	void PlaySlidingMontage();
 	void StopMontage();
 
 	FAnimNotifyDelegate vaultDelegate;
@@ -33,6 +34,8 @@ public:
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
 	bool IsFalling = false;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
+	bool IsHandUp = false;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
 	bool IsJumped = false;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Aim, Meta = (AllowPrivateAccess = true))
@@ -60,6 +63,7 @@ private:
 
 	UAnimMontage* Vault_Montage;
 	UAnimMontage* Climb_Montage;
+	UAnimMontage* Sliding_Montage;
 
 	UFUNCTION()
 	void AnimNotify_ClimbEnd();

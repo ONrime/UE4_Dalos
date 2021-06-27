@@ -68,6 +68,10 @@ void UArmed_PlayerUpper::StateStart(AMultiPlayerBase* player)
 void UArmed_PlayerUpper::StateUpdate(AMultiPlayerBase* player)
 {
 	ADSTimeline.TickTimeline(GetWorld()->DeltaTimeSeconds);
+	if (player->HasAuthority()) {
+		player->IsHandUp = HandUpTracer(player);
+	}
+	
 }
 
 void UArmed_PlayerUpper::StateEnd(AMultiPlayerBase* player)
@@ -100,14 +104,27 @@ void UArmed_PlayerUpper::PlayerFire(AMultiPlayerBase* player, AWeaponeBase* equi
 	
 }
 
+bool UArmed_PlayerUpper::HandUpTracer(AMultiPlayerBase* player)
+{
+	TArray<AActor*> actorstoIgnore;
+	FHitResult outHit;
+	FVector startTrace = player->GetMesh()->GetSocketLocation("HandLoc");
+	FVector endTrace = startTrace + player->FollowCamera->GetForwardVector() * 75.0f;
+	bool IsHit = UKismetSystemLibrary::SphereTraceSingle(this, startTrace, endTrace, 8.0f, ETraceTypeQuery::TraceTypeQuery1
+		, false, actorstoIgnore, EDrawDebugTrace::ForOneFrame, outHit, true);
+
+	return IsHit;
+}
+
 void UArmed_PlayerUpper::SetUnADS()
 {
 	if (playerCamera) {
 		playerCamera->SetFieldOfView(FMath::Lerp(50.0f, 90.0f, ADSTimeline.GetPlaybackPosition()));
 	}
 }
-
 void UArmed_PlayerUpper::SetUnADSFinish()
 {
 
 }
+
+

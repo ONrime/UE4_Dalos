@@ -4,6 +4,7 @@
 #include "Dalos/Character/Public/Player/PlayerArm_AnimInstance.h"
 #include "Dalos/Character/Public/Player/MultiPlayerBase.h"
 #include "Dalos/Character/Public/Player/PlayerState/PlayerUpper/Armed_PlayerUpper.h"
+#include "Net/UnrealNetwork.h"
 #include "PlayerBody_AnimInstance.h"
 #include "PlayerArm_AnimInstance.h"
 
@@ -29,9 +30,12 @@ void UPlayerArm_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (::IsValid(pawn)) {
 		auto player = Cast<AMultiPlayerBase>(pawn);
 		playerSpeed = player->GetVelocity().Size();
+		FRotator InterpToAngle = (player->GetControllerRot() - player->GetActorRotation()).GetNormalized();
+		upperPitch = FMath::ClampAngle(InterpToAngle.Pitch, -90.0f, 90.0f);
 
 		IsJumped = player->IsJumped;
 		IsFalling = player->GetMovementComponent()->IsFalling();
+		IsHandUp = player->IsHandUp;
 
 		upperStateNClass = player->upperStateNClass;
 		downStateNClass= player->downStateNClass;
@@ -94,4 +98,11 @@ void UPlayerArm_AnimInstance::PlayReloadMontage()
 void UPlayerArm_AnimInstance::StopReloadMontage()
 {
 	Montage_Stop(0.1f);
+}
+
+void UPlayerArm_AnimInstance::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(UPlayerArm_AnimInstance, upperPitch, COND_SkipOwner);
 }
