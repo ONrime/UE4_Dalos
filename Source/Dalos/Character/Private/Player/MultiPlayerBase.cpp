@@ -14,6 +14,8 @@
 #include "Dalos/Character/Public/Player/PlayerState/PlayerDown/Sliding_PlayerDown.h"
 #include "Dalos/Character/Public/Player/PlayerArm_AnimInstance.h"
 #include "Dalos/Character/Public/Player/PlayerBody_AnimInstance.h"
+#include "Dalos/Stage/TwoVersus/Public/TwoVersus_GameState.h"
+#include "Dalos/Stage/TwoVersus/Public/TwoVersus_PlayerState.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 
@@ -72,11 +74,13 @@ AMultiPlayerBase::AMultiPlayerBase()
 	if (ARM_ANIMBP.Succeeded()) { ArmMesh->SetAnimInstanceClass(ARM_ANIMBP.Class); }
 
 	BodyMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BODY"));
+	BodyMesh->SetGenerateOverlapEvents(true);
 	BodyMesh->SetupAttachment(RootComponent);
 	BodyMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -97.0f));
 	BodyMesh->SetRelativeRotation(FRotator(0.0f, 270.0f, 0.0f));
 	BodyMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-	BodyMesh->SetCollisionProfileName("CharacterMesh");
+	BodyMesh->SetCollisionProfileName("BodyMesh");
+	BodyMesh->OnComponentBeginOverlap.AddDynamic(this, &AMultiPlayerBase::OnOverlapBegin_Mesh);
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>LEGBODY_SKELETALMESH(TEXT("SkeletalMesh'/Game/Mannequin/Character/Mesh/SK_Mannequin.SK_Mannequin'"));
 	if (LEGBODY_SKELETALMESH.Succeeded()) { BodyMesh->SetSkeletalMesh(LEGBODY_SKELETALMESH.Object); }
 	static ConstructorHelpers::FClassFinder<UAnimInstance>LEGBODY_ANIMBP(TEXT("AnimBlueprint'/Game/Player/Anim/Body/PlayerBodyAnimBP.PlayerBodyAnimBP_C'"));
@@ -90,6 +94,15 @@ AMultiPlayerBase::AMultiPlayerBase()
 	GetCharacterMovement()->MovementMode = EMovementMode::MOVE_Walking;
 
 
+}
+
+float AMultiPlayerBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float damage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	ATwoVersus_PlayerState* playerstate = Cast<ATwoVersus_PlayerState>(GetPlayerState()); 
+	playerstate->DamageToHP(damage);
+	UE_LOG(LogTemp, Warning, TEXT("HP: %d"), playerstate->GetPlyaerHP());
+	return damage;
 }
 
 void AMultiPlayerBase::BeginPlay()
@@ -113,7 +126,7 @@ void AMultiPlayerBase::BeginPlay()
 	downStateNClass = downState->GetState();
 	upperState->StateStart(this);
 	downState->StateStart(this);
-
+	UE_LOG(LogTemp, Warning, TEXT("BeginePlay"));
 
 }
 
@@ -247,6 +260,20 @@ void AMultiPlayerBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 void AMultiPlayerBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
+}
+
+void AMultiPlayerBase::OnOverlapBegin_Mesh(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (HasAuthority()) {
+		UE_LOG(LogTemp, Warning, TEXT("Hit"));
+		ATwoVersus_GameState* gameState = Cast<ATwoVersus_GameState>(UGameplayStatics::GetGameState(GetWorld()));
+
+		for (int i = 0; i < gameState->PlayerArray.Num(); i++) {
+			if (gameState->PlayerArray[i] == GetPlayerState()) {
+
+			}
+		}
+	}
 }
 
 bool AMultiPlayerBase::InteractionCheck()

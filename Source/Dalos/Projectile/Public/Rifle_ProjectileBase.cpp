@@ -12,7 +12,6 @@ ARifle_ProjectileBase::ARifle_ProjectileBase()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	BodyMesh->OnComponentBeginOverlap.AddDynamic(this, &ARifle_ProjectileBase::OnOverlapBegin);
 	BodyMesh->SetRelativeScale3D(FVector(0.3f, 0.02f, 0.02f));
 	//MeshBody->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
@@ -36,7 +35,7 @@ ARifle_ProjectileBase::ARifle_ProjectileBase()
 		bulletHoleDecal = BULLETHOLE_DECAL.Object;
 	}
 
-	projectileDamage = 15.0f;
+	projectileDamage = 12.0f;
 }
 
 void ARifle_ProjectileBase::BeginPlay()
@@ -45,20 +44,9 @@ void ARifle_ProjectileBase::BeginPlay()
 	SetLifeSpan(1000.0f);
 }
 
-void ARifle_ProjectileBase::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ARifle_ProjectileBase::OnOverlapBegin_Body(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	FVector decalLoc = SweepResult.Location;
-	FRotator decalRot = FRotationMatrix::MakeFromX(SweepResult.Normal).Rotator();
+	Super::OnOverlapBegin_Body(OverlappedComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
-	if (OtherActor != nullptr) {
-		if (OtherComp->GetCollisionProfileName() == "Wall") {
-			auto bulletHole = UGameplayStatics::SpawnDecalAttached(bulletHoleDecal, FVector(25.0f, 25.0f, 25.0f), OtherComp, TEXT("BulletHole"), decalLoc, decalRot, EAttachLocation::KeepWorldPosition, 100.0f);
-			bulletHole->SetLifeSpan(10.0f);
-			Destroy();
-		}
-		else {
-			Destroy();
-		}
-
-	}
+	//UE_LOG(LogTemp, Warning, TEXT("ProjectileHitt"));
 }

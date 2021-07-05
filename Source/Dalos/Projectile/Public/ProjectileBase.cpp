@@ -5,6 +5,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/DecalComponent.h"
 
 // Sets default values
 AProjectileBase::AProjectileBase()
@@ -20,6 +22,7 @@ AProjectileBase::AProjectileBase()
 	BodyMesh->SetRelativeScale3D(FVector(2.0f, 0.025f, 0.025f));
 	BodyMesh->SetCollisionProfileName("Projectile");
 	BodyMesh->SetGenerateOverlapEvents(true);
+	BodyMesh->OnComponentBeginOverlap.AddDynamic(this, &AProjectileBase::OnOverlapBegin_Body);
 
 	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("SPHERECOLLISION"));
 	Sphere->SetupAttachment(RootComponent);
@@ -55,4 +58,26 @@ void AProjectileBase::SetProjectileVelocity(float Velocity)
 {
 	Movement->InitialSpeed = Velocity;
 }
+
+void AProjectileBase::OnOverlapBegin_Body(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	FVector decalLoc = SweepResult.Location;
+	FRotator decalRot = FRotationMatrix::MakeFromX(SweepResult.Normal).Rotator();
+
+	if (OtherActor != nullptr) {
+		if (OtherComp->GetCollisionProfileName() == "Wall") {
+			auto bulletHole = UGameplayStatics::SpawnDecalAttached(bulletHoleDecal, FVector(25.0f, 25.0f, 25.0f), OtherComp, TEXT("BulletHole"), decalLoc, decalRot, EAttachLocation::KeepWorldPosition, 100.0f);
+			bulletHole->SetLifeSpan(10.0f);
+		}
+		else if (OtherComp->GetCollisionProfileName() == "BodyMesh") {
+			UGameplayStatics::ApplyDamage(OtherActor, projectileDamage, nullptr, this, nullptr);
+			UE_LOG(LogTemp, Warning, TEXT("Projectil: Player Hit"));
+		}
+		else {
+			//UE_LOG(LogTemp, Warning, TEXT("Projectil: Hit"));
+		}
+		Destroy();
+	}
+}
+
 
