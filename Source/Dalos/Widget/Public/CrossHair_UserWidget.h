@@ -15,5 +15,11 @@ class DALOS_API UCrossHair_UserWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cross")
+	ESlateVisibility corssHairVis = ESlateVisibility::Visible;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cross")
+	bool IsRed = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cross")
+	float crossHairSpread = 0.0f;
 
 };

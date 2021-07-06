@@ -65,6 +65,8 @@ protected:
 	class UPlayerBody_AnimInstance* bodyAnim = nullptr;
 	UPROPERTY()
 	class UPlayerBody_AnimInstance* legAnim = nullptr;
+	UPROPERTY()
+	class AMultiPlayer_HUD* HUD = nullptr;
 	class AWeaponeBase* equipWeapone = nullptr;
 	class AWeaponeBase* equipWeaponeArm = nullptr;
 	class AWeaponeBase* backWeapone1 = nullptr;
@@ -162,6 +164,7 @@ public:
 	class UPlayerBody_AnimInstance* GetBodyAnim() { return bodyAnim; }
 	class UPlayerBody_AnimInstance* GetLegAnim() { return legAnim; }
 	class UPlayerArm_AnimInstance* GetArmAnim() { return armAnim; }
+	class AMultiPlayer_HUD* GetHUD() { return HUD; }
 
 	void FireBullet(FVector muzzleLoc, FRotator muzzleRot, FRotator bulletRotation);
 

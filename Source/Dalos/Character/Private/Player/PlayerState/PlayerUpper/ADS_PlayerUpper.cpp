@@ -4,6 +4,7 @@
 #include "Dalos/Character/Public/Player/PlayerState/PlayerUpper/ADS_PlayerUpper.h"
 #include "Dalos/Character/Public/Player/PlayerState/PlayerUpper/Armed_PlayerUpper.h"
 #include "Dalos/Character/Public/Player/PlayerState/PlayerUpper/UnArmed_PlayerUpper.h"
+#include "Dalos/Widget/Public/MultiPlayer_HUD.h"
 #include "GameFramework/PlayerInput.h"
 #include "GameFramework/PlayerController.h"
 #include "Camera/CameraComponent.h"
@@ -64,6 +65,9 @@ void UADS_PlayerUpper::StateStart(AMultiPlayerBase* player)
 		ADSTimeline.SetPlayRate(4.0f);
 		ADSTimeline.PlayFromStart();
 	}
+	if (player->IsLocallyControlled()) {
+		if (player->GetHUD()->CrossHairHideCheck.IsBound()) player->GetHUD()->CrossHairHideCheck.Execute(true);
+	}
 }
 
 void UADS_PlayerUpper::StateUpdate(AMultiPlayerBase* player)
@@ -106,6 +110,9 @@ void UADS_PlayerUpper::StateUpdate(AMultiPlayerBase* player)
 void UADS_PlayerUpper::StateEnd(AMultiPlayerBase* player)
 {
 	//UE_LOG(LogTemp, Warning, TEXT("ADS: StateEnd"));
+	if (player->IsLocallyControlled()) {
+		if (player->GetHUD()->CrossHairHideCheck.IsBound()) player->GetHUD()->CrossHairHideCheck.Execute(false);
+	}
 }
 
 UClass* UADS_PlayerUpper::GetState()

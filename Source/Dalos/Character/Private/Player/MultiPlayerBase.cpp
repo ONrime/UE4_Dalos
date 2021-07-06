@@ -16,6 +16,7 @@
 #include "Dalos/Character/Public/Player/PlayerBody_AnimInstance.h"
 #include "Dalos/Stage/TwoVersus/Public/TwoVersus_GameState.h"
 #include "Dalos/Stage/TwoVersus/Public/TwoVersus_PlayerState.h"
+#include "Dalos/Widget/Public/MultiPlayer_HUD.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 
@@ -80,7 +81,7 @@ AMultiPlayerBase::AMultiPlayerBase()
 	BodyMesh->SetRelativeRotation(FRotator(0.0f, 270.0f, 0.0f));
 	BodyMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	BodyMesh->SetCollisionProfileName("BodyMesh");
-	BodyMesh->OnComponentBeginOverlap.AddDynamic(this, &AMultiPlayerBase::OnOverlapBegin_Mesh);
+	//BodyMesh->OnComponentBeginOverlap.AddDynamic(this, &AMultiPlayerBase::OnOverlapBegin_Mesh);
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>LEGBODY_SKELETALMESH(TEXT("SkeletalMesh'/Game/Mannequin/Character/Mesh/SK_Mannequin.SK_Mannequin'"));
 	if (LEGBODY_SKELETALMESH.Succeeded()) { BodyMesh->SetSkeletalMesh(LEGBODY_SKELETALMESH.Object); }
 	static ConstructorHelpers::FClassFinder<UAnimInstance>LEGBODY_ANIMBP(TEXT("AnimBlueprint'/Game/Player/Anim/Body/PlayerBodyAnimBP.PlayerBodyAnimBP_C'"));
@@ -109,6 +110,7 @@ void AMultiPlayerBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	HUD = Cast<AMultiPlayer_HUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
 	GetMesh()->HideBoneByName(FName("spine_02"), PBO_None);
 	GetMesh()->SetOnlyOwnerSee(true);
 	GetMesh()->SetCastShadow(false);
@@ -126,6 +128,7 @@ void AMultiPlayerBase::BeginPlay()
 	downStateNClass = downState->GetState();
 	upperState->StateStart(this);
 	downState->StateStart(this);
+	
 	UE_LOG(LogTemp, Warning, TEXT("BeginePlay"));
 
 }
@@ -164,7 +167,10 @@ void AMultiPlayerBase::Tick(float DeltaTime)
 	upperState->StateUpdate(this);
 	
 	PlayerMove();
-	CrossHairCheck();
+	if (IsLocallyControlled()) {
+		CrossHairCheck();
+		if (HUD) HUD->SetCrossHairSpread(FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 330.0f), FVector2D(0.0f, 250.0f), GetVelocity().Size()));
+	}
 	RecoilCheck();
 
 	/*if (WallForwardTracer() && WallHeightTracer(wallLoc, wallNomal) && !IsVault) {
@@ -322,9 +328,13 @@ bool AMultiPlayerBase::CrossHairCheck()
 	}
 	else { muzzleLoc = FollowCamera->GetComponentLocation(); }
 
+	bool redCheck = false;
 	if (hitis) {
 		crossHairEndLoc = outHit.Location;
 		distance = outHit.Distance;
+		if (outHit.GetComponent()->GetCollisionProfileName() == "BodyMesh") {
+			redCheck = true;
+		}
 	}
 	else {
 		crossHairEndLoc = endTracer;
@@ -348,6 +358,8 @@ bool AMultiPlayerBase::CrossHairCheck()
 	기존에 있는 것 보다 정확하게 수치에 따라 변하도록 업그레이드를 했다
 	기존의 것은 거리에 따라 커지게는 만들었지만 일정하게 조절하지 못하게 만들었다.
 	이번에는 fov 수치를 이용해서 좀더 정확한 수치가 나오도록 업그레이드를 했다.*/
+
+	if (HUD && HUD->CrossHairRedCheck.IsBound()) HUD->CrossHairRedCheck.Execute(redCheck);
 
 	return hitis;
 }
@@ -667,17 +679,13 @@ void AMultiPlayerBase::PlayerMove()
 		if (moveDir.IsZero()) {
 			return;
 		}
-		//UE_LOG(LogTemp, Warning, TEXT("PlayerSpeed: %f"), PlayerSpeed);
 		moveDir.Normalize();
-
-		//float InputDir = 0.0f;
 		if (FMath::Abs(inputDirForward) > FMath::Abs(inputDirRight)) {
 			inputDir = FMath::Abs(inputDirForward);
 		}
 		else { inputDir = FMath::Abs(inputDirRight); }
 		//UE_LOG(LogTemp, Warning, TEXT("Input: %f"), FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 1.0f), FVector2D(0.0f, PlayerSpeed), InputDir));
 		AddMovementInput(moveDir, FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 1.0f), FVector2D(0.0f, PlayerSpeed), inputDir) * 0.008f);
-		//MoveDir.Set(0.0f, 0.0f, 0.0f);
 		downState->PlayerMove(this, inputDir, inputDirRight);
 	}
 }

@@ -5,6 +5,7 @@
 #include "Dalos/Character/Public/Player/PlayerState/PlayerDown/Standing_PlayerDown.h"
 #include "Dalos/Character/Public/Player/PlayerState/PlayerDown/Crouch_PlayerDown.h"
 #include "Dalos/Character/Public/Player/PlayerState/PlayerDown/Sliding_PlayerDown.h"
+#include "Dalos/Widget/Public/MultiPlayer_HUD.h"
 #include "GameFramework/PlayerInput.h"
 #include "GameFramework/PlayerController.h"
 #include "Dalos/CameraShake/Public/Player_Splint_CameraShake.h"
@@ -49,6 +50,9 @@ void USplint_PlayerDown::StateStart(AMultiPlayerBase* player)
 	UE_LOG(LogTemp, Warning, TEXT("Splint: StateStart"));
 	pelvisZ = 60.0f;
 	player->PlayerSpeed = 120.0f;
+	if (player->IsLocallyControlled()) {
+		if(player->GetHUD()->CrossHairHideCheck.IsBound()) player->GetHUD()->CrossHairHideCheck.Execute(true);
+	}
 }
 
 void USplint_PlayerDown::StateUpdate(AMultiPlayerBase* player)
@@ -82,6 +86,9 @@ void USplint_PlayerDown::StateEnd(AMultiPlayerBase* player)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Splint: StateEnd"));
 	GetWorld()->GetFirstPlayerController()->PlayerCameraManager->StopCameraShake(splintShake);
+	if (player->IsLocallyControlled()) {
+		if (player->GetHUD()->CrossHairHideCheck.IsBound()) player->GetHUD()->CrossHairHideCheck.Execute(false);
+	}
 }
 
 UClass* USplint_PlayerDown::GetState()
