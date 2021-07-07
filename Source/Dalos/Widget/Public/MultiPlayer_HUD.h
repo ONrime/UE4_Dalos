@@ -38,8 +38,15 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+	float currentSpread = 0.0f;
+	float targetSpread = 0.0f;
+	float backSpread = 0.0f;
+	bool IsFire = false;
+	bool IsBackSpread = false;
+
 public:
-	void SetCrossHairSpread(float corss);
+	void SetCrossHairSpread(float cross, bool back, bool fire);
+	float GetTargetSpread() { return targetSpread; }
 
 
 };

@@ -86,6 +86,7 @@ protected:
 	FVector recoilReturnLoc = FVector::ZeroVector;
 	FVector recoilReturnDir = FVector::ZeroVector;
 	FRotator bulletRot = FRotator::ZeroRotator;
+	float spreadSize = 0.0f;
 
 	UPROPERTY(Replicated)
 	float upperPitch = 0.0f;

@@ -51,7 +51,7 @@ void AProjectileBase::Tick(float DeltaTime)
 }
 void AProjectileBase::ProjectileFire(FVector FireDir)
 {
-	UE_LOG(LogTemp, Warning, TEXT("ProjectileFire"));
+	//UE_LOG(LogTemp, Warning, TEXT("ProjectileFire"));
 	Movement->Velocity = FireDir * Movement->InitialSpeed;
 }
 void AProjectileBase::SetProjectileVelocity(float Velocity)
@@ -71,7 +71,7 @@ void AProjectileBase::OnOverlapBegin_Body(UPrimitiveComponent* OverlappedComp, A
 		}
 		else if (OtherComp->GetCollisionProfileName() == "BodyMesh") {
 			UGameplayStatics::ApplyDamage(OtherActor, projectileDamage, nullptr, this, nullptr);
-			UE_LOG(LogTemp, Warning, TEXT("Projectil: Player Hit"));
+			//UE_LOG(LogTemp, Warning, TEXT("Projectil: Player Hit"));
 		}
 		else {
 			//UE_LOG(LogTemp, Warning, TEXT("Projectil: Hit"));

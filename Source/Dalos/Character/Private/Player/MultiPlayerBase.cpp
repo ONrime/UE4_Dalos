@@ -169,7 +169,9 @@ void AMultiPlayerBase::Tick(float DeltaTime)
 	PlayerMove();
 	if (IsLocallyControlled()) {
 		CrossHairCheck();
-		if (HUD) HUD->SetCrossHairSpread(FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 330.0f), FVector2D(0.0f, 250.0f), GetVelocity().Size()));
+		if (HUD && equipWeapone && !IsFire) {
+			HUD->SetCrossHairSpread(FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 330.0f), FVector2D(0.0f, equipWeapone->GetWalkSpreadSize()), GetVelocity().Size()), false, IsFire);
+		}
 	}
 	RecoilCheck();
 
@@ -190,6 +192,15 @@ void AMultiPlayerBase::Tick(float DeltaTime)
 
 	if (IsFire && IsFireAuto) {
 		FireBullet(equipWeaponeArm->BodyMesh->GetSocketLocation("Muzzle"), FollowCamera->GetComponentRotation(), bulletRot);
+		if (HUD && equipWeapone) {
+			float spread = equipWeapone->GetFireStartSpreadSize();
+			if (HUD->GetTargetSpread() <= spread) {
+				HUD->SetCrossHairSpread(HUD->GetTargetSpread() + 80.0f, false, IsFire);
+			}
+			if (spreadSize > 10.0f) {
+				spreadSize = spreadSize - 30.0f;
+			}
+		}
 	}
 	if (recoilReturn && IsFire == false) {
 		float RecoilNowRotatorPitch = FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 360.0f), FVector2D(-90.0f, 90.0f), (Controller->GetControlRotation()).Pitch);
@@ -323,8 +334,8 @@ bool AMultiPlayerBase::CrossHairCheck()
 	bool hitis = UKismetSystemLibrary::LineTraceSingle(GetWorld(), startTracer, endTracer, ETraceTypeQuery::TraceTypeQuery4, false
 		, actorsToIgnore, EDrawDebugTrace::None, outHit, true);
 
-	if (equipWeapone != nullptr) {
-		muzzleLoc = equipWeapone->BodyMesh->GetSocketLocation("Muzzle");
+	if (equipWeaponeArm != nullptr) {
+		muzzleLoc = equipWeaponeArm->BodyMesh->GetSocketLocation("Muzzle");
 	}
 	else { muzzleLoc = FollowCamera->GetComponentLocation(); }
 
@@ -340,12 +351,13 @@ bool AMultiPlayerBase::CrossHairCheck()
 		crossHairEndLoc = endTracer;
 		distance = 2000.0f;
 	}
-	float radius = (FMath::Tan(FollowCamera->FieldOfView / 2.0f) * distance) / 30.0f; // 40을 바꾸기
-
+	float radius = (FMath::Tan(FollowCamera->FieldOfView / 2.0f) * distance) / spreadSize; // 40을 바꾸기
 	float bulletEndLocationZ = FMath::RandRange((crossHairEndLoc + (FollowCamera->GetUpVector() * radius)).Z,
 		(crossHairEndLoc + (-(FollowCamera->GetUpVector()) * radius)).Z);
+	//float bulletEndLocationTestZ = (crossHairEndLoc + ((FollowCamera->GetUpVector()) * radius)).Z;
 	float bulletEndLocationY = FMath::RandRange((crossHairEndLoc + (FollowCamera->GetRightVector() * radius)).Y,
 		(crossHairEndLoc + (-(FollowCamera->GetRightVector()) * radius)).Y);
+	//float bulletEndLocationTestY = (crossHairEndLoc + (FollowCamera->GetRightVector() * radius)).Y;
 	float bulletEndLocationX = crossHairEndLoc.X;
 
 	bulletEndLoc = FVector(bulletEndLocationX, bulletEndLocationY, bulletEndLocationZ);
@@ -579,6 +591,7 @@ void AMultiPlayerBase::PlayerFire()
 	recoilPitch = 0.0f;
 	recoilReturnDir = FVector::ZeroVector;
 	recoilRot = FRotator::ZeroRotator;
+	spreadSize = 70.0f;
 	if (equipWeapone && equipWeaponeArm) {
 		upperState->PlayerFire(this, equipWeapone, IsFireAuto, threeCount
 			, equipWeaponeArm->BodyMesh->GetSocketLocation("Muzzle"), FollowCamera->GetComponentRotation(), bulletRot);
@@ -590,6 +603,8 @@ void AMultiPlayerBase::PlayerUnFire()
 	armAnim->StopFireMontage();
 	IsFire = false;
 	IsFireAuto = false;
+	spreadSize = 70.0f;
+	if (HUD && equipWeapone) HUD->SetCrossHairSpread(0.0f, false, false);
 }
 
 void AMultiPlayerBase::PlayerReload()

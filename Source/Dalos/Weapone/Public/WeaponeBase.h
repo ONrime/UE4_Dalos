@@ -52,6 +52,10 @@ protected:
 	float fireRecoilYaw = 0.0f;
 	UAnimMontage* fireMontage;
 	UAnimMontage* reloadMontage;
+	float walkSpreadSize = 0.0f;
+	float fireStartSpreadSize = 0.0f;
+	float fireEndSpreadSize = 0.0f;
+	float standSpreadSize = 0.0f;
 
 	virtual void StateStart(WEAPONSTATE state);
 
@@ -71,6 +75,10 @@ public:
 	WEAPONLEVER GetWeaponeLever() { return WeaponeLever; }; void SetWeaponeLever(WEAPONLEVER set) { WeaponeLever = set; };
 	bool GetIsEmpty() { return IsEmpty; }; void SetIsEmpty(bool set) { IsEmpty = set; };
 	bool GetIsReload() { return IsReload; }; void SetIsReload(bool set) { IsReload = set; };
+	float GetWalkSpreadSize() { return walkSpreadSize; }
+	float GetFireStartSpreadSize() { return fireStartSpreadSize; }
+	float GetFireEndSpreadSize() { return fireEndSpreadSize; }
+	float GetStandSpreadSize() { return standSpreadSize; }
 	virtual float GetFireRecoilPitch(); 
 	virtual float GetFireRecoilYaw();
 	virtual UClass* GetStaticClass();

@@ -39,6 +39,10 @@ AAK_Weapone::AAK_Weapone()
 	//InAmmo = FMath::FRandRange(2.0f, 5.0f);
 	MaxInAmmo = 7.0f;
 	InAmmo = MaxInAmmo;*/
+	walkSpreadSize = 250.0f;
+	fireStartSpreadSize = 230.0f;
+	fireEndSpreadSize = 280.0f;
+	standSpreadSize = 0.0f;
 }
 
 void AAK_Weapone::BeginPlay()
