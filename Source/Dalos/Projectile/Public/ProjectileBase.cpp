@@ -7,6 +7,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/DecalComponent.h"
+#include "Dalos/Widget/Public/MultiPlayer_HUD.h"
 
 // Sets default values
 AProjectileBase::AProjectileBase()

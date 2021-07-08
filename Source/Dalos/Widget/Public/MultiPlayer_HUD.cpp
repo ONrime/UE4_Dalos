@@ -3,12 +3,18 @@
 
 #include "Dalos/Widget/Public/MultiPlayer_HUD.h"
 #include "Dalos/Widget/Public/CrossHair_UserWidget.h"
+#include "Dalos/Widget/Public/HitCheck_UserWidget.h"
+#include "Dalos/Widget/Public/PlayerHitCheck_UserWidget.h"
 #include "Blueprint/UserWidget.h"
 
 AMultiPlayer_HUD::AMultiPlayer_HUD() 
 {
 	static ConstructorHelpers::FClassFinder<UUserWidget>CROSSHAIR_WIDGET(TEXT("WidgetBlueprint'/Game/UI/Player/CrossHair.CrossHair_C'"));
 	if (CROSSHAIR_WIDGET.Succeeded()) CrossHairWidget = CreateWidget<UUserWidget>(GetWorld(), CROSSHAIR_WIDGET.Class);
+	static ConstructorHelpers::FClassFinder<UUserWidget>HITCHECK_WIDGET(TEXT("WidgetBlueprint'/Game/UI/Player/HitCheck.HitCheck_C'"));
+	if (HITCHECK_WIDGET.Succeeded()) HitCheckClass= HITCHECK_WIDGET.Class;
+	static ConstructorHelpers::FClassFinder<UUserWidget>PLAYERHITCHECK_WIDGET(TEXT("WidgetBlueprint'/Game/UI/Player/PlayerHitCheck.PlayerHitCheck_C'"));
+	if (PLAYERHITCHECK_WIDGET.Succeeded()) PlayerHitCheckClass = PLAYERHITCHECK_WIDGET.Class;
 	
 
 }
@@ -36,35 +42,39 @@ void AMultiPlayer_HUD::PostInitializeComponents()
 		IsRed = check;
 		cross->IsRed = check;
 		});
+	HitRedCheck.BindLambda([this](bool check)->void {
+		auto HitCheckWidget = CreateWidget<UUserWidget>(GetWorld(), HitCheckClass);
+		if (HitCheckWidget != nullptr) {
+			HitCheckWidget->AddToViewport();
+			UHitCheck_UserWidget* hit = Cast<UHitCheck_UserWidget>(HitCheckWidget);
+			hit->RedCheck(check);
+		}
+		});
+	PlyaerHitLocCheck.BindLambda([this](FVector loc)->void {
+		auto PlayerHitCheckWidget = CreateWidget<UUserWidget>(GetWorld(), PlayerHitCheckClass);
+		if (PlayerHitCheckWidget != nullptr) {
+			PlayerHitCheckWidget->AddToViewport();
+			UPlayerHitCheck_UserWidget* playerhit = Cast<UPlayerHitCheck_UserWidget>(PlayerHitCheckWidget);
+			playerhit->HitLocCheck(loc);
+		}
+		});
 }
 void AMultiPlayer_HUD::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	/*float backSpread = 0.0f;
-	if (IsFire && currentSpread >= targetSpread - 10.0f) {
-		backSpread = 10.0f;
-	}*/
 	float speed = 30.0f;
 	float target = targetSpread;
 	if (IsFire && currentSpread >= targetSpread - 5.0f) { // 한 번 작동
-		//backSpread = 10.0f;
 		IsBackSpread = true;
-		//UE_LOG(LogTemp, Warning, TEXT("IsBackSpread"));
 	}
 	if (IsBackSpread) {
-		//currentSpread = FMath::FInterpTo(currentSpread, targetSpread - 30.0f, DeltaTime, 80.0f);
-		speed = 80.0f;
-		target = targetSpread - 30.0f;
-		UE_LOG(LogTemp, Warning, TEXT("IsBackSpread"));
-	}
-	else {
-		//currentSpread = FMath::FInterpTo(currentSpread, targetSpread, DeltaTime, 30.0f);
-		UE_LOG(LogTemp, Warning, TEXT("NotIsBackSpread"));
+		speed = 500.0f;
+		target = targetSpread - 80.0f;
 	}
 	currentSpread = FMath::FInterpTo(currentSpread, target, DeltaTime, speed);
 	
-	UE_LOG(LogTemp, Warning, TEXT("currentSpread: %f"), currentSpread);
-	UE_LOG(LogTemp, Warning, TEXT("targetSpread: %f"), targetSpread);
+	//UE_LOG(LogTemp, Warning, TEXT("currentSpread: %f"), currentSpread);
+	//UE_LOG(LogTemp, Warning, TEXT("targetSpread: %f"), targetSpread);
 	UCrossHair_UserWidget* crossHair = Cast<UCrossHair_UserWidget>(CrossHairWidget);
 	crossHair->crossHairSpread = currentSpread;
 

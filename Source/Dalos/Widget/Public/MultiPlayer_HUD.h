@@ -7,6 +7,7 @@
 #include "MultiPlayer_HUD.generated.h"
 
 DECLARE_DELEGATE_OneParam(FDele_HUDCheck, bool check);
+DECLARE_DELEGATE_OneParam(FDele_HUDLocCheck, FVector check);
 
 /**
  * 
@@ -31,6 +32,8 @@ public:
 
 	FDele_HUDCheck CrossHairHideCheck;
 	FDele_HUDCheck CrossHairRedCheck;
+	FDele_HUDCheck HitRedCheck;
+	FDele_HUDLocCheck PlyaerHitLocCheck;
 
 protected:
 	virtual void BeginPlay() override;
@@ -43,6 +46,9 @@ protected:
 	float backSpread = 0.0f;
 	bool IsFire = false;
 	bool IsBackSpread = false;
+
+	TSubclassOf<class UUserWidget> HitCheckClass;
+	TSubclassOf<class UUserWidget> PlayerHitCheckClass;
 
 public:
 	void SetCrossHairSpread(float cross, bool back, bool fire);

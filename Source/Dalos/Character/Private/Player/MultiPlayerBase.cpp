@@ -102,6 +102,12 @@ float AMultiPlayerBase::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 	float damage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	ATwoVersus_PlayerState* playerstate = Cast<ATwoVersus_PlayerState>(GetPlayerState()); 
 	playerstate->DamageToHP(damage);
+	// 히트 표시를 할때 로컬 컨트롤을 쓰면 될 것 같다
+	AMultiPlayer_HUD* hud = Cast<AMultiPlayer_HUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
+	if (!IsLocallyControlled() && hud) hud->HitRedCheck.Execute(false);
+	if (IsLocallyControlled() && hud) hud->PlyaerHitLocCheck.Execute(DamageCauser->GetActorLocation());
+	
+	
 	UE_LOG(LogTemp, Warning, TEXT("HP: %d"), playerstate->GetPlyaerHP());
 	return damage;
 }
@@ -196,6 +202,9 @@ void AMultiPlayerBase::Tick(float DeltaTime)
 			float spread = equipWeapone->GetFireStartSpreadSize();
 			if (HUD->GetTargetSpread() <= spread) {
 				HUD->SetCrossHairSpread(HUD->GetTargetSpread() + 80.0f, false, IsFire);
+			}
+			else {
+				HUD->SetCrossHairSpread(spread + 30.0f, false, IsFire);
 			}
 			if (spreadSize > 10.0f) {
 				spreadSize = spreadSize - 30.0f;
@@ -877,11 +886,11 @@ void AMultiPlayerBase::FireBullet(FVector muzzleLoc, FRotator muzzleRot, FRotato
 		//EquipWeapon->SetIsFire(false);
 		//EnemyHearing->ReportNoiseEvent(this, GetActorLocation(), 1.0f, this, 10000.0f, FName("FireNoise"));
 		if (HasAuthority()) {
-			UE_LOG(LogTemp, Warning, TEXT("HasAuthority"));
+			//UE_LOG(LogTemp, Warning, TEXT("HasAuthority"));
 			NetMulticast_SendFireBullet(bulletRotation);
 		}
 		else {
-			UE_LOG(LogTemp, Warning, TEXT("NotHasAuthority"));
+			//UE_LOG(LogTemp, Warning, TEXT("NotHasAuthority"));
 			Server_SendFireBullet(bulletRotation);
 
 		}
