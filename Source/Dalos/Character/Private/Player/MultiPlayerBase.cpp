@@ -17,7 +17,10 @@
 #include "Dalos/Stage/TwoVersus/Public/TwoVersus_GameState.h"
 #include "Dalos/Stage/TwoVersus/Public/TwoVersus_PlayerState.h"
 #include "Dalos/Widget/Public/MultiPlayer_HUD.h"
+#include "Components/PostProcessComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Engine/BlendableInterface.h"
+#include "Materials/MaterialInstance.h"
 #include "Net/UnrealNetwork.h"
 
 AMultiPlayerBase::AMultiPlayerBase()
@@ -43,7 +46,6 @@ AMultiPlayerBase::AMultiPlayerBase()
 	static ConstructorHelpers::FClassFinder<UAnimInstance>FULLBODY_ANIMBP(TEXT("AnimBlueprint'/Game/Player/Anim/Body/PlayerBodyAnimBP.PlayerBodyAnimBP_C'"));
 	if (FULLBODY_ANIMBP.Succeeded()) { GetMesh()->SetAnimInstanceClass(FULLBODY_ANIMBP.Class); }
 	
-
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(RootComponent);
 	SpringArm->SetRelativeLocation(FVector(25.0f, 0.0f, 65.0f));
@@ -93,22 +95,35 @@ AMultiPlayerBase::AMultiPlayerBase()
 	GetCharacterMovement()->AirControl = 0.2f;
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;  // 컨트롤러 방향으로 캐릭터 회전(무브먼트 기준)
 	GetCharacterMovement()->MovementMode = EMovementMode::MOVE_Walking;
-
+	
+	static ConstructorHelpers::FObjectFinder<UObject> GRAY_MATERIAL(TEXT("Material'/Game/Player/Grey_Camera.Grey_Camera'"));
+	if(GRAY_MATERIAL.Succeeded()) FollowCamera->AddOrUpdateBlendable(GRAY_MATERIAL.Object, 1.0f);
+	FollowCamera->PostProcessBlendWeight = 0.0f;
+	//FollowCamera->PostProcessSettings.WeightedBlendables.Array[0].Weight = 0.0f;
+	
 
 }
 
 float AMultiPlayerBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	float damage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	ATwoVersus_PlayerState* playerstate = Cast<ATwoVersus_PlayerState>(GetPlayerState()); 
+	ATwoVersus_PlayerState* playerstate = Cast<ATwoVersus_PlayerState>(GetPlayerState());
 	playerstate->DamageToHP(damage);
-	// 히트 표시를 할때 로컬 컨트롤을 쓰면 될 것 같다
-	AMultiPlayer_HUD* hud = Cast<AMultiPlayer_HUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
-	if (!IsLocallyControlled() && hud) hud->HitRedCheck.Execute(false);
-	if (IsLocallyControlled() && hud) hud->PlyaerHitLocCheck.Execute(DamageCauser->GetActorLocation());
-	
-	
-	UE_LOG(LogTemp, Warning, TEXT("HP: %d"), playerstate->GetPlyaerHP());
+	characterHp -= damage;
+	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID)) {
+		const FPointDamageEvent* point = (FPointDamageEvent*)&DamageEvent;
+		// 히트 표시를 할때 로컬 컨트롤을 쓰면 될 것 같다
+		AMultiPlayer_HUD* hud = Cast<AMultiPlayer_HUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
+		if (!IsLocallyControlled() && DamageCauser == GetWorld()->GetFirstPlayerController()->GetPawn() && hud) hud->HitRedCheck.Execute(false);
+		// 상대방의 데미지가 깍일때 히트 표시를 하자
+		if (IsLocallyControlled() && hud) {
+			hud->PlyaerHitLocCheck.Execute(DamageCauser->GetActorLocation() + DamageCauser->GetActorForwardVector() * 50.0f);
+		}
+		if (HasAuthority()) {
+			NetMulticast_SendPlayerHit(damage, DamageCauser->GetActorForwardVector(), point->HitInfo, DamageCauser);
+		}
+	}
+	//UE_LOG(LogTemp, Warning, TEXT("HP: %d"), playerstate->GetPlyaerHP());
 	return damage;
 }
 
@@ -197,7 +212,7 @@ void AMultiPlayerBase::Tick(float DeltaTime)
 	}
 
 	if (IsFire && IsFireAuto) {
-		FireBullet(equipWeaponeArm->BodyMesh->GetSocketLocation("Muzzle"), FollowCamera->GetComponentRotation(), bulletRot);
+		FireBullet(equipWeapone->BodyMesh->GetSocketLocation("Muzzle"), FollowCamera->GetComponentRotation(), bulletFireLoc);
 		if (HUD && equipWeapone) {
 			float spread = equipWeapone->GetFireStartSpreadSize();
 			if (HUD->GetTargetSpread() <= spread) {
@@ -343,8 +358,8 @@ bool AMultiPlayerBase::CrossHairCheck()
 	bool hitis = UKismetSystemLibrary::LineTraceSingle(GetWorld(), startTracer, endTracer, ETraceTypeQuery::TraceTypeQuery4, false
 		, actorsToIgnore, EDrawDebugTrace::None, outHit, true);
 
-	if (equipWeaponeArm != nullptr) {
-		muzzleLoc = equipWeaponeArm->BodyMesh->GetSocketLocation("Muzzle");
+	if (equipWeapone != nullptr) {
+		muzzleLoc = equipWeapone->BodyMesh->GetSocketLocation("Muzzle");
 	}
 	else { muzzleLoc = FollowCamera->GetComponentLocation(); }
 
@@ -369,11 +384,12 @@ bool AMultiPlayerBase::CrossHairCheck()
 	//float bulletEndLocationTestY = (crossHairEndLoc + (FollowCamera->GetRightVector() * radius)).Y;
 	float bulletEndLocationX = crossHairEndLoc.X;
 
-	bulletEndLoc = FVector(bulletEndLocationX, bulletEndLocationY, bulletEndLocationZ);
+	bulletFireLoc = FVector(bulletEndLocationX, bulletEndLocationY, bulletEndLocationZ);
+	/*bulletEndLoc = FVector(bulletEndLocationX, bulletEndLocationY, bulletEndLocationZ);
 	if (upperState->GetState() == UADS_PlayerUpper::StaticClass()) {
 		bulletRot = FollowCamera->GetForwardVector().Rotation();
 	}
-	else { bulletRot = UKismetMathLibrary::FindLookAtRotation(muzzleLoc, bulletEndLoc); }
+	else { bulletRot = UKismetMathLibrary::FindLookAtRotation(muzzleLoc, bulletEndLoc); }*/
 
 	/*투영행렬을 이용하여 만들 수 있을것같다
 	기존에 있는 것 보다 정확하게 수치에 따라 변하도록 업그레이드를 했다
@@ -603,7 +619,7 @@ void AMultiPlayerBase::PlayerFire()
 	spreadSize = 70.0f;
 	if (equipWeapone && equipWeaponeArm) {
 		upperState->PlayerFire(this, equipWeapone, IsFireAuto, threeCount
-			, equipWeaponeArm->BodyMesh->GetSocketLocation("Muzzle"), FollowCamera->GetComponentRotation(), bulletRot);
+			, equipWeapone->BodyMesh->GetSocketLocation("Muzzle"), FollowCamera->GetComponentRotation(), bulletFireLoc);
 	}
 	//armAnim->PlayFireMontage();
 }
@@ -851,7 +867,7 @@ void AMultiPlayerBase::DownPress(UPlayerDownStateBase* state)
 	}
 }
 
-void AMultiPlayerBase::FireBullet(FVector muzzleLoc, FRotator muzzleRot, FRotator bulletRotation)
+void AMultiPlayerBase::FireBullet(FVector muzzleLoc, FRotator muzzleRot, FVector bulletLoc)
 {
 	if (equipWeapone) {
 		armAnim->PlayFireMontage();
@@ -877,9 +893,15 @@ void AMultiPlayerBase::FireBullet(FVector muzzleLoc, FRotator muzzleRot, FRotato
 
 		//FVector muzzleLoc= equipWeaponeArm->BodyMesh->GetSocketLocation("Muzzle");
 		//FRotator muzzleRot = FollowCamera->GetComponentRotation();
-		//UE_LOG(LogTemp, Warning, TEXT("MuzzleLocation: %f, %f, %f"), MuzzleLocation.X, MuzzleLocation.Y, MuzzleLocation.Z);
+		//UE_LOG(L ogTemp, Warning, TEXT("MuzzleLocation: %f, %f, %f"), MuzzleLocation.X, MuzzleLocation.Y, MuzzleLocation.Z);
 
-		equipWeaponeArm->ProjectileFire(muzzleLoc, muzzleRot, bulletRotation);
+		FRotator bulletFireRot = FRotator::ZeroRotator;
+		if (upperState->GetState() == UADS_PlayerUpper::StaticClass()) {
+			bulletFireRot = FollowCamera->GetForwardVector().Rotation();
+		}
+		else { bulletFireRot = UKismetMathLibrary::FindLookAtRotation(muzzleLoc, bulletLoc); }
+
+		equipWeaponeArm->ProjectileFire(muzzleLoc, muzzleRot, bulletFireRot);
 		if (equipWeapone->GetWeaponeLever() == WEAPONLEVER::FULLAUTO) {
 			GetWorldTimerManager().SetTimer(fireTimer, this, &AMultiPlayerBase::FireAutoOn, 0.15f, false);
 		}
@@ -887,11 +909,11 @@ void AMultiPlayerBase::FireBullet(FVector muzzleLoc, FRotator muzzleRot, FRotato
 		//EnemyHearing->ReportNoiseEvent(this, GetActorLocation(), 1.0f, this, 10000.0f, FName("FireNoise"));
 		if (HasAuthority()) {
 			//UE_LOG(LogTemp, Warning, TEXT("HasAuthority"));
-			NetMulticast_SendFireBullet(bulletRotation);
+			NetMulticast_SendFireBullet(bulletLoc);
 		}
 		else {
 			//UE_LOG(LogTemp, Warning, TEXT("NotHasAuthority"));
-			Server_SendFireBullet(bulletRotation);
+			Server_SendFireBullet(bulletLoc);
 
 		}
 		
@@ -1092,11 +1114,11 @@ void AMultiPlayerBase::NetMulticast_SendValutCheck_Implementation()
 	}
 }
 
-bool AMultiPlayerBase::Server_SendFireBullet_Validate(FRotator rot)
+bool AMultiPlayerBase::Server_SendFireBullet_Validate(FVector loc)
 {
 	return true;
 }
-void AMultiPlayerBase::Server_SendFireBullet_Implementation(FRotator rot)
+void AMultiPlayerBase::Server_SendFireBullet_Implementation(FVector loc)
 {
 	//FireBullet(equipWeapone->BodyMesh->GetSocketLocation("Muzzle"), FollowCamera->GetComponentRotation(), rot);
 	if (equipWeapone && !IsLocallyControlled()) {
@@ -1106,24 +1128,30 @@ void AMultiPlayerBase::Server_SendFireBullet_Implementation(FRotator rot)
 			EquipWeaponInAmmo -= 1.0f;
 		}
 		else { equipWeapone->PlayEmptyMontage(); }*/
-
+		
 		IsFireAuto = false;
+		FVector muzzleLoc = equipWeapone->BodyMesh->GetSocketLocation("Muzzle");
+		FRotator bulletFireRot = FRotator::ZeroRotator;
+		if (upperState->GetState() == UADS_PlayerUpper::StaticClass()) {
+			bulletFireRot = FollowCamera->GetForwardVector().Rotation();
+		}
+		else { bulletFireRot = UKismetMathLibrary::FindLookAtRotation(muzzleLoc, loc); }
 
 		equipWeapone->ProjectileFire(equipWeapone->BodyMesh->GetSocketLocation("Muzzle")
-			, FollowCamera->GetComponentRotation(), rot);
+			, FollowCamera->GetComponentRotation(), bulletFireRot);
 		if (equipWeapone->GetWeaponeLever() == WEAPONLEVER::FULLAUTO) {
 			GetWorldTimerManager().SetTimer(fireTimer, this, &AMultiPlayerBase::FireAutoOn, 0.15f, false);
 		}
 		//EquipWeapon->SetIsFire(false);
 		//EnemyHearing->ReportNoiseEvent(this, GetActorLocation(), 1.0f, this, 10000.0f, FName("FireNoise"));
-		NetMulticast_SendFireBullet(rot);
+		NetMulticast_SendFireBullet(loc);
 	}
 }
-bool AMultiPlayerBase::NetMulticast_SendFireBullet_Validate(FRotator rot)
+bool AMultiPlayerBase::NetMulticast_SendFireBullet_Validate(FVector loc)
 {
 	return true;
 }
-void AMultiPlayerBase::NetMulticast_SendFireBullet_Implementation(FRotator rot)
+void AMultiPlayerBase::NetMulticast_SendFireBullet_Implementation(FVector loc)
 {
 	//FireBullet(equipWeapone->BodyMesh->GetSocketLocation("Muzzle"), FollowCamera->GetComponentRotation(), rot);
 	if (equipWeapone && !IsLocallyControlled() && !HasAuthority()) {
@@ -1135,14 +1163,32 @@ void AMultiPlayerBase::NetMulticast_SendFireBullet_Implementation(FRotator rot)
 		else { equipWeapone->PlayEmptyMontage(); }*/
 
 		IsFireAuto = false;
+		FVector muzzleLoc = equipWeapone->BodyMesh->GetSocketLocation("Muzzle");
+		FRotator bulletFireRot = FRotator::ZeroRotator;
+		if (upperState->GetState() == UADS_PlayerUpper::StaticClass()) {
+			bulletFireRot = FollowCamera->GetForwardVector().Rotation();
+		}
+		else { bulletFireRot = UKismetMathLibrary::FindLookAtRotation(muzzleLoc, loc); }
 
 		equipWeapone->ProjectileFire(equipWeapone->BodyMesh->GetSocketLocation("Muzzle")
-			, rot, rot);
+			, bulletFireRot, bulletFireRot);
 		if (equipWeapone->GetWeaponeLever() == WEAPONLEVER::FULLAUTO) {
 			GetWorldTimerManager().SetTimer(fireTimer, this, &AMultiPlayerBase::FireAutoOn, 0.15f, false);
 		}
 		//EquipWeapon->SetIsFire(false);
 		//EnemyHearing->ReportNoiseEvent(this, GetActorLocation(), 1.0f, this, 10000.0f, FName("FireNoise"));
+	}
+}
+
+bool AMultiPlayerBase::NetMulticast_SendPlayerHit_Validate(float Damage, FVector Dir, FHitResult Hit, AActor* DamageCauser)
+{
+	return true;
+}
+void AMultiPlayerBase::NetMulticast_SendPlayerHit_Implementation(float Damage, FVector Dir, FHitResult Hit, AActor* DamageCauser)
+{
+	if (!HasAuthority()) {
+		UE_LOG(LogTemp, Warning, TEXT("NetMulticast_SendPlayerHit"));
+		UGameplayStatics::ApplyPointDamage(this, Damage, Dir, Hit, nullptr, DamageCauser, nullptr);
 	}
 }
 

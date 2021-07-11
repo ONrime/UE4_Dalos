@@ -71,13 +71,13 @@ AWeaponeBase* AAK_Weapone::SpawnToHand(AActor* owner, FVector loc, FRotator rot)
 void AAK_Weapone::ProjectileFire(FVector loc, FRotator rot, FRotator bulletRot)
 {
 	FActorSpawnParameters spawnParameter;
-	//spawnParameter.Owner = this;
+	spawnParameter.Owner = GetOwner();
 	//spawnParameter.Instigator = GetInstigator();
 
 	auto projectile = GetWorld()->SpawnActor<ARifle_ProjectileBase>(ARifle_ProjectileBase::StaticClass(), loc, rot, spawnParameter);
 	if (projectile) {
 		projectile->SetProjectileVelocity(8000.0f);
-		projectile->ProjectileFire(bulletRot.Vector());
+		projectile->ProjectileFire(bulletRot.Vector(), GetOwner());
 	}
 }
 

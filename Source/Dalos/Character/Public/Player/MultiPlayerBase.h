@@ -86,6 +86,7 @@ protected:
 	FVector recoilReturnLoc = FVector::ZeroVector;
 	FVector recoilReturnDir = FVector::ZeroVector;
 	FRotator bulletRot = FRotator::ZeroRotator;
+	FVector bulletFireLoc = FVector::ZeroVector;
 	float spreadSize = 0.0f;
 
 	UPROPERTY(Replicated)
@@ -167,7 +168,7 @@ public:
 	class UPlayerArm_AnimInstance* GetArmAnim() { return armAnim; }
 	class AMultiPlayer_HUD* GetHUD() { return HUD; }
 
-	void FireBullet(FVector muzzleLoc, FRotator muzzleRot, FRotator bulletRotation);
+	void FireBullet(FVector muzzleLoc, FRotator muzzleRot, FVector bulletLoc);
 
 	UFUNCTION(NetMulticast, Reliable, WithValidation)
 	void SendControllerRot(FRotator rot);
@@ -224,13 +225,18 @@ public:
 	void NetMulticast_SendValutCheck_Implementation();
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_SendFireBullet(FRotator rot);
-	bool Server_SendFireBullet_Validate(FRotator rot);
-	void Server_SendFireBullet_Implementation(FRotator rot);
+	void Server_SendFireBullet(FVector loc);
+	bool Server_SendFireBullet_Validate(FVector loc);
+	void Server_SendFireBullet_Implementation(FVector loc);
 	UFUNCTION(NetMulticast, Reliable, WithValidation)
-	void NetMulticast_SendFireBullet(FRotator rot);
-	bool NetMulticast_SendFireBullet_Validate(FRotator rot);
-	void NetMulticast_SendFireBullet_Implementation(FRotator rot);
+	void NetMulticast_SendFireBullet(FVector loc);
+	bool NetMulticast_SendFireBullet_Validate(FVector loc);
+	void NetMulticast_SendFireBullet_Implementation(FVector loc);
+
+	UFUNCTION(NetMulticast, Reliable, WithValidation)
+	void NetMulticast_SendPlayerHit(float Damage, FVector Dir, FHitResult Hit, AActor* DamageCauser);
+	bool NetMulticast_SendPlayerHit_Validate(float Damage, FVector Dir, FHitResult Hit, AActor* DamageCauser);
+	void NetMulticast_SendPlayerHit_Implementation(float Damage, FVector Dir, FHitResult Hit, AActor* DamageCauser);
 
 	bool IsMove = true;
 	bool IsPlayerCameraTurn = true;

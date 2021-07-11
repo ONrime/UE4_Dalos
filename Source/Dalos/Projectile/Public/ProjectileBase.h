@@ -33,7 +33,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	void ProjectileFire(FVector FireDir);
+	void ProjectileFire(FVector FireDir, AActor* Onwer);
 	void SetProjectileVelocity(float Velocity);
 	float GetProjectileDamage() { return projectileDamage; };
 

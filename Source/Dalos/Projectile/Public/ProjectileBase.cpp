@@ -50,9 +50,9 @@ void AProjectileBase::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
-void AProjectileBase::ProjectileFire(FVector FireDir)
+void AProjectileBase::ProjectileFire(FVector FireDir, AActor* Onwer)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("ProjectileFire"));
+	UE_LOG(LogTemp, Warning, TEXT("ProjectileFire"));
 	Movement->Velocity = FireDir * Movement->InitialSpeed;
 }
 void AProjectileBase::SetProjectileVelocity(float Velocity)
@@ -71,7 +71,11 @@ void AProjectileBase::OnOverlapBegin_Body(UPrimitiveComponent* OverlappedComp, A
 			bulletHole->SetLifeSpan(10.0f);
 		}
 		else if (OtherComp->GetCollisionProfileName() == "BodyMesh") {
-			UGameplayStatics::ApplyDamage(OtherActor, projectileDamage, nullptr, this, nullptr);
+			//UGameplayStatics::ApplyDamage(OtherActor, projectileDamage, nullptr, GetOwner(), nullptr);
+			if (OtherActor->HasAuthority()) {
+				UGameplayStatics::ApplyPointDamage(OtherActor, projectileDamage, GetActorForwardVector(), SweepResult, nullptr, GetOwner(), nullptr);
+			}
+			//UE_LOG(LogTemp, Warning, TEXT("bulletLoc2: %f, %f, %f"), GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z);
 			//UE_LOG(LogTemp, Warning, TEXT("Projectil: Player Hit"));
 		}
 		else {

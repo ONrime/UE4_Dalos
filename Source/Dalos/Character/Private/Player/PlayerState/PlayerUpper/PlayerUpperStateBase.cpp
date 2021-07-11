@@ -33,7 +33,7 @@ UClass* UPlayerUpperStateBase::GetState()
 	return nullptr;
 }
 
-void UPlayerUpperStateBase::PlayerFire(AMultiPlayerBase* player, AWeaponeBase* equip, bool& IsAuto, float& count, FVector loc, FRotator rot, FRotator bulletRotation)
+void UPlayerUpperStateBase::PlayerFire(AMultiPlayerBase* player, AWeaponeBase* equip, bool& IsAuto, float& count, FVector loc, FRotator rot, FVector bulletLoc)
 {
 }
 

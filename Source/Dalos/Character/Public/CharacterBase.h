@@ -12,18 +12,18 @@ class DALOS_API ACharacterBase : public ACharacter
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	ACharacterBase();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	UPROPERTY()
+	float characterHp = 100.0f;
 
-	// Called to bind functionality to input
+public:	
+	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	float GetCharacterHp() { return characterHp; }
 
 };

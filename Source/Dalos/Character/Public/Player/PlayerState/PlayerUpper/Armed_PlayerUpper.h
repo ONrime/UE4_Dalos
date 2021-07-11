@@ -25,7 +25,7 @@ public:
 	virtual void StateEnd(class AMultiPlayerBase* player) override;
 	virtual UClass* GetState() override;
 
-	virtual void PlayerFire(class AMultiPlayerBase* player, class AWeaponeBase* equip, bool& IsAuto, float& count, FVector loc, FRotator rot, FRotator bulletRotation) override;
+	virtual void PlayerFire(class AMultiPlayerBase* player, class AWeaponeBase* equip, bool& IsAuto, float& count, FVector loc, FRotator rot, FVector bulletLoc) override;
 	virtual bool HandUpTracer(class AMultiPlayerBase* player) override;
 
 protected:

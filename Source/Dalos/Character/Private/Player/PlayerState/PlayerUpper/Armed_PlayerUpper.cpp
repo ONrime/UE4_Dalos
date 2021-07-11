@@ -84,7 +84,7 @@ UClass* UArmed_PlayerUpper::GetState()
 	return UArmed_PlayerUpper::StaticClass();
 }
 
-void UArmed_PlayerUpper::PlayerFire(AMultiPlayerBase* player, AWeaponeBase* equip, bool& IsAuto, float& count, FVector loc, FRotator rot, FRotator bulletRotation)
+void UArmed_PlayerUpper::PlayerFire(AMultiPlayerBase* player, AWeaponeBase* equip, bool& IsAuto, float& count, FVector loc, FRotator rot, FVector bulletLoc)
 {
 	if (equip) {
 		if (equip->GetWeaponeLever() == WEAPONLEVER::FULLAUTO) {
@@ -99,7 +99,7 @@ void UArmed_PlayerUpper::PlayerFire(AMultiPlayerBase* player, AWeaponeBase* equi
 			IsAuto = true;
 			count = 3.0f;
 		}
-		player->FireBullet(loc, rot, bulletRotation);
+		player->FireBullet(loc, rot, bulletLoc);
 	}
 	
 }
