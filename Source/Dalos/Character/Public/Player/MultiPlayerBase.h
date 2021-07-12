@@ -115,6 +115,9 @@ protected:
 	FVector wallBackHeight = FVector::ZeroVector;
 	FVector wallNomal = FVector::ZeroVector;
 
+	bool IsDead = false;
+	FTimerHandle healTimer;
+
 private:
 	// ป๓ลย
 	class UPlayerUpperStateBase* upperState = nullptr;
@@ -133,6 +136,7 @@ private:
 	void PlayerUnFire();
 	void PlayerReload();
 	void PlayerVault();
+	void PlayerDead();
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
@@ -146,6 +150,7 @@ private:
 	bool WallBackHeightTracer(FVector loc);
 	void StopVault();
 	void StopClimb();
+	void StratAutoHeal();
 
 public:
 	UPlayerUpperStateBase* GetUpperState() { return upperState; };
@@ -167,8 +172,10 @@ public:
 	class UPlayerBody_AnimInstance* GetLegAnim() { return legAnim; }
 	class UPlayerArm_AnimInstance* GetArmAnim() { return armAnim; }
 	class AMultiPlayer_HUD* GetHUD() { return HUD; }
+	bool GetIsDead() { return IsDead; }
 
 	void FireBullet(FVector muzzleLoc, FRotator muzzleRot, FVector bulletLoc);
+	void CheckPlayerHP(float hp);
 
 	UFUNCTION(NetMulticast, Reliable, WithValidation)
 	void SendControllerRot(FRotator rot);

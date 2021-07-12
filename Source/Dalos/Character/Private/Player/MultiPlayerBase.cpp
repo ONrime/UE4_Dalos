@@ -100,31 +100,39 @@ AMultiPlayerBase::AMultiPlayerBase()
 	if(GRAY_MATERIAL.Succeeded()) FollowCamera->AddOrUpdateBlendable(GRAY_MATERIAL.Object, 1.0f);
 	FollowCamera->PostProcessBlendWeight = 0.0f;
 	//FollowCamera->PostProcessSettings.WeightedBlendables.Array[0].Weight = 0.0f;
-	
 
 }
 
 float AMultiPlayerBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	float damage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	ATwoVersus_PlayerState* playerstate = Cast<ATwoVersus_PlayerState>(GetPlayerState());
-	playerstate->DamageToHP(damage);
-	characterHp -= damage;
-	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID)) {
-		const FPointDamageEvent* point = (FPointDamageEvent*)&DamageEvent;
-		// 히트 표시를 할때 로컬 컨트롤을 쓰면 될 것 같다
-		AMultiPlayer_HUD* hud = Cast<AMultiPlayer_HUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
-		if (!IsLocallyControlled() && DamageCauser == GetWorld()->GetFirstPlayerController()->GetPawn() && hud) hud->HitRedCheck.Execute(false);
-		// 상대방의 데미지가 깍일때 히트 표시를 하자
-		if (IsLocallyControlled() && hud) {
-			hud->PlyaerHitLocCheck.Execute(DamageCauser->GetActorLocation() + DamageCauser->GetActorForwardVector() * 50.0f);
+	float currentHP = 0.0f;
+	if (!IsDead) {
+		ATwoVersus_PlayerState* playerstate = Cast<ATwoVersus_PlayerState>(GetPlayerState());
+		if (DamageEvent.IsOfType(FPointDamageEvent::ClassID)) {
+			const FPointDamageEvent* point = (FPointDamageEvent*)&DamageEvent;
+			currentHP = playerstate->GetPlyaerHP();
+			// 히트 표시를 할때 로컬 컨트롤을 쓰면 될 것 같다
+			AMultiPlayer_HUD* hud = Cast<AMultiPlayer_HUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
+			if (!IsLocallyControlled() && DamageCauser == GetWorld()->GetFirstPlayerController()->GetPawn() && hud) hud->HitRedCheck.Execute(false);
+			// 상대방의 데미지가 깍일때 히트 표시를 하자
+			if (IsLocallyControlled() && hud) {
+				hud->PlyaerHitLocCheck.Execute(DamageCauser->GetActorLocation() + DamageCauser->GetActorForwardVector() * 50.0f);
+			}
+			if (HasAuthority()) {
+				playerstate->DamageToHP(damage);
+				playerstate->StopHeal();
+				GetWorldTimerManager().ClearTimer(healTimer);
+				GetWorldTimerManager().SetTimer(healTimer, this, &AMultiPlayerBase::StratAutoHeal, 4.0f, false);
+				CheckPlayerHP(currentHP);
+				NetMulticast_SendPlayerHit(damage, DamageCauser->GetActorForwardVector(), point->HitInfo, DamageCauser);
+			}
 		}
-		if (HasAuthority()) {
-			NetMulticast_SendPlayerHit(damage, DamageCauser->GetActorForwardVector(), point->HitInfo, DamageCauser);
+		if (!HasAuthority()) {
+			//UE_LOG(LogTemp, Warning, TEXT("PlyaerHP: %f"), currentHP);
+			//UE_LOG(LogTemp, Warning, TEXT("damage: %f"), damage);
 		}
-	}
-	//UE_LOG(LogTemp, Warning, TEXT("HP: %d"), playerstate->GetPlyaerHP());
-	return damage;
+	}	return damage;
 }
 
 void AMultiPlayerBase::BeginPlay()
@@ -149,6 +157,8 @@ void AMultiPlayerBase::BeginPlay()
 	downStateNClass = downState->GetState();
 	upperState->StateStart(this);
 	downState->StateStart(this);
+
+	characterHp = 100.0f;
 	
 	UE_LOG(LogTemp, Warning, TEXT("BeginePlay"));
 
@@ -195,6 +205,11 @@ void AMultiPlayerBase::Tick(float DeltaTime)
 		}
 	}
 	RecoilCheck();
+
+	ATwoVersus_PlayerState* playerstate = Cast<ATwoVersus_PlayerState>(GetPlayerState());
+	if (IsLocallyControlled()&& playerstate && playerstate->GetPlyaerHP() > 40.0f) {
+		FollowCamera->PostProcessBlendWeight = 0.0f;
+	}
 
 	/*if (WallForwardTracer() && WallHeightTracer(wallLoc, wallNomal) && !IsVault) {
 		WallBackHeightTracer(wallLoc);
@@ -682,6 +697,34 @@ void AMultiPlayerBase::PlayerVault()
 	SetActorLocation(wallLocationTracer);
 }
 
+void AMultiPlayerBase::PlayerDead()
+{
+	IsMove = false;
+	GetWorldTimerManager().ClearTimer(healTimer);
+	if (equipWeapone) {
+		equipWeapone->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
+		equipWeapone->SetWeaponeState(WEAPONSTATE::DROP);
+	}
+	if (equipWeaponeArm) {
+		equipWeaponeArm->Destroy();
+	}
+	if (backWeapone1) {
+		backWeapone1->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
+		backWeapone1->SetWeaponeState(WEAPONSTATE::DROP);
+	}
+	if (backWeapone2) {
+		backWeapone2->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
+		backWeapone2->SetWeaponeState(WEAPONSTATE::DROP);
+	}
+
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("DeadColl"));
+	ArmMesh->SetCollisionProfileName(TEXT("DeadNomal"));
+	GetMesh()->SetCollisionProfileName(TEXT("DeadNomal"));
+	BodyMesh->SetCollisionProfileName(TEXT("DeadMesh"));
+	//GetMesh()->SetCollisionProfileName(TEXT("PhysicsActor"));
+	BodyMesh->SetSimulatePhysics(true);
+}
+
 void AMultiPlayerBase::MoveForward(float Value)
 {
 	if (IsMove) {
@@ -816,6 +859,15 @@ void AMultiPlayerBase::StopClimb()
 	IsVault = false;
 }
 
+void AMultiPlayerBase::StratAutoHeal()
+{
+	UE_LOG(LogTemp, Warning, TEXT("StratAutoHeal"));
+	ATwoVersus_PlayerState* state = Cast<ATwoVersus_PlayerState>(GetPlayerState());
+	if (state && HasAuthority()) {
+		state->StartHeal();
+	}
+}
+
 void AMultiPlayerBase::TurnAtRate(float Rate)
 {
 	aimDirRight = Rate;
@@ -917,6 +969,19 @@ void AMultiPlayerBase::FireBullet(FVector muzzleLoc, FRotator muzzleRot, FVector
 
 		}
 		
+	}
+}
+
+void AMultiPlayerBase::CheckPlayerHP(float hp)
+{
+	if (hp <= 40.0f && hp > 0) {
+		UE_LOG(LogTemp, Warning, TEXT("GRAY"));
+		FollowCamera->PostProcessBlendWeight = 1.0f;
+	}
+	else if (hp <= 0.0f) {
+		UE_LOG(LogTemp, Warning, TEXT("Dead"));
+		IsDead = true;
+		PlayerDead();
 	}
 }
 
@@ -1187,7 +1252,7 @@ bool AMultiPlayerBase::NetMulticast_SendPlayerHit_Validate(float Damage, FVector
 void AMultiPlayerBase::NetMulticast_SendPlayerHit_Implementation(float Damage, FVector Dir, FHitResult Hit, AActor* DamageCauser)
 {
 	if (!HasAuthority()) {
-		UE_LOG(LogTemp, Warning, TEXT("NetMulticast_SendPlayerHit"));
+		UE_LOG(LogTemp, Warning, TEXT("NetMulticast_SendPlayerHit: %f"), Damage);
 		UGameplayStatics::ApplyPointDamage(this, Damage, Dir, Hit, nullptr, DamageCauser, nullptr);
 	}
 }
