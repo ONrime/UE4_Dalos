@@ -43,6 +43,14 @@ AAK_Weapone::AAK_Weapone()
 	fireStartSpreadSize = 240.0f;
 	fireEndSpreadSize = 270.0f;
 	standSpreadSize = 0.0f;
+
+	weaponName = "AK";
+	baseKeepAmmo = 60;
+	baseLoadedAmmo = 30;
+	LoadedAmmo = baseLoadedAmmo;
+	limitAmmo = 90;
+
+	WeaponType = WEAPONTYPE::RIFLE;
 }
 
 void AAK_Weapone::BeginPlay()

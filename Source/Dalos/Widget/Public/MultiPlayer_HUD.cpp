@@ -5,6 +5,7 @@
 #include "Dalos/Widget/Public/CrossHair_UserWidget.h"
 #include "Dalos/Widget/Public/HitCheck_UserWidget.h"
 #include "Dalos/Widget/Public/PlayerHitCheck_UserWidget.h"
+#include "Dalos/Widget/Public/Ammo_UserWidget.h"
 #include "Blueprint/UserWidget.h"
 
 AMultiPlayer_HUD::AMultiPlayer_HUD() 
@@ -15,7 +16,8 @@ AMultiPlayer_HUD::AMultiPlayer_HUD()
 	if (HITCHECK_WIDGET.Succeeded()) HitCheckClass= HITCHECK_WIDGET.Class;
 	static ConstructorHelpers::FClassFinder<UUserWidget>PLAYERHITCHECK_WIDGET(TEXT("WidgetBlueprint'/Game/UI/Player/PlayerHitCheck.PlayerHitCheck_C'"));
 	if (PLAYERHITCHECK_WIDGET.Succeeded()) PlayerHitCheckClass = PLAYERHITCHECK_WIDGET.Class;
-	
+	static ConstructorHelpers::FClassFinder<UUserWidget>AMMO_WIDGET(TEXT("WidgetBlueprint'/Game/UI/Player/Ammo.Ammo_C'"));
+	if (AMMO_WIDGET.Succeeded()) AmmoWidget = CreateWidget<UUserWidget>(GetWorld(), AMMO_WIDGET.Class);
 
 }
 
@@ -24,6 +26,7 @@ void AMultiPlayer_HUD::BeginPlay()
 	Super::BeginPlay();
 
 	if (CrossHairWidget != nullptr) CrossHairWidget->AddToViewport();
+	if (AmmoWidget != nullptr) AmmoWidget->AddToViewport();
 
 }
 void AMultiPlayer_HUD::PostInitializeComponents()
@@ -58,6 +61,18 @@ void AMultiPlayer_HUD::PostInitializeComponents()
 			playerhit->HitLocCheck(loc);
 		}
 		});
+	LoadedAmmoCheck.BindLambda([this](float check)->void {
+		UAmmo_UserWidget* ammo = Cast<UAmmo_UserWidget>(AmmoWidget);
+		if (ammo) ammo->loadedAmmo = check;
+		});
+	EquipAmmoCheck.BindLambda([this](float check)->void {
+		UAmmo_UserWidget* ammo = Cast<UAmmo_UserWidget>(AmmoWidget);
+		if (ammo) ammo->equipAmmo = check;
+		});
+	WeaponNameCheck.BindLambda([this](FName check)->void {
+		UAmmo_UserWidget* ammo = Cast<UAmmo_UserWidget>(AmmoWidget);
+		if (ammo) ammo->weaponName = check;
+		});
 }
 void AMultiPlayer_HUD::Tick(float DeltaTime)
 {
@@ -77,6 +92,9 @@ void AMultiPlayer_HUD::Tick(float DeltaTime)
 	//UE_LOG(LogTemp, Warning, TEXT("targetSpread: %f"), targetSpread);
 	UCrossHair_UserWidget* crossHair = Cast<UCrossHair_UserWidget>(CrossHairWidget);
 	crossHair->crossHairSpread = currentSpread;
+
+	UAmmo_UserWidget* ammo = Cast<UAmmo_UserWidget>(AmmoWidget);
+	//ammo->loadedAmmo=
 
 }
 void AMultiPlayer_HUD::EndPlay(const EEndPlayReason::Type EndPlayReason)

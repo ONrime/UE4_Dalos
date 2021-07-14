@@ -55,14 +55,14 @@ void UStanding_PlayerDown::StateStart(AMultiPlayerBase* player)
 void UStanding_PlayerDown::StateUpdate(AMultiPlayerBase* player)
 {
 	FRotator interpToAngle = (player->GetControlRotation() - player->GetActorRotation()).GetNormalized();
-	pitch = FMath::Abs(FMath::ClampAngle(interpToAngle.Pitch, -90.0f, 90.0f)) / 3.0f;
+	pitch = FMath::ClampAngle(interpToAngle.Pitch, -90.0f, -5.0f) / 2.0f;
 	
 	// 카메라
 	 //  카메라 위치
 	cameraLoc = player->GetTransform().InverseTransformPosition(player->GetMesh()->GetSocketLocation("CameraLoc"));
 	if (!player->GetIsCameraLock()) {
 		player->SpringArm->SetRelativeLocation(FVector(cameraLoc.X, cameraLoc.Y
-			, FMath::FInterpTo(player->SpringArm->GetRelativeLocation().Z, pelvisZ - pitch
+			, FMath::FInterpTo(player->SpringArm->GetRelativeLocation().Z, pelvisZ + pitch
 				, GetWorld()->GetDeltaSeconds(), 10.0f)));
 	}
 	else {

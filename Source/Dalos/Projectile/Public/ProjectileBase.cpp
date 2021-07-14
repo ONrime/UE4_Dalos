@@ -65,12 +65,12 @@ void AProjectileBase::OnOverlapBegin_Body(UPrimitiveComponent* OverlappedComp, A
 	FVector decalLoc = SweepResult.Location;
 	FRotator decalRot = FRotationMatrix::MakeFromX(SweepResult.Normal).Rotator();
 
-	if (OtherActor != nullptr) {
+	if (OtherActor != nullptr && OtherActor != GetOwner()) {
 		if (OtherComp->GetCollisionProfileName() == "Wall") {
 			auto bulletHole = UGameplayStatics::SpawnDecalAttached(bulletHoleDecal, FVector(25.0f, 25.0f, 25.0f), OtherComp, TEXT("BulletHole"), decalLoc, decalRot, EAttachLocation::KeepWorldPosition, 100.0f);
 			bulletHole->SetLifeSpan(10.0f);
 		}
-		else if (OtherComp->GetCollisionProfileName() == "BodyMesh") {
+		else if (OtherComp->GetCollisionProfileName() == "EBodyMesh") {
 			//UGameplayStatics::ApplyDamage(OtherActor, projectileDamage, nullptr, GetOwner(), nullptr);
 			if (OtherActor->HasAuthority()) {
 				UGameplayStatics::ApplyPointDamage(OtherActor, projectileDamage, GetActorForwardVector(), SweepResult, nullptr, GetOwner(), nullptr);

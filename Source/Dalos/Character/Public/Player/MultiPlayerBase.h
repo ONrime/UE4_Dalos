@@ -245,6 +245,11 @@ public:
 	bool NetMulticast_SendPlayerHit_Validate(float Damage, FVector Dir, FHitResult Hit, AActor* DamageCauser);
 	void NetMulticast_SendPlayerHit_Implementation(float Damage, FVector Dir, FHitResult Hit, AActor* DamageCauser);
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SendReloadAmmo(int loadAmmo, int equipAmmo);
+	bool Server_SendReloadAmmo_Validate(int loadAmmo, int equipAmmo);
+	void Server_SendReloadAmmo_Implementation(int loadAmmo, int equipAmmo);
+
 	bool IsMove = true;
 	bool IsPlayerCameraTurn = true;
 	bool IsPlayerRotationYawSpeedSlow = false;

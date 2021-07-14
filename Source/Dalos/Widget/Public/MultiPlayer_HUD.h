@@ -8,6 +8,8 @@
 
 DECLARE_DELEGATE_OneParam(FDele_HUDCheck, bool check);
 DECLARE_DELEGATE_OneParam(FDele_HUDLocCheck, FVector check);
+DECLARE_DELEGATE_OneParam(FDele_HUDFloatCheck, float check);
+DECLARE_DELEGATE_OneParam(FDele_HUDNameCheck, FName check);
 
 /**
  * 
@@ -34,6 +36,9 @@ public:
 	FDele_HUDCheck CrossHairRedCheck;
 	FDele_HUDCheck HitRedCheck;
 	FDele_HUDLocCheck PlyaerHitLocCheck;
+	FDele_HUDFloatCheck LoadedAmmoCheck;
+	FDele_HUDFloatCheck EquipAmmoCheck;
+	FDele_HUDNameCheck WeaponNameCheck;
 
 protected:
 	virtual void BeginPlay() override;

@@ -17,7 +17,7 @@ ATwoVersus_PlayerState::ATwoVersus_PlayerState()
 
 void ATwoVersus_PlayerState::DamageToHP(float damage)
 {
-	if(HasAuthority()) playerHP = playerHP - damage;
+	playerHP = playerHP - damage;
 }
 
 void ATwoVersus_PlayerState::BeginPlay()
@@ -49,7 +49,7 @@ void ATwoVersus_PlayerState::StartHeal()
 }
 void ATwoVersus_PlayerState::StopHeal()
 {
-	if(healTimeline.IsPlaying()) healTimeline.Stop();
+	healTimeline.Stop();
 }
 
 void ATwoVersus_PlayerState::SetHeal()

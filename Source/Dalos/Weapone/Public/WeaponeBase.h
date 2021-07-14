@@ -22,6 +22,12 @@ enum class WEAPONLEVER : uint8 {
 	SINGLEFIRE
 };
 
+UENUM(BlueprintType)
+enum class WEAPONTYPE : uint8 {
+	RIFLE,
+	PISTOL
+};
+
 UCLASS()
 class DALOS_API AWeaponeBase : public AActor, public IInteraction_Interface
 {
@@ -38,7 +44,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI", meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* InteractionUI;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
-	float InAmmo = 0.0f;
+	int LoadedAmmo = 0;
 
 protected:
 	// Called when the game starts or when spawned
@@ -46,6 +52,7 @@ protected:
 
 	WEAPONSTATE WeaponeState;
 	WEAPONLEVER WeaponeLever;
+	WEAPONTYPE WeaponType;
 	bool IsEmpty = false;
 	bool IsReload = false;
 	float fireRecoilPitch = 0.0f;
@@ -56,6 +63,10 @@ protected:
 	float fireStartSpreadSize = 0.0f;
 	float fireEndSpreadSize = 0.0f;
 	float standSpreadSize = 0.0f;
+	int baseKeepAmmo = 0;
+	int baseLoadedAmmo = 0;
+	int limitAmmo = 0;
+	FName weaponName = "";
 
 	virtual void StateStart(WEAPONSTATE state);
 
@@ -73,6 +84,7 @@ public:
 
 	WEAPONSTATE GetWeaponeState() { return WeaponeState; }; void SetWeaponeState(WEAPONSTATE set);
 	WEAPONLEVER GetWeaponeLever() { return WeaponeLever; }; void SetWeaponeLever(WEAPONLEVER set) { WeaponeLever = set; };
+	WEAPONTYPE GetWeaponType() { return WeaponType; }; void SetWeaponType(WEAPONTYPE set) { WeaponType = set; };
 	bool GetIsEmpty() { return IsEmpty; }; void SetIsEmpty(bool set) { IsEmpty = set; };
 	bool GetIsReload() { return IsReload; }; void SetIsReload(bool set) { IsReload = set; };
 	float GetWalkSpreadSize() { return walkSpreadSize; }
@@ -83,6 +95,10 @@ public:
 	virtual float GetFireRecoilYaw();
 	virtual UClass* GetStaticClass();
 	virtual AWeaponeBase* SpawnToHand(AActor* owner, FVector loc, FRotator rot);
+	int GetBaseKeepAmmo() { return baseKeepAmmo; }
+	int GetBaseLoadedAmmo() { return baseLoadedAmmo; }
+	FName GetWeaponName() { return weaponName; }
+	int GetLimitAmmo() { return limitAmmo; }
 
 	virtual void ProjectileFire(FVector loc, FRotator rot, FRotator bulletRot);
 	virtual void PlayFireMontage();

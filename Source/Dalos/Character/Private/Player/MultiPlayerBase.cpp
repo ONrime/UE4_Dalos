@@ -111,26 +111,27 @@ float AMultiPlayerBase::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 		ATwoVersus_PlayerState* playerstate = Cast<ATwoVersus_PlayerState>(GetPlayerState());
 		if (DamageEvent.IsOfType(FPointDamageEvent::ClassID)) {
 			const FPointDamageEvent* point = (FPointDamageEvent*)&DamageEvent;
-			currentHP = playerstate->GetPlyaerHP();
+			damage = point->Damage;
+			currentHP = playerstate->GetPlyaerHP()- damage;
+			playerstate->DamageToHP(damage);
+			
+			UE_LOG(LogTemp, Warning, TEXT("PlayerHP: %f"), currentHP);
+
 			// 히트 표시를 할때 로컬 컨트롤을 쓰면 될 것 같다
 			AMultiPlayer_HUD* hud = Cast<AMultiPlayer_HUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
 			if (!IsLocallyControlled() && DamageCauser == GetWorld()->GetFirstPlayerController()->GetPawn() && hud) hud->HitRedCheck.Execute(false);
+			
 			// 상대방의 데미지가 깍일때 히트 표시를 하자
 			if (IsLocallyControlled() && hud) {
 				hud->PlyaerHitLocCheck.Execute(DamageCauser->GetActorLocation() + DamageCauser->GetActorForwardVector() * 50.0f);
 			}
 			if (HasAuthority()) {
-				playerstate->DamageToHP(damage);
 				playerstate->StopHeal();
 				GetWorldTimerManager().ClearTimer(healTimer);
 				GetWorldTimerManager().SetTimer(healTimer, this, &AMultiPlayerBase::StratAutoHeal, 4.0f, false);
-				CheckPlayerHP(currentHP);
 				NetMulticast_SendPlayerHit(damage, DamageCauser->GetActorForwardVector(), point->HitInfo, DamageCauser);
 			}
-		}
-		if (!HasAuthority()) {
-			//UE_LOG(LogTemp, Warning, TEXT("PlyaerHP: %f"), currentHP);
-			//UE_LOG(LogTemp, Warning, TEXT("damage: %f"), damage);
+			CheckPlayerHP(currentHP);
 		}
 	}	return damage;
 }
@@ -147,6 +148,7 @@ void AMultiPlayerBase::BeginPlay()
 	IsPlayerCameraTurn = true;
 	//auto controller = Cast<APlayerController>(GetController());
 	//controller->SetInputMode(FInputModeGameAndUI());
+	if(!IsLocallyControlled()) BodyMesh->SetCollisionProfileName("EBodyMesh");
 	BodyMesh->SetOwnerNoSee(true);
 	BodyMesh->SetCastShadow(true);
 	BodyMesh->bCastHiddenShadow = true;
@@ -227,7 +229,7 @@ void AMultiPlayerBase::Tick(float DeltaTime)
 	}
 
 	if (IsFire && IsFireAuto) {
-		FireBullet(equipWeapone->BodyMesh->GetSocketLocation("Muzzle"), FollowCamera->GetComponentRotation(), bulletFireLoc);
+		FireBullet(equipWeaponeArm->BodyMesh->GetSocketLocation("Muzzle"), FollowCamera->GetComponentRotation(), bulletFireLoc);
 		if (HUD && equipWeapone) {
 			float spread = equipWeapone->GetFireStartSpreadSize();
 			if (HUD->GetTargetSpread() <= spread) {
@@ -371,7 +373,7 @@ bool AMultiPlayerBase::CrossHairCheck()
 	FOutputDeviceNull aimRed;
 
 	bool hitis = UKismetSystemLibrary::LineTraceSingle(GetWorld(), startTracer, endTracer, ETraceTypeQuery::TraceTypeQuery4, false
-		, actorsToIgnore, EDrawDebugTrace::None, outHit, true);
+		, actorsToIgnore, EDrawDebugTrace::ForOneFrame, outHit, true);
 
 	if (equipWeapone != nullptr) {
 		muzzleLoc = equipWeapone->BodyMesh->GetSocketLocation("Muzzle");
@@ -379,7 +381,7 @@ bool AMultiPlayerBase::CrossHairCheck()
 	else { muzzleLoc = FollowCamera->GetComponentLocation(); }
 
 	bool redCheck = false;
-	if (hitis) {
+	if (hitis && outHit.GetActor() != this) {
 		crossHairEndLoc = outHit.Location;
 		distance = outHit.Distance;
 		if (outHit.GetComponent()->GetCollisionProfileName() == "BodyMesh") {
@@ -477,6 +479,14 @@ void AMultiPlayerBase::WeaponCheck(AWeaponeBase* check)
 				backWeapone1 = check;
 			}
 		}
+		ATwoVersus_PlayerState* state = Cast<ATwoVersus_PlayerState>(GetPlayerState());
+		if (equipWeapone && equipWeapone->GetWeaponType() == WEAPONTYPE::RIFLE) {
+			if (equipWeapone->GetLimitAmmo() - equipWeapone->GetBaseLoadedAmmo() >= state->rifleAmmo) {
+				if (state->equipAmmo != 0) state->rifleAmmo += equipWeapone->GetBaseLoadedAmmo();
+			}
+			state->equipAmmo = state->rifleAmmo;
+		}
+		if (HUD) HUD->EquipAmmoCheck.Execute(state->equipAmmo);
 		EquipGunOnHand(check);
 	}
 }
@@ -487,6 +497,7 @@ void AMultiPlayerBase::EquipGunOnHand(AWeaponeBase* equip)
 	equipWeapone->SetWeaponeState(WEAPONSTATE::EQUIP);
 	equipWeapone->SetOwner(this); // 여기 문제 영상 참고
 	equipWeapone->AttachToComponent(BodyMesh, FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("WeaponeLoc"));
+	equipWeapone->BodyMesh->SetOwnerNoSee(true);
 	equipWeaponeStaticClass = equipWeapone->GetStaticClass();
 
 	if (IsLocallyControlled()) {
@@ -500,6 +511,19 @@ void AMultiPlayerBase::EquipGunOnHand(AWeaponeBase* equip)
 		equipWeaponeArm->BodyMesh->SetOwnerNoSee(false);
 		equipWeaponeArm->SetOwner(this); // 여기 문제 영상 참고
 		equipWeaponeArm->AttachToComponent(ArmMesh, FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("WeaponeLoc"));
+
+		ATwoVersus_PlayerState* state = Cast<ATwoVersus_PlayerState>(GetPlayerState());
+		if (equipWeapone->GetWeaponType() == WEAPONTYPE::RIFLE) {
+			if (state->rifleAmmo == 0) state->rifleAmmo = equipWeapone->GetBaseKeepAmmo();
+			state->equipAmmo = state->rifleAmmo;
+			state->weaponName = equipWeapone->GetWeaponName();
+		}
+		state->loadedAmmo = equipWeapone->LoadedAmmo;
+		if (HUD) {
+			HUD->LoadedAmmoCheck.Execute(equipWeapone->LoadedAmmo);
+			HUD->EquipAmmoCheck.Execute(state->equipAmmo);
+			HUD->WeaponNameCheck.Execute(equipWeapone->GetWeaponName());
+		}
 	}
 	UE_LOG(LogTemp, Warning, TEXT("EquipGunOnHand"));
 	//EquipWeaponInAmmo = equip->InAmmo;
@@ -607,10 +631,10 @@ void AMultiPlayerBase::PlayerInteraction()
 			Server_SendWeaponeCheck(lookWeapone);
 			Server_SendUpperPress(EPlayerPress::INTERACTION);
 		}
-		else { 
+		/*else { 
 			NetMulticast_SendWeaponeCheck(lookWeapone);
 			NetMulticast_SendUpperPress(EPlayerPress::INTERACTION); 
-		}
+		}*/
 	}
 }
 
@@ -634,7 +658,7 @@ void AMultiPlayerBase::PlayerFire()
 	spreadSize = 70.0f;
 	if (equipWeapone && equipWeaponeArm) {
 		upperState->PlayerFire(this, equipWeapone, IsFireAuto, threeCount
-			, equipWeapone->BodyMesh->GetSocketLocation("Muzzle"), FollowCamera->GetComponentRotation(), bulletFireLoc);
+			, equipWeaponeArm->BodyMesh->GetSocketLocation("Muzzle"), FollowCamera->GetComponentRotation(), bulletFireLoc);
 	}
 	//armAnim->PlayFireMontage();
 }
@@ -654,6 +678,23 @@ void AMultiPlayerBase::PlayerReload()
 		equipWeapone->PlayReloadMontage();
 		equipWeaponeArm->PlayReloadMontage();
 	}
+	ATwoVersus_PlayerState* state = Cast<ATwoVersus_PlayerState>(GetPlayerState());
+	if (state->rifleAmmo <= 0 || equipWeapone->LoadedAmmo >= equipWeapone->GetBaseLoadedAmmo()) { return; }
+	if (state->rifleAmmo < (equipWeapone->GetBaseLoadedAmmo() - equipWeapone->LoadedAmmo)) {
+		equipWeapone->LoadedAmmo = equipWeapone->LoadedAmmo + state->rifleAmmo;
+		state->rifleAmmo = 0;
+	}
+	else {
+		state->rifleAmmo = state->rifleAmmo - (equipWeapone->GetBaseLoadedAmmo() - equipWeapone->LoadedAmmo);
+		equipWeapone->LoadedAmmo = equipWeapone->GetBaseLoadedAmmo();
+	}
+	state->loadedAmmo = equipWeapone->LoadedAmmo;
+	state->equipAmmo = state->rifleAmmo;
+	if (HUD) {
+		HUD->LoadedAmmoCheck.Execute(equipWeapone->LoadedAmmo);
+		HUD->EquipAmmoCheck.Execute(state->equipAmmo);
+	}
+	Server_SendReloadAmmo(state->loadedAmmo, state->equipAmmo);
 }
 
 void AMultiPlayerBase::PlayerVault()
@@ -719,8 +760,12 @@ void AMultiPlayerBase::PlayerDead()
 
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("DeadColl"));
 	ArmMesh->SetCollisionProfileName(TEXT("DeadNomal"));
+	ArmMesh->HideBoneByName(FName("root"), PBO_None);
 	GetMesh()->SetCollisionProfileName(TEXT("DeadNomal"));
+	GetMesh()->HideBoneByName(FName("root"), PBO_None);
 	BodyMesh->SetCollisionProfileName(TEXT("DeadMesh"));
+	BodyMesh->SetOnlyOwnerSee(false);
+	BodyMesh->SetOwnerNoSee(false);
 	//GetMesh()->SetCollisionProfileName(TEXT("PhysicsActor"));
 	BodyMesh->SetSimulatePhysics(true);
 }
@@ -863,7 +908,7 @@ void AMultiPlayerBase::StratAutoHeal()
 {
 	UE_LOG(LogTemp, Warning, TEXT("StratAutoHeal"));
 	ATwoVersus_PlayerState* state = Cast<ATwoVersus_PlayerState>(GetPlayerState());
-	if (state && HasAuthority()) {
+	if (state) {
 		state->StartHeal();
 	}
 }
@@ -925,6 +970,13 @@ void AMultiPlayerBase::FireBullet(FVector muzzleLoc, FRotator muzzleRot, FVector
 		armAnim->PlayFireMontage();
 		equipWeapone->PlayFireMontage();
 		equipWeaponeArm->PlayFireMontage();
+
+		ATwoVersus_PlayerState* state = Cast<ATwoVersus_PlayerState>(GetPlayerState());
+		if (equipWeapone->LoadedAmmo > 1) {
+			equipWeapone->LoadedAmmo -= 1;
+			state->loadedAmmo -= 1;
+		}else { ; } // empty 동작
+		if (HUD) HUD->LoadedAmmoCheck.Execute(equipWeapone->LoadedAmmo);
 		/*if (EquipWeaponInAmmo > 1.0f) {
 			EquipWeaponInAmmo -= 1.0f;
 		}
@@ -943,10 +995,6 @@ void AMultiPlayerBase::FireBullet(FVector muzzleLoc, FRotator muzzleRot, FVector
 		AddControllerPitchInput(AddPitch);
 		AddControllerYawInput(AddYaw);
 
-		//FVector muzzleLoc= equipWeaponeArm->BodyMesh->GetSocketLocation("Muzzle");
-		//FRotator muzzleRot = FollowCamera->GetComponentRotation();
-		//UE_LOG(L ogTemp, Warning, TEXT("MuzzleLocation: %f, %f, %f"), MuzzleLocation.X, MuzzleLocation.Y, MuzzleLocation.Z);
-
 		FRotator bulletFireRot = FRotator::ZeroRotator;
 		if (upperState->GetState() == UADS_PlayerUpper::StaticClass()) {
 			bulletFireRot = FollowCamera->GetForwardVector().Rotation();
@@ -957,17 +1005,10 @@ void AMultiPlayerBase::FireBullet(FVector muzzleLoc, FRotator muzzleRot, FVector
 		if (equipWeapone->GetWeaponeLever() == WEAPONLEVER::FULLAUTO) {
 			GetWorldTimerManager().SetTimer(fireTimer, this, &AMultiPlayerBase::FireAutoOn, 0.15f, false);
 		}
-		//EquipWeapon->SetIsFire(false);
-		//EnemyHearing->ReportNoiseEvent(this, GetActorLocation(), 1.0f, this, 10000.0f, FName("FireNoise"));
 		if (HasAuthority()) {
-			//UE_LOG(LogTemp, Warning, TEXT("HasAuthority"));
 			NetMulticast_SendFireBullet(bulletLoc);
 		}
-		else {
-			//UE_LOG(LogTemp, Warning, TEXT("NotHasAuthority"));
-			Server_SendFireBullet(bulletLoc);
-
-		}
+		else { Server_SendFireBullet(bulletLoc); }
 		
 	}
 }
@@ -975,7 +1016,7 @@ void AMultiPlayerBase::FireBullet(FVector muzzleLoc, FRotator muzzleRot, FVector
 void AMultiPlayerBase::CheckPlayerHP(float hp)
 {
 	if (hp <= 40.0f && hp > 0) {
-		UE_LOG(LogTemp, Warning, TEXT("GRAY"));
+		UE_LOG(LogTemp, Warning, TEXT("Gray"));
 		FollowCamera->PostProcessBlendWeight = 1.0f;
 	}
 	else if (hp <= 0.0f) {
@@ -1066,7 +1107,7 @@ bool AMultiPlayerBase::NetMulticast_SendWeaponeCheck_Validate(AWeaponeBase* chec
 }
 void AMultiPlayerBase::NetMulticast_SendWeaponeCheck_Implementation(AWeaponeBase* check)
 {
-	if (!HasAuthority()) WeaponCheck(check);
+	if (!HasAuthority() && !IsLocallyControlled()) WeaponCheck(check);
 }
 bool AMultiPlayerBase::Server_SendWeaponeChange_Validate(EPlayerPress press)
 {
@@ -1253,8 +1294,20 @@ void AMultiPlayerBase::NetMulticast_SendPlayerHit_Implementation(float Damage, F
 {
 	if (!HasAuthority()) {
 		UE_LOG(LogTemp, Warning, TEXT("NetMulticast_SendPlayerHit: %f"), Damage);
-		UGameplayStatics::ApplyPointDamage(this, Damage, Dir, Hit, nullptr, DamageCauser, nullptr);
+		float cd = Damage;
+		UGameplayStatics::ApplyPointDamage(this, cd, Dir, Hit, nullptr, DamageCauser, nullptr);
 	}
+}
+
+bool AMultiPlayerBase::Server_SendReloadAmmo_Validate(int loadAmmo, int equipAmmo)
+{
+	return true;
+}
+void AMultiPlayerBase::Server_SendReloadAmmo_Implementation(int loadAmmo, int equipAmmo)
+{
+	ATwoVersus_PlayerState* state = Cast<ATwoVersus_PlayerState>(GetPlayerState());
+	state->loadedAmmo = loadAmmo;
+	state->equipAmmo = equipAmmo;
 }
 
 void AMultiPlayerBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
