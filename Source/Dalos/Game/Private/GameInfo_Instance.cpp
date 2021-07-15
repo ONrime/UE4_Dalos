@@ -13,6 +13,7 @@
 #include "Engine/Engine.h"
 #include "Components/SlateWrapperTypes.h"
 #include "Dalos/Widget/Public/OptionMenu_UserWidget.h"
+#include "Dalos/Widget/Public/FindServer_UserWidget.h"
 
 
 UGameInfo_Instance::UGameInfo_Instance()
@@ -20,9 +21,9 @@ UGameInfo_Instance::UGameInfo_Instance()
 	//bReplicates = true;
 	static ConstructorHelpers::FClassFinder<UUserWidget> MAINMENU_WIDGET(TEXT("WidgetBlueprint'/Game/UI/MainMenu/MainMenu.MainMenu_C'"));
 	if (MAINMENU_WIDGET.Succeeded()) MainMenu_Class = MAINMENU_WIDGET.Class;
-	static ConstructorHelpers::FClassFinder<UUserWidget> HOSTMENU_WIDGET(TEXT("WidgetBlueprint'/Game/UI/MainMenu/HostMenu.HostMenu_C'"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> HOSTMENU_WIDGET(TEXT("WidgetBlueprint'/Game/UI/MainMenu/HostMenu1.HostMenu1_C'"));
 	if (HOSTMENU_WIDGET.Succeeded()) HostMenu_Class = HOSTMENU_WIDGET.Class;
-	static ConstructorHelpers::FClassFinder<UUserWidget> SERVERMENU_WIDGET(TEXT("WidgetBlueprint'/Game/UI/MainMenu/ServerMenu.ServerMenu_C'"));
+	static ConstructorHelpers::FClassFinder<UFindServer_UserWidget> SERVERMENU_WIDGET(TEXT("WidgetBlueprint'/Game/UI/MainMenu/ServerMenu2.ServerMenu2_C'"));
 	if (SERVERMENU_WIDGET.Succeeded()) ServerMenu_Class = SERVERMENU_WIDGET.Class;
 	static ConstructorHelpers::FClassFinder<UOptionMenu_UserWidget> OPTIONMENU_WIDGET(TEXT("WidgetBlueprint'/Game/UI/MainMenu/OptionMenus.OptionMenus_C'"));
 	if (OPTIONMENU_WIDGET.Succeeded()) OptionMenu_Class = OPTIONMENU_WIDGET.Class;
@@ -96,6 +97,7 @@ void UGameInfo_Instance::OnFindSessionsComplete(bool succeeded)
 		sessionsNum = sessionSearch->SearchResults.Num();
 		IsFindServer = true;
 		//Join_Server();
+		Results= sessionSearch->SearchResults;
 		findSessionSucceeded.Broadcast();
 	}
 	else {
@@ -123,21 +125,31 @@ void UGameInfo_Instance::HandleTravelError(ETravelFailure::Type FailureType)
 	UE_LOG(LogTemp, Warning, TEXT("TravelError: %s"), *TravelErrorToString(FailureType));
 }
 
-void UGameInfo_Instance::CreateServer(int32 Player_Num, FName Server_Name, bool Is_Lan)
+void UGameInfo_Instance::CreateServer(int32 PlayerNum, FName ServerName, FName GameModeName, bool LanCheck)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("CreateServer"));
 	UE_LOG(LogTemp, Warning, TEXT("CreateServer"));
 	FOnlineSessionSettings sessionSettings;
 	sessionSettings.bAllowJoinInProgress = true;
 	sessionSettings.bIsDedicated = false;
-	sessionSettings.bIsLANMatch = false;
+	sessionSettings.bIsLANMatch = LanCheck;
 	sessionSettings.bShouldAdvertise = true;
 	sessionSettings.bUsesPresence = true;
 	//SessionSettings.bUsesPresence = false;
 	//SessionSettings.bIsDedicated = true;
 	sessionSettings.NumPublicConnections = 5;
-	sessionInterface->DestroySession(Server_Name);
-	sessionInterface->CreateSession(Player_Num, Server_Name, sessionSettings);
+
+	FOnlineSessionSetting AddSessionName;
+	AddSessionName.Data = ServerName.ToString();
+	AddSessionName.AdvertisementType = EOnlineDataAdvertisementType::ViaOnlineService;
+	sessionSettings.Settings.Add(FName("SESSION_NAME"), AddSessionName);
+	FOnlineSessionSetting AddGameModeName;
+	AddGameModeName.Data = GameModeName.ToString();
+	AddGameModeName.AdvertisementType = EOnlineDataAdvertisementType::ViaOnlineService;
+	sessionSettings.Settings.Add(FName("GAMEMODE_NAME"), AddGameModeName);
+
+	sessionInterface->DestroySession(ServerName);
+	sessionInterface->CreateSession(PlayerNum, ServerName, sessionSettings);
 }
 
 
@@ -165,7 +177,7 @@ void UGameInfo_Instance::ShowHostMenu()
 void UGameInfo_Instance::ShowServerMenu()
 {
 	auto PlayerContoller = GetFirstLocalPlayerController();
-	ServerMenu_WB = CreateWidget<UUserWidget>(PlayerContoller, ServerMenu_Class);
+	ServerMenu_WB = CreateWidget<UFindServer_UserWidget>(PlayerContoller, ServerMenu_Class);
 	ServerMenu_WB->AddToViewport();
 	PlayerContoller->bShowMouseCursor = true;
 }
@@ -187,26 +199,42 @@ void UGameInfo_Instance::ShowOptionMenu()
 	}
 }
 
-void UGameInfo_Instance::LaunchLobby(int32 playerNum, FName server_Name, bool Is_Lan)
+void UGameInfo_Instance::LaunchLobby(int32 PlayerNum, FName ServerName, FName GameModeName, bool LanCheck, bool IsDedicated)
 {
-	maxPlayer = playerNum;
-	serverName = server_Name;
-	ShowLodingScreen();
-	CreateServer(playerNum, server_Name, Is_Lan);
+	if (IsDedicated) {
+		FindServer(false, IsDedicated);
+	}
+	else {
+		maxPlayer = PlayerNum;
+		serverName = ServerName;
+		ShowLodingScreen();
+		CreateServer(PlayerNum, ServerName, GameModeName, LanCheck);
+	}
 }
 
-void UGameInfo_Instance::JoinServer()
+void UGameInfo_Instance::JoinServer(bool DedicatedCheck)
 {
 	TArray<FOnlineSessionSearchResult> searchResults = sessionSearch->SearchResults;
 	FString sessionId = searchResults[0].Session.GetSessionIdStr();
 	UE_LOG(LogTemp, Warning, TEXT("SearchResults Count: %s"), *sessionId);
 	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Join Server"));
 	//ServerName= SearchResults[0]->
-	sessionInterface->JoinSession(0, "test", searchResults[0]);
-
+	
+	int num = 0;
+	/*if (DedicatedCheck) { // 데디케이티드 서버 고르기
+		for (int i = 0; i < searchResults.Num(); i++) {
+			if (searchResults[i].Session.SessionSettings.bIsDedicated) {
+				num = i;
+			}
+		}
+	}*/
+	//FBlueprintSessionResult
+	FName sessionName = FName(*(searchResults[num].Session.SessionSettings.Settings.FindRef("SESSION_NAME").Data.ToString()));
+	//FName gameModeName = FName(*(searchResults[num].Session.SessionSettings.Settings.FindRef("GAMEMODE_NAME").Data.ToString()));
+	sessionInterface->JoinSession(0, FName(*(searchResults[num].Session.OwningUserName)), searchResults[num]);
 }
 
-void UGameInfo_Instance::FindServer()
+void UGameInfo_Instance::FindServer(bool LanCheck, bool DedicatedCheck)
 {
 	IOnlineSubsystem* onlineSub = IOnlineSubsystem::Get();
 
@@ -218,14 +246,16 @@ void UGameInfo_Instance::FindServer()
 		if (sessionInterface.IsValid())
 		{
 			sessionSearch = MakeShareable(new FOnlineSessionSearch());
-			sessionSearch->bIsLanQuery = false;
+			sessionSearch->bIsLanQuery = LanCheck;
 			//SessionSearch->dedica
+			sessionSearch->SearchState = EOnlineAsyncTaskState::NotStarted;
 			sessionSearch->MaxSearchResults = 50;
 			//SessionSearch->PingBucketSize = 50;
-			//SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+			//sessionSearch->QuerySettings.Set(SEARCH_SECURE_SERVERS_ONLY, true, EOnlineComparisonOp::Equals);
+			sessionSearch->QuerySettings.Set(SEARCH_DEDICATED_ONLY, DedicatedCheck, EOnlineComparisonOp::Equals);
+			//sessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 
 			TSharedRef<FOnlineSessionSearch> SearchSettingsRef = sessionSearch.ToSharedRef();
-
 			// Finally call the SessionInterface function. The Delegate gets called once this is finished
 			sessionInterface->FindSessions(0, SearchSettingsRef);
 		}
@@ -262,6 +292,15 @@ void UGameInfo_Instance::Check_SaveGame()
 		ShowOptionMenu();
 		auto PlayerContoller = GetFirstLocalPlayerController();
 		PlayerContoller->bShowMouseCursor = true;
+	}
+}
+
+void UGameInfo_Instance::ChoiseJoinServer(int num)
+{
+	TArray<FOnlineSessionSearchResult> searchResults = sessionSearch->SearchResults;
+	if (searchResults.Num() > 0) {
+		FName sessionName = FName(*(searchResults[num].Session.SessionSettings.Settings.FindRef("SESSION_NAME").Data.ToString()));
+		sessionInterface->JoinSession(0, FName(*(searchResults[num].Session.OwningUserName)), searchResults[num]);
 	}
 }
 

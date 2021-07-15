@@ -5,11 +5,19 @@
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "FindSessionsCallbackProxy.h"
 #include "GameInfo_Instance.generated.h"
 
 /**
  * 
  */
+
+UENUM(BlueprintType)
+enum class GAMEMODETYPE : uint8 {
+	TWOVERSUS,
+	TEAMDEATHMACH
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSessionDelegate);
 
 UCLASS()
@@ -35,7 +43,7 @@ protected:
 	virtual void HandleTravelError(ETravelFailure::Type FailureType); // 이동시 에러 처리 및 메세지 출력
 
 	UFUNCTION(BlueprintCallable)
-		void CreateServer(int32 playerNum, FName server_Name, bool is_Lan);
+	void CreateServer(int32 PlayerNum, FName ServerName, FName GameModeName, bool LanCheck);
 
 public:
 	UPROPERTY(BlueprintAssignable, VisibleAnywhere, BlueprintCallable, Category = "Event")
@@ -48,7 +56,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu", meta = (AllowPrivateAccess = "true"))
 	class UUserWidget* HostMenu_WB;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu", meta = (AllowPrivateAccess = "true"))
-	class UUserWidget* ServerMenu_WB;
+	class UFindServer_UserWidget* ServerMenu_WB;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu", meta = (AllowPrivateAccess = "true"))
 	class UOptionMenu_UserWidget* OptionMenu_WB;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu", meta = (AllowPrivateAccess = "true"))
@@ -69,23 +77,29 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Event")
 	void ShowOptionMenu();  // 옵션 메뉴 화면 전환 and 마우스 활성화
 	UFUNCTION(BlueprintCallable, Category = "Event")
-	void LaunchLobby(int32 playerNum, FName server_Name, bool Is_Lan);  // 로비를 시작하고 호스트를 세팅한다.
+	void LaunchLobby(int32 PlayerNum, FName ServerName, FName GameModeName, bool LanCheck, bool IsDedicated);  // 로비를 시작하고 호스트를 세팅한다.
 	UFUNCTION(BlueprintCallable, Category = "Event")
-	void JoinServer();  // 서버에 들어가기
+	void JoinServer(bool DedicatedCheck);  // 서버에 들어가기
 	UFUNCTION(BlueprintCallable, Category = "Event")
-	void FindServer();  // 서버 찾기
+	void FindServer(bool LanCheck, bool DedicatedCheck);  // 서버 찾기
 	UFUNCTION(BlueprintCallable, Category = "Event")
 	void ShowLodingScreen(); // 요구시 로딩 화면 출력
 		//UFUNCTION(BlueprintCallable, Category = "Event")
 	void Destroy_SessionCaller(class APlayerController PC); // 호출 시 세션 파괴
 	UFUNCTION(BlueprintCallable, Category = "Event")
 	void Check_SaveGame();  // 저장 파일 확인 하기
+	UFUNCTION(BlueprintCallable, Category = "Event")
+	void ChoiseJoinServer(int num);
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ServerSetting", meta = (AllowPrivateAccess = "true"))
 	int32 maxPlayer = 4;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ServerSetting", meta = (AllowPrivateAccess = "true"))
 	FName serverName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ServerSetting", meta = (AllowPrivateAccess = "true"))
+	GAMEMODETYPE GameMode = GAMEMODETYPE::TWOVERSUS;
+
+	TArray<FOnlineSessionSearchResult> Results;
 
 private:
 	FName lobbyName = "LobyMap";
@@ -98,10 +112,13 @@ private:
 	bool IsFindServer = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Check", meta = (AllowPrivateAccess = "true"))
 	int32 sessionsNum = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Check", meta = (AllowPrivateAccess = "true"))
+	int32 sessionsSelectNum = 0;
 
 	UFUNCTION(BlueprintPure)
 	FString NetErrorToString(ENetworkFailure::Type FailureType);
 	UFUNCTION(BlueprintPure)
 	FString TravelErrorToString(ETravelFailure::Type FailureType);
+
 
 };
