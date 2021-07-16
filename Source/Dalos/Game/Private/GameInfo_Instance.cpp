@@ -108,6 +108,7 @@ void UGameInfo_Instance::OnFindSessionsComplete(bool succeeded)
 
 }
 
+
 /*void UGameInfo_Instance::HandleNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString)
 {
 	//HandleNetworkError()
@@ -303,6 +304,12 @@ void UGameInfo_Instance::ChoiseJoinServer(int num)
 		sessionInterface->JoinSession(0, FName(*(searchResults[num].Session.OwningUserName)), searchResults[num]);
 	}
 }
+
+void UGameInfo_Instance::DestroySessionAndLeaveGame()
+{
+	//sessionInterface->DestroySession();
+}
+
 
 FString UGameInfo_Instance::NetErrorToString(ENetworkFailure::Type FailureType)
 {

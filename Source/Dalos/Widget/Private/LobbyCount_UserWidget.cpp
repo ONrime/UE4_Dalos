@@ -13,7 +13,7 @@ void ULobbyCount_UserWidget::PlayCountDown()
 void ULobbyCount_UserWidget::StopCountDown()
 {
 	countVis = ESlateVisibility::Hidden;
-	if (GetWorld()->GetTimerManager().IsTimerActive(countDownTimer)) {
+	if (GetWorld() && GetWorld()->GetTimerManager().IsTimerActive(countDownTimer)) {
 		GetWorld()->GetTimerManager().ClearTimer(countDownTimer);
 	}
 	//GetWorld()->GetTimerManager().ClearTimer(countDownTimer);

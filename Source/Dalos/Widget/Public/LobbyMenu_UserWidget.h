@@ -27,10 +27,10 @@ public:
 
 	UPROPERTY(BlueprintAssignable, VisibleAnywhere, BlueprintCallable, Category = "Event")
 	FLobbyDelegate ClearPlayerListCheck;
-	UPROPERTY(BlueprintAssignable, VisibleAnywhere, BlueprintCallable, Category = "Event")
-	FLobbyDelegate RedButtonClick;
-	UPROPERTY(BlueprintAssignable, VisibleAnywhere, BlueprintCallable, Category = "Event")
-	FLobbyDelegate BlueButtonClick;
+	//UPROPERTY(BlueprintAssignable, VisibleAnywhere, BlueprintCallable, Category = "Event")
+	//FLobbyDelegate RedButtonClick;
+	//UPROPERTY(BlueprintAssignable, VisibleAnywhere, BlueprintCallable, Category = "Event")
+	//FLobbyDelegate BlueButtonClick;
 	UPROPERTY(BlueprintAssignable, VisibleAnywhere, BlueprintCallable, Category = "Event")
 	FLobbyOneDelegate UpdatePlayerWindowCheck;
 	UPROPERTY(BlueprintAssignable, VisibleAnywhere, BlueprintCallable, Category = "Event")
@@ -47,6 +47,9 @@ public:
 	FString playerDisplay;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESlateVisibility WidgetVis = ESlateVisibility::Visible;
+
+	UFUNCTION(BlueprintCallable)
+	void DestroySessionAndLeaveGame();
 
 protected:
 

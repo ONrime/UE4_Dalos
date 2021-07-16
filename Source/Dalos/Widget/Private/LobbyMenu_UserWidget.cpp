@@ -15,3 +15,8 @@ void ULobbyMenu_UserWidget::GetLifetimeReplicatedProps(TArray< FLifetimeProperty
 	DOREPLIFETIME(ULobbyMenu_UserWidget, playerDisplay);
 
 }
+
+void ULobbyMenu_UserWidget::DestroySessionAndLeaveGame()
+{
+	GetGameInstance();
+}

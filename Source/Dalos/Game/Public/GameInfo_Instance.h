@@ -90,6 +90,8 @@ public:
 	void Check_SaveGame();  // 저장 파일 확인 하기
 	UFUNCTION(BlueprintCallable, Category = "Event")
 	void ChoiseJoinServer(int num);
+	UFUNCTION(BlueprintCallable, Category = "Event")
+	void DestroySessionAndLeaveGame();
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ServerSetting", meta = (AllowPrivateAccess = "true"))

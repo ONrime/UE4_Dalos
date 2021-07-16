@@ -33,6 +33,8 @@ void ALoby_GameModeBase::PostLogin(APlayerController* NewPlayer)
 	gameState->maxPlayers = gameIns->maxPlayer; // 4
 	//UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), gameState->allPlayerStart);
 
+
+
 	FString teamInfo = "";
 	if (redTeamCount <= blueTeamCount) {
 		redTeamCount++;
@@ -46,6 +48,7 @@ void ALoby_GameModeBase::PostLogin(APlayerController* NewPlayer)
 	}
 
 	auto playerController = Cast<ALoby_PlayerController>(NewPlayer);
+	if (playerController->IsLocalController()) playerController->SetupLobbyMenu_Implementation(gameState->serverName); // 각 클라이언트의 로비 메뉴 활성화
 	if (!IsHost) {
 		IsHost = true;
 		playerController->InitialSetup("Host", teamInfo);
@@ -54,9 +57,9 @@ void ALoby_GameModeBase::PostLogin(APlayerController* NewPlayer)
 		playerController->InitialSetup("Guest", teamInfo);
 	}// 초기화 및 세이브 게임 정보 확인하고 서버에 업데이트 하기
 	 // 각 컨트롤(클라이언트)에 플레이어 수 업데이트 및 플레이어 인포 전달
-
-	playerController->SetupLobbyMenu(gameState->serverName); // 각 클라이언트의 로비 메뉴 활성화
+	if (!playerController->IsLocalController()) playerController->SetupLobbyMenu(gameState->serverName); // 각 클라이언트의 로비 메뉴 활성화
 	playerController->UpdateLobbySettings(mapImage, mapName, mapTime); // 각 클라이언트의 기본 맵 이미지, 맵 이름, 맵 시간 전달 해서 설정
+
 	//RespawnPlayer(NewPlayer); // 플레이어 캐릭터 리스폰하기
 }
 
@@ -83,6 +86,7 @@ void ALoby_GameModeBase::EveryoneUpdate_Implementation()
 		for (int i = 0; i < gameState->allPlayerController.Num(); i++) {
 			auto lobbyController = Cast<ALoby_PlayerController>(gameState->allPlayerController[i]);
 			gameState->connetedPlayers.Add(lobbyController->playerSettings);
+			if(HasAuthority()) gameState->OnRep_UpdateConnetedPlayers();
 			lobbyController->UpdateNumberOfPlayers(currentPlayers, gameState->maxPlayers); // 각 컨트롤러에 플레이어 수 업데이트 하기
 		}
 
@@ -152,7 +156,7 @@ void ALoby_GameModeBase::StopCountDown()
 	if (gameState) {
 		for (int i = 0; i < gameState->allPlayerController.Num(); i++) {
 			auto lobbyController = Cast<ALoby_PlayerController>(gameState->allPlayerController[i]);
-			lobbyController->StopCountDown();
+			if(lobbyController) lobbyController->StopCountDown();
 		}
 	}
 }
