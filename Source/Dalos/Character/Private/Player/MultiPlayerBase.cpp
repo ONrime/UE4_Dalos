@@ -16,9 +16,11 @@
 #include "Dalos/Character/Public/Player/PlayerBody_AnimInstance.h"
 #include "Dalos/Stage/TwoVersus/Public/TwoVersus_GameState.h"
 #include "Dalos/Stage/TwoVersus/Public/TwoVersus_PlayerState.h"
+#include "Dalos/Stage/TwoVersus/Public/TwoVersus_GameMode.h"
 #include "Dalos/Widget/Public/MultiPlayer_HUD.h"
 #include "Components/PostProcessComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/GameplayStatics.h"
 #include "Engine/BlendableInterface.h"
 #include "Materials/MaterialInstance.h"
 #include "Net/UnrealNetwork.h"
@@ -96,11 +98,12 @@ AMultiPlayerBase::AMultiPlayerBase()
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;  // 컨트롤러 방향으로 캐릭터 회전(무브먼트 기준)
 	GetCharacterMovement()->MovementMode = EMovementMode::MOVE_Walking;
 	
-	static ConstructorHelpers::FObjectFinder<UObject> GRAY_MATERIAL(TEXT("Material'/Game/Player/Grey_Camera.Grey_Camera'"));
+	static ConstructorHelpers::FObjectFinder<UObject>GRAY_MATERIAL(TEXT("Material'/Game/Player/Grey_Camera.Grey_Camera'"));
 	if(GRAY_MATERIAL.Succeeded()) FollowCamera->AddOrUpdateBlendable(GRAY_MATERIAL.Object, 1.0f);
 	FollowCamera->PostProcessBlendWeight = 0.0f;
 	//FollowCamera->PostProcessSettings.WeightedBlendables.Array[0].Weight = 0.0f;
 
+	
 }
 
 float AMultiPlayerBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -140,12 +143,15 @@ void AMultiPlayerBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	IsPlayerCameraTurn = false;
+	IsMove = false;
+
 	HUD = Cast<AMultiPlayer_HUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
 	GetMesh()->HideBoneByName(FName("spine_02"), PBO_None);
 	GetMesh()->SetOnlyOwnerSee(true);
 	GetMesh()->SetCastShadow(false);
 	ArmMesh->SetOnlyOwnerSee(true);
-	IsPlayerCameraTurn = true;
+	//IsPlayerCameraTurn = true;
 	//auto controller = Cast<APlayerController>(GetController());
 	//controller->SetInputMode(FInputModeGameAndUI());
 	if(!IsLocallyControlled()) BodyMesh->SetCollisionProfileName("EBodyMesh");
@@ -185,6 +191,10 @@ void AMultiPlayerBase::PostInitializeComponents()
 		});
 	bodyAnim->climbDelegate.BindLambda([this]()->void {
 		StopClimb();
+		});
+	CountDownEndCheck.BindLambda([this]()->void {
+		IsPlayerCameraTurn = true;
+		IsMove = true;
 		});
 
 	/*armAnim->playFire.BindLambda([this]()->void {

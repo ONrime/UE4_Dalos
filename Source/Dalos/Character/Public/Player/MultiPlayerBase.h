@@ -10,6 +10,8 @@
  * 
  */
 
+DECLARE_DELEGATE(FMultiPlayerCheckDelegate)
+
 UENUM(BlueprintType)
 enum class EPlayerPress : uint8 {
 	CROUCH UMETA(DisplayName = "Crouch"),
@@ -266,5 +268,7 @@ public:
 	bool IsCoverRight = false;
 	UPROPERTY(Replicated)
 	float coverAngle = 0.0f;
+
+	FMultiPlayerCheckDelegate CountDownEndCheck;
 
 };

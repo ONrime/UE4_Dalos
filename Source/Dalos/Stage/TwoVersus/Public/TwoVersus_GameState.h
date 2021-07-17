@@ -17,6 +17,11 @@ class DALOS_API ATwoVersus_GameState : public AGameState
 public:
 	ATwoVersus_GameState();
 
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = ServerSettings, meta = (AllowPrivateAccess = "true"))
+	TArray<class APlayerController*> AllPlayerController;
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = ServerSettings, meta = (AllowPrivateAccess = "true"))
+	TArray<class AActor*> AllPlayerStart;
+
 protected:
 
 public:

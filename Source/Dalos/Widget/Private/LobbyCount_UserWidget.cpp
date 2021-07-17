@@ -24,5 +24,6 @@ void ULobbyCount_UserWidget::MinCount()
 	countNum -= 1;
 	if (countNum == 0) {
 		GetWorld()->GetTimerManager().ClearTimer(countDownTimer);
+		CountDownEndCheck.Execute();
 	}
 }

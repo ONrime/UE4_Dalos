@@ -9,6 +9,9 @@
 /**
  * 
  */
+
+DECLARE_DELEGATE(FLobbyCountDelegate);
+
 UCLASS()
 class DALOS_API ULobbyCount_UserWidget : public UUserWidget
 {
@@ -25,6 +28,8 @@ public:
 	void MinCount();
 	UFUNCTION(BlueprintCallable)
 	void StopCountDown();
+
+	FLobbyCountDelegate CountDownEndCheck;
 
 private:
 	FTimerHandle countDownTimer;

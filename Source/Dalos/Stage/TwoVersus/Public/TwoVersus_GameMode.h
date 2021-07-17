@@ -17,6 +17,22 @@ class DALOS_API ATwoVersus_GameMode : public AGameMode
 public:
 	ATwoVersus_GameMode();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ServerSettings, meta = (AllowPrivateAccess = "true"))
+	TArray<class ATwoVersus_PlayerController*> AllPlayerController;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ServerSettings, meta = (AllowPrivateAccess = "true"))
+	TArray<class AActor*> AllPlayerStart;
+
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+
+	void CountBeginPlayer();
+
+protected:
+
 private:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ServerSettings, meta = (AllowPrivateAccess = "true"))
+	int32 RedTeamCount = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ServerSettings, meta = (AllowPrivateAccess = "true"))
+	int32 BlueTeamCount = 0;
+	int BeginPlayer = 0;
 
 };
