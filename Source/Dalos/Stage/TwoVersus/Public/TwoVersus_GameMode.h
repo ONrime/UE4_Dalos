@@ -22,9 +22,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ServerSettings, meta = (AllowPrivateAccess = "true"))
 	TArray<class AActor*> AllPlayerStart;
 
-	virtual void PostLogin(APlayerController* NewPlayer) override;
+	virtual void RestartPlayer(AController* NewPlayer) override;
 
 	void CountBeginPlayer();
+	void CountPlayerDead(FString Team);
 
 protected:
 
@@ -33,6 +34,13 @@ private:
 	int32 RedTeamCount = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ServerSettings, meta = (AllowPrivateAccess = "true"))
 	int32 BlueTeamCount = 0;
+	UPROPERTY()
+	int16 RedTeamWinCount = 0;
+	UPROPERTY()
+	int16 BlueTeamWinCount = 0;
 	int BeginPlayer = 0;
+
+	FTimerHandle WinResultTimer;
+	void WinResultEnd();
 
 };

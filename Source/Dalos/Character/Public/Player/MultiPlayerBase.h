@@ -252,6 +252,15 @@ public:
 	bool Server_SendReloadAmmo_Validate(int loadAmmo, int equipAmmo);
 	void Server_SendReloadAmmo_Implementation(int loadAmmo, int equipAmmo);
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SendPlayerStart();
+	bool Server_SendPlayerStart_Validate();
+	void Server_SendPlayerStart_Implementation();
+	UFUNCTION(NetMulticast, Reliable, WithValidation)
+	void NetMulticast_SendPlayerStart();
+	bool NetMulticast_SendPlayerStart_Validate();
+	void NetMulticast_SendPlayerStart_Implementation();
+
 	bool IsMove = true;
 	bool IsPlayerCameraTurn = true;
 	bool IsPlayerRotationYawSpeedSlow = false;

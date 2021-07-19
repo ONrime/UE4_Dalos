@@ -83,7 +83,8 @@ public:
 	void Kicked_Implementation();
 
 	UFUNCTION(Client, Reliable, WithValidation)
-	void UpdateNumberOfPlayers(int16 CurrentPlayers, int16 MaxPlayers); // 접속 플레이어 숫자 표시 업데이트
+	void UpdateNumberOfPlayers(int16 
+		s, int16 MaxPlayers); // 접속 플레이어 숫자 표시 업데이트
 	bool UpdateNumberOfPlayers_Validate(int16 CurrentPlayers, int16 MaxPlayers);
 	void UpdateNumberOfPlayers_Implementation(int16 CurrentPlayers, int16 MaxPlayers);
 
@@ -107,13 +108,18 @@ public:
 	bool UpdateText_Validate(const FString& sender_Text, const FString& sender_Name);
 	void UpdateText_Implementation(const FString& sender_Text, const FString& sender_Name);
 
+	UFUNCTION(NetMulticast, Reliable, WithValidation)
+	void ClearWidget();
+	bool ClearWidget_Validate();
+	void ClearWidget_Implementation();
+	
 	void SaveGameCheck();
 	void UpdateList();
 	void ClickRedButton();
 	void ClickBlueButton();
 	void TogglePlayer();
 	void VisibleWidget();
-
+	
 	
 protected:
 

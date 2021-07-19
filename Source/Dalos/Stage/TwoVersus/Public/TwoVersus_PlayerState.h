@@ -10,6 +10,9 @@
 /**
  * 
  */
+
+DECLARE_DELEGATE(FPlayerStateCheck);
+
 UCLASS()
 class DALOS_API ATwoVersus_PlayerState : public APlayerState
 {
@@ -35,9 +38,12 @@ public:
 	UPROPERTY(Transient)
 	int equipAmmo = 0;
 
-protected:
 	virtual void BeginPlay() override;
+	virtual void PostInitializeComponents() override;
 	virtual void Tick(float DeltaTime) override;
+
+protected:
+	
 	// , ReplicatedUsing = OnRep_UpdatePlayerHP
 	UPROPERTY(Transient, Replicated) // 직렬화에서 제회시키는 키워드이다. 데이터가 상시 변하기 때문에 보관하는게 의미가 없다.
 	float playerHP = 100;

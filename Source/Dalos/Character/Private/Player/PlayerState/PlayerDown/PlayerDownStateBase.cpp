@@ -35,22 +35,24 @@ UClass* UPlayerDownStateBase::GetState()
 void UPlayerDownStateBase::TurnAtRate(AMultiPlayerBase* player, float Rate)
 {
 	if (player->IsPlayerCameraTurn) {
+		player->SpringArm->bUsePawnControlRotation = true;
 		float PitchRate = Rate * player->BaseTurnRate * 0.008f;
 		player->AddControllerYawInput(PitchRate);
 	}
 	else { // 카메라 움직임 끄기
-		player->SpringArm->bUsePawnControlRotation = false;
+		//player->SpringArm->bUsePawnControlRotation = false;
 	}
 }
 
 void UPlayerDownStateBase::LookUpAtRate(AMultiPlayerBase* player, float Rate)
 {
 	if (player->IsPlayerCameraTurn) {
+		player->SpringArm->bUsePawnControlRotation = true;
 		float PitchRate = Rate * player->BaseLookUpRate * 0.008f;
 		player->AddControllerPitchInput(PitchRate);
 	}
 	else { // 카메라 움직임 끄기
-		player->SpringArm->bUsePawnControlRotation = false;
+		//player->SpringArm->bUsePawnControlRotation = false;
 	}
 }
 

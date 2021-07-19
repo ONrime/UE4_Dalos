@@ -17,6 +17,7 @@
 #include "Dalos/Stage/TwoVersus/Public/TwoVersus_GameState.h"
 #include "Dalos/Stage/TwoVersus/Public/TwoVersus_PlayerState.h"
 #include "Dalos/Stage/TwoVersus/Public/TwoVersus_GameMode.h"
+#include "Dalos/Stage/TwoVersus/Public/TwoVersus_PlayerController.h"
 #include "Dalos/Widget/Public/MultiPlayer_HUD.h"
 #include "Components/PostProcessComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -193,8 +194,9 @@ void AMultiPlayerBase::PostInitializeComponents()
 		StopClimb();
 		});
 	CountDownEndCheck.BindLambda([this]()->void {
-		IsPlayerCameraTurn = true;
-		IsMove = true;
+		Server_SendPlayerStart();
+		//IsPlayerCameraTurn = true;
+		//IsMove = true;
 		});
 
 	/*armAnim->playFire.BindLambda([this]()->void {
@@ -778,6 +780,10 @@ void AMultiPlayerBase::PlayerDead()
 	BodyMesh->SetOwnerNoSee(false);
 	//GetMesh()->SetCollisionProfileName(TEXT("PhysicsActor"));
 	BodyMesh->SetSimulatePhysics(true);
+
+	ATwoVersus_PlayerController* Ctrl = Cast<ATwoVersus_PlayerController>(GetController());
+	if(Ctrl && Ctrl->PlayerDeadCheck.IsBound()) Ctrl->PlayerDeadCheck.Execute();
+
 }
 
 void AMultiPlayerBase::MoveForward(float Value)
@@ -1318,6 +1324,24 @@ void AMultiPlayerBase::Server_SendReloadAmmo_Implementation(int loadAmmo, int eq
 	ATwoVersus_PlayerState* state = Cast<ATwoVersus_PlayerState>(GetPlayerState());
 	state->loadedAmmo = loadAmmo;
 	state->equipAmmo = equipAmmo;
+}
+
+bool AMultiPlayerBase::Server_SendPlayerStart_Validate()
+{
+	return true;
+}
+void AMultiPlayerBase::Server_SendPlayerStart_Implementation()
+{
+	NetMulticast_SendPlayerStart();
+}
+bool AMultiPlayerBase::NetMulticast_SendPlayerStart_Validate()
+{
+	return true;
+}
+void AMultiPlayerBase::NetMulticast_SendPlayerStart_Implementation()
+{
+	IsPlayerCameraTurn = true;
+	IsMove = true;
 }
 
 void AMultiPlayerBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const

@@ -18,7 +18,7 @@ ALoby_GameModeBase::ALoby_GameModeBase()
 	DefaultPawnClass = ADalosCharacter::StaticClass();
 	PlayerControllerClass = ALoby_PlayerController::StaticClass();
 	GameStateClass = ALoby_GameState::StaticClass();
-	bUseSeamlessTravel = false;
+	bUseSeamlessTravel = true;
 
 }
 
@@ -32,8 +32,6 @@ void ALoby_GameModeBase::PostLogin(APlayerController* NewPlayer)
 	gameState->serverName = gameIns->serverName.ToString();
 	gameState->maxPlayers = gameIns->maxPlayer; // 4
 	//UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), gameState->allPlayerStart);
-
-
 
 	FString teamInfo = "";
 	if (redTeamCount <= blueTeamCount) {
@@ -166,9 +164,15 @@ void ALoby_GameModeBase::MinCount()
 	countNum -= 1;
 	if (countNum == 0) {
 		GetWorld()->GetTimerManager().ClearTimer(countDownTimer);
-		UE_LOG(LogTemp, Warning, TEXT("LaunchTheGame"));
-		GetWorld()->ServerTravel("/Game/Map/TestMap?Game=ATwoVersus_GameModeBase", true, false);
-		//GetWorld()->Exec(GetWorld(), TEXT("servertravel /Game/Map/TestMap"));
+		auto gameState = Cast<ALoby_GameState>(GameState);
+		UE_LOG(LogTemp, Warning, TEXT("LaunchTheGame: %d"), gameState->allPlayerController.Num());
+		for (int i = 0; i < gameState->allPlayerController.Num(); i++) {
+			ALoby_PlayerController* Controller = Cast< ALoby_PlayerController>(gameState->allPlayerController[i]);
+			Controller->ClearWidget();
+			UE_LOG(LogTemp, Warning, TEXT("ClearWidget"));
+		}
+		//GetWorld()->ServerTravel("/Game/Map/TestMap?Game=ATwoVersus_GameMode");
+		GetWorld()->ServerTravel("/Game/Map/TestMap?Game=ATwoVersus_GameMode");
 	}
 }
 

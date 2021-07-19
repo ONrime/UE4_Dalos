@@ -18,12 +18,20 @@ ATwoVersus_GameMode::ATwoVersus_GameMode()
 	PlayerStateClass = ATwoVersus_PlayerState::StaticClass();
 	HUDClass = AMultiPlayer_HUD::StaticClass();
 	//bUseSeamlessTravel = false;
+
+	//bStartPlayersAsSpectators = 0; // 자동 스폰 막기
 }
 
-void ATwoVersus_GameMode::PostLogin(APlayerController* NewPlayer)
+/*void ATwoVersus_GameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
+	
+}*/
 
+void ATwoVersus_GameMode::RestartPlayer(AController* NewPlayer)
+{
+
+	
 	// 컨트롤러에 팀 등록
 	ATwoVersus_PlayerController* Controller = Cast<ATwoVersus_PlayerController>(NewPlayer);
 	ATwoVersus_GameState* State = Cast<ATwoVersus_GameState>(GameState);
@@ -51,26 +59,61 @@ void ATwoVersus_GameMode::PostLogin(APlayerController* NewPlayer)
 		if (Controller->GetTeamName() == PlayerStart->TeamName && !(PlayerStart->IsUse)) {
 			UE_LOG(LogTemp, Warning, TEXT("TeamName_P: %s"), *(PlayerStart->TeamName) );
 			UE_LOG(LogTemp, Warning, TEXT("TeamName_C: %s"), *(Controller->GetTeamName()));
-			UE_LOG(LogTemp, Warning, TEXT("inde: %d"), i);
+			UE_LOG(LogTemp, Warning, TEXT("index: %d"), i);
 			PlayerStart->IsUse = true;
 			NewPlayer->Possess(SpawnDefaultPawnAtTransform(NewPlayer, PlayerStart->GetTransform()));
 			break;
 		}
 	}
-	
-	
-
+	UE_LOG(LogTemp, Warning, TEXT("RestartPlayer"));
 
 }
+
 
 void ATwoVersus_GameMode::CountBeginPlayer()
 {
 	BeginPlayer++;
-	//UE_LOG(LogTemp, Warning, TEXT("BeginPlayer: %d"), BeginPlayer);
-	if (BeginPlayer == 2) {
-		//UE_LOG(LogTemp, Warning, TEXT("AllPlayerControllerC: %d"), AllPlayerController.Num());
+	UE_LOG(LogTemp, Warning, TEXT("BeginPlayer: %d"), BeginPlayer);
+	if (BeginPlayer == AllPlayerController.Num()) {
+		UE_LOG(LogTemp, Warning, TEXT("AllPlayerControllerC: %d"), AllPlayerController.Num());
 		for (int i = 0; i < AllPlayerController.Num(); i++) {
 			if(AllPlayerController[i]->CountDownStartCheck.IsBound())AllPlayerController[i]->CountDownStartCheck.Execute();
 		}
 	}
+}
+
+void ATwoVersus_GameMode::CountPlayerDead(FString Team)
+{
+	if (Team == "Red") {
+		RedTeamCount--;
+		if (RedTeamCount == 0) {
+			// 매치 앤드
+			UE_LOG(LogTemp, Warning, TEXT("Match End"));
+			RedTeamWinCount++;
+			for (int i = 0; i < AllPlayerController.Num(); i++) {
+				AllPlayerController[i]->NetMulticast_SendWinResult(RedTeamWinCount, BlueTeamCount);
+			}
+		}
+	}
+	else {
+		BlueTeamCount--;
+		if (BlueTeamCount == 0) {
+			// 매치 앤드
+			UE_LOG(LogTemp, Warning, TEXT("Match End"));
+			BlueTeamWinCount++;
+			for (int i = 0; i < AllPlayerController.Num(); i++) {
+				AllPlayerController[i]->NetMulticast_SendWinResult(RedTeamWinCount, BlueTeamCount);
+			}
+		}
+	}
+	GetWorld()->GetTimerManager().SetTimer(WinResultTimer, this, &ATwoVersus_GameMode::WinResultEnd, 4.0f, true);
+}
+
+void ATwoVersus_GameMode::WinResultEnd()
+{
+	UE_LOG(LogTemp, Warning, TEXT("ReStart"));
+	for (int i = 0; i < AllPlayerController.Num(); i++) {
+		AllPlayerController[i]->NetMulticast_EndWinResult();
+	}
+	RestartGame();
 }

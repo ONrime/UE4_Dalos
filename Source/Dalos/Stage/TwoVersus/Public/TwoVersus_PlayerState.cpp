@@ -3,6 +3,7 @@
 
 #include "Dalos/Stage/TwoVersus/Public/TwoVersus_PlayerState.h"
 #include "Dalos/Character/Public/Player/MultiPlayerBase.h"
+#include "Dalos/Stage/TwoVersus/Public/TwoVersus_GameMode.h"
 #include "Camera/CameraComponent.h"
 #include "Net/UnrealNetwork.h"
 
@@ -24,6 +25,11 @@ void ATwoVersus_PlayerState::BeginPlay()
 {
 	Super::BeginPlay();
 	
+
+}
+void ATwoVersus_PlayerState::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
 
 }
 void ATwoVersus_PlayerState::Tick(float DeltaTime)

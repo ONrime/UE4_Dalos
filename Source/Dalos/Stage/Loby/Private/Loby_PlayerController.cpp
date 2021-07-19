@@ -346,6 +346,18 @@ void ALoby_PlayerController::VisibleWidget()
 	SetInputMode(mode);
 }
 
+bool ALoby_PlayerController::ClearWidget_Validate()
+{
+	return true;
+}
+void ALoby_PlayerController::ClearWidget_Implementation()
+{
+	if (IsLocalController()){
+		LobbyMenu_WB->RemoveFromParent();
+		LobbyCount_WB->RemoveFromParent();
+	}
+}
+
 void ALoby_PlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason) 
 {
 	// 나가기 넣기
