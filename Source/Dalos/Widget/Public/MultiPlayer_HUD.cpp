@@ -25,6 +25,8 @@ void AMultiPlayer_HUD::BeginPlay()
 {
 	Super::BeginPlay();
 
+	//UE_LOG(LogTemp, Warning, TEXT("AMultiPlayer_HUD::BeginPlay"));
+
 	if (CrossHairWidget != nullptr) CrossHairWidget->AddToViewport();
 	if (AmmoWidget != nullptr) AmmoWidget->AddToViewport();
 

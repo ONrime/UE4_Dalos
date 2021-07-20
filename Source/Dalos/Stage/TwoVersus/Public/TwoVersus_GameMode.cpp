@@ -17,6 +17,7 @@ ATwoVersus_GameMode::ATwoVersus_GameMode()
 	GameStateClass = ATwoVersus_GameState::StaticClass();
 	PlayerStateClass = ATwoVersus_PlayerState::StaticClass();
 	HUDClass = AMultiPlayer_HUD::StaticClass();
+	bUseSeamlessTravel = true;
 	//bUseSeamlessTravel = false;
 
 	//bStartPlayersAsSpectators = 0; // 자동 스폰 막기
@@ -84,14 +85,17 @@ void ATwoVersus_GameMode::CountBeginPlayer()
 
 void ATwoVersus_GameMode::CountPlayerDead(FString Team)
 {
+	FString EndWinTeam = "";
 	if (Team == "Red") {
 		RedTeamCount--;
 		if (RedTeamCount == 0) {
 			// 매치 앤드
-			UE_LOG(LogTemp, Warning, TEXT("Match End"));
-			RedTeamWinCount++;
+			BlueTeamWinCount++;
+			UE_LOG(LogTemp, Warning, TEXT("Match End Red: %d"), RedTeamWinCount);
+			if (WinEnd == BlueTeamWinCount) EndWinTeam = "RED"; GameEnd = true;
+
 			for (int i = 0; i < AllPlayerController.Num(); i++) {
-				AllPlayerController[i]->NetMulticast_SendWinResult(RedTeamWinCount, BlueTeamCount);
+				AllPlayerController[i]->NetMulticast_SendWinResult(RedTeamWinCount, BlueTeamWinCount, EndWinTeam);
 			}
 		}
 	}
@@ -99,10 +103,12 @@ void ATwoVersus_GameMode::CountPlayerDead(FString Team)
 		BlueTeamCount--;
 		if (BlueTeamCount == 0) {
 			// 매치 앤드
-			UE_LOG(LogTemp, Warning, TEXT("Match End"));
-			BlueTeamWinCount++;
+			RedTeamWinCount++;
+			UE_LOG(LogTemp, Warning, TEXT("Match End Blue: %d"), BlueTeamWinCount);
+			if (WinEnd == RedTeamWinCount) EndWinTeam = "BLUE"; GameEnd = true;
+
 			for (int i = 0; i < AllPlayerController.Num(); i++) {
-				AllPlayerController[i]->NetMulticast_SendWinResult(RedTeamWinCount, BlueTeamCount);
+				AllPlayerController[i]->NetMulticast_SendWinResult(RedTeamWinCount, BlueTeamWinCount, EndWinTeam);
 			}
 		}
 	}
@@ -115,5 +121,11 @@ void ATwoVersus_GameMode::WinResultEnd()
 	for (int i = 0; i < AllPlayerController.Num(); i++) {
 		AllPlayerController[i]->NetMulticast_EndWinResult();
 	}
-	RestartGame();
+
+	if (GameEnd) {
+		GetWorld()->ServerTravel("/Game/Map/LobyMap?Game=ALoby_GameModeBase");
+	}
+	else {
+		RestartGame();
+	}
 }

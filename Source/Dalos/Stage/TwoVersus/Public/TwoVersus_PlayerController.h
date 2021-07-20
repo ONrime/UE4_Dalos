@@ -28,12 +28,10 @@ public:
 	FTwoVersusControllerCheckDelegate CountDownStartCheck;
 	FTwoVersusControllerCheckDelegate PlayerDeadCheck;
 
-	FTwoVersusControllerCheckTwoDelegate WinCountCheck;
-
 	UFUNCTION(NetMulticast, Reliable, WithValidation)
-	void NetMulticast_SendWinResult(int Red, int Blue);
-	bool NetMulticast_SendWinResult_Validate(int Red, int Blue);
-	void NetMulticast_SendWinResult_Implementation(int Red, int Blue);
+	void NetMulticast_SendWinResult(int Red, int Blue, const FString& WinTeam);
+	bool NetMulticast_SendWinResult_Validate(int Red, int Blue, const FString& WinTeam);
+	void NetMulticast_SendWinResult_Implementation(int Red, int Blue, const FString& WinTeam);
 
 	UFUNCTION(NetMulticast, Reliable, WithValidation)
 	void NetMulticast_EndWinResult();

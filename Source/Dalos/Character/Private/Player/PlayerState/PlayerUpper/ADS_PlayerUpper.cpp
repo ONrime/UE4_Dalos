@@ -51,7 +51,7 @@ UPlayerUpperStateBase* UADS_PlayerUpper::SendHandleInput(EPlayerPress press)
 
 void UADS_PlayerUpper::StateStart(AMultiPlayerBase* player)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("ADS: StateStart"));
+	UE_LOG(LogTemp, Warning, TEXT("ADS: StateStart"));
 
 	playerCamera = player->FollowCamera;
 
@@ -109,7 +109,7 @@ void UADS_PlayerUpper::StateUpdate(AMultiPlayerBase* player)
 
 void UADS_PlayerUpper::StateEnd(AMultiPlayerBase* player)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("ADS: StateEnd"));
+	UE_LOG(LogTemp, Warning, TEXT("ADS: StateEnd"));
 	if (player->IsLocallyControlled()) {
 		if (player->GetHUD()->CrossHairHideCheck.IsBound()) player->GetHUD()->CrossHairHideCheck.Execute(false);
 	}
@@ -147,7 +147,7 @@ bool UADS_PlayerUpper::HandUpTracer(AMultiPlayerBase* player)
 	FVector startTrace = player->GetMesh()->GetSocketLocation("HandLoc");
 	FVector endTrace = startTrace + player->FollowCamera->GetForwardVector() * 75.0f;
 	bool IsHit = UKismetSystemLibrary::SphereTraceSingle(this, startTrace, endTrace, 8.0f, ETraceTypeQuery::TraceTypeQuery1
-		, false, actorstoIgnore, EDrawDebugTrace::ForOneFrame, outHit, true);
+		, false, actorstoIgnore, EDrawDebugTrace::None, outHit, true);
 
 	return IsHit;
 }

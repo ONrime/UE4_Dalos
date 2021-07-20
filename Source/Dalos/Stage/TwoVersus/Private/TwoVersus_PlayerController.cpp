@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Dalos/Widget/Public/LobbyCount_UserWidget.h"
 #include "Dalos/Widget/Public/WinResult_UserWidget.h"
+#include "Dalos/Widget/Public/MultiPlayer_HUD.h"
 
 ATwoVersus_PlayerController::ATwoVersus_PlayerController()
 {
@@ -20,6 +21,11 @@ void ATwoVersus_PlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	SetShowMouseCursor(false);
+	SetInputMode(FInputModeGameOnly());
+
+	//AMultiPlayer_HUD* PlayerHUD = Cast<AMultiPlayer_HUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
+	//if(PlayerHUD) PlayerHUD->BeginPlay();
 	if (IsLocalController()) {
 		SendGameModeCount();
 		UE_LOG(LogTemp, Warning, TEXT("BeginePlay_C_C"));
@@ -31,11 +37,6 @@ void ATwoVersus_PlayerController::BeginPlay()
 			});
 		Count_WB->AddToViewport();
 		WinCount_WB = CreateWidget<UWinResult_UserWidget>(this, WinCount_Class);
-		WinCountCheck.BindLambda([this](int red, int blue)->void {
-			WinCount_WB->RedWin = red;
-			WinCount_WB->BlueWin = blue;
-			WinCount_WB->AddToViewport();
-			});
 	}
 	
 }
@@ -77,16 +78,21 @@ void ATwoVersus_PlayerController::SendGameModeCount_Implementation()
 	if (GameMode) GameMode->CountBeginPlayer();
 	//UE_LOG(LogTemp, Warning, TEXT("SendGameModeCount"));
 }
-
-bool ATwoVersus_PlayerController::NetMulticast_SendWinResult_Validate(int Red, int Blue)
+bool ATwoVersus_PlayerController::NetMulticast_SendWinResult_Validate(int Red, int Blue, const FString& WinTeam)
 {
 	return true;
 }
-void ATwoVersus_PlayerController::NetMulticast_SendWinResult_Implementation(int Red, int Blue)
+void ATwoVersus_PlayerController::NetMulticast_SendWinResult_Implementation(int Red, int Blue, const FString& WinTeam)
 {
-	if (IsLocalController()) {
-		WinCount_WB->RedWin = Red;
-		WinCount_WB->BlueWin = Blue;
+	UE_LOG(LogTemp, Warning, TEXT("Match End BB: %d, %d"), Red, Blue);
+	if (IsLocalController() && WinCount_WB) {
+		WinCount_WB->SetRedWin(Red);
+		WinCount_WB->SetBlueWin(Blue);
+		UE_LOG(LogTemp, Warning, TEXT("Match End B: %d, %d"), Red, Blue);
+		if (WinTeam != "") {
+			WinCount_WB->ResultText = WinTeam;
+			WinCount_WB->SetResultTextColor();
+		}
 		WinCount_WB->AddToViewport();
 	}
 }
@@ -97,6 +103,7 @@ bool ATwoVersus_PlayerController::NetMulticast_EndWinResult_Validate()
 void ATwoVersus_PlayerController::NetMulticast_EndWinResult_Implementation()
 {
 	if (IsLocalController()) {
+		WinCount_WB->ResultTextVis = ESlateVisibility::Hidden;
 		WinCount_WB->RemoveFromParent();
 	}
 }

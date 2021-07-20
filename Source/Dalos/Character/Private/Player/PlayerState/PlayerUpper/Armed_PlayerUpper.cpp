@@ -111,7 +111,7 @@ bool UArmed_PlayerUpper::HandUpTracer(AMultiPlayerBase* player)
 	FVector startTrace = player->GetMesh()->GetSocketLocation("HandLoc");
 	FVector endTrace = startTrace + player->FollowCamera->GetForwardVector() * 75.0f;
 	bool IsHit = UKismetSystemLibrary::SphereTraceSingle(this, startTrace, endTrace, 8.0f, ETraceTypeQuery::TraceTypeQuery1
-		, false, actorstoIgnore, EDrawDebugTrace::ForOneFrame, outHit, true);
+		, false, actorstoIgnore, EDrawDebugTrace::None, outHit, true);
 
 	return IsHit;
 }

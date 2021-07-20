@@ -153,8 +153,7 @@ void AMultiPlayerBase::BeginPlay()
 	GetMesh()->SetCastShadow(false);
 	ArmMesh->SetOnlyOwnerSee(true);
 	//IsPlayerCameraTurn = true;
-	//auto controller = Cast<APlayerController>(GetController());
-	//controller->SetInputMode(FInputModeGameAndUI());
+
 	if(!IsLocallyControlled()) BodyMesh->SetCollisionProfileName("EBodyMesh");
 	BodyMesh->SetOwnerNoSee(true);
 	BodyMesh->SetCastShadow(true);
@@ -385,7 +384,7 @@ bool AMultiPlayerBase::CrossHairCheck()
 	FOutputDeviceNull aimRed;
 
 	bool hitis = UKismetSystemLibrary::LineTraceSingle(GetWorld(), startTracer, endTracer, ETraceTypeQuery::TraceTypeQuery4, false
-		, actorsToIgnore, EDrawDebugTrace::ForOneFrame, outHit, true);
+		, actorsToIgnore, EDrawDebugTrace::None, outHit, true);
 
 	if (equipWeapone != nullptr) {
 		muzzleLoc = equipWeapone->BodyMesh->GetSocketLocation("Muzzle");
@@ -652,6 +651,7 @@ void AMultiPlayerBase::PlayerInteraction()
 
 void AMultiPlayerBase::PlayerADS()
 {
+	UE_LOG(LogTemp, Warning, TEXT("PlayerADS"));
 	armAnim->StopAllMontages(0.1f);
 	UpperPress(nullptr);
 }

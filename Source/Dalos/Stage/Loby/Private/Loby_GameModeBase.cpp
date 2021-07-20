@@ -18,7 +18,7 @@ ALoby_GameModeBase::ALoby_GameModeBase()
 	DefaultPawnClass = ADalosCharacter::StaticClass();
 	PlayerControllerClass = ALoby_PlayerController::StaticClass();
 	GameStateClass = ALoby_GameState::StaticClass();
-	bUseSeamlessTravel = true;
+	bUseSeamlessTravel = false;
 
 }
 

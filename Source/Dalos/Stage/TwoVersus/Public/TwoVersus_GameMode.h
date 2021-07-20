@@ -39,6 +39,9 @@ private:
 	UPROPERTY()
 	int16 BlueTeamWinCount = 0;
 	int BeginPlayer = 0;
+	int WinEnd = 2;
+
+	bool GameEnd = false;
 
 	FTimerHandle WinResultTimer;
 	void WinResultEnd();

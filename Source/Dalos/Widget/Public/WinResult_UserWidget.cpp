@@ -3,3 +3,7 @@
 
 #include "Dalos/Widget/Public/WinResult_UserWidget.h"
 
+
+void UWinResult_UserWidget::SetResultTextColor_Implementation()
+{
+}
