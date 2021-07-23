@@ -84,11 +84,9 @@ bool ATwoVersus_PlayerController::NetMulticast_SendWinResult_Validate(int Red, i
 }
 void ATwoVersus_PlayerController::NetMulticast_SendWinResult_Implementation(int Red, int Blue, const FString& WinTeam)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Match End BB: %d, %d"), Red, Blue);
 	if (IsLocalController() && WinCount_WB) {
 		WinCount_WB->SetRedWin(Red);
 		WinCount_WB->SetBlueWin(Blue);
-		UE_LOG(LogTemp, Warning, TEXT("Match End B: %d, %d"), Red, Blue);
 		if (WinTeam != "") {
 			WinCount_WB->ResultText = WinTeam;
 			WinCount_WB->SetResultTextColor();

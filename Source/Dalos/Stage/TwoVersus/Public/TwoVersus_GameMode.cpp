@@ -17,8 +17,7 @@ ATwoVersus_GameMode::ATwoVersus_GameMode()
 	GameStateClass = ATwoVersus_GameState::StaticClass();
 	PlayerStateClass = ATwoVersus_PlayerState::StaticClass();
 	HUDClass = AMultiPlayer_HUD::StaticClass();
-	bUseSeamlessTravel = true;
-	//bUseSeamlessTravel = false;
+	bUseSeamlessTravel = false;
 
 	//bStartPlayersAsSpectators = 0; // 자동 스폰 막기
 }
@@ -85,14 +84,18 @@ void ATwoVersus_GameMode::CountBeginPlayer()
 
 void ATwoVersus_GameMode::CountPlayerDead(FString Team)
 {
+	UE_LOG(LogTemp, Warning, TEXT("Match End WinEnd: %d"), WinEnd);
 	FString EndWinTeam = "";
 	if (Team == "Red") {
 		RedTeamCount--;
 		if (RedTeamCount == 0) {
 			// 매치 앤드
 			BlueTeamWinCount++;
-			UE_LOG(LogTemp, Warning, TEXT("Match End Red: %d"), RedTeamWinCount);
-			if (WinEnd == BlueTeamWinCount) EndWinTeam = "RED"; GameEnd = true;
+			UE_LOG(LogTemp, Warning, TEXT("Match End Blue: %d"), BlueTeamWinCount);
+			if (WinEnd == BlueTeamWinCount) {
+				EndWinTeam = "RED";
+				GameEnd = true;
+			}
 
 			for (int i = 0; i < AllPlayerController.Num(); i++) {
 				AllPlayerController[i]->NetMulticast_SendWinResult(RedTeamWinCount, BlueTeamWinCount, EndWinTeam);
@@ -104,8 +107,11 @@ void ATwoVersus_GameMode::CountPlayerDead(FString Team)
 		if (BlueTeamCount == 0) {
 			// 매치 앤드
 			RedTeamWinCount++;
-			UE_LOG(LogTemp, Warning, TEXT("Match End Blue: %d"), BlueTeamWinCount);
-			if (WinEnd == RedTeamWinCount) EndWinTeam = "BLUE"; GameEnd = true;
+			UE_LOG(LogTemp, Warning, TEXT("Match End Red: %d"), RedTeamWinCount);
+			if (WinEnd == RedTeamWinCount) {
+				EndWinTeam = "BLUE";
+				GameEnd = true;
+			}
 
 			for (int i = 0; i < AllPlayerController.Num(); i++) {
 				AllPlayerController[i]->NetMulticast_SendWinResult(RedTeamWinCount, BlueTeamWinCount, EndWinTeam);
@@ -117,15 +123,16 @@ void ATwoVersus_GameMode::CountPlayerDead(FString Team)
 
 void ATwoVersus_GameMode::WinResultEnd()
 {
-	UE_LOG(LogTemp, Warning, TEXT("ReStart"));
 	for (int i = 0; i < AllPlayerController.Num(); i++) {
 		AllPlayerController[i]->NetMulticast_EndWinResult();
 	}
 
 	if (GameEnd) {
+		UE_LOG(LogTemp, Warning, TEXT("End"));
 		GetWorld()->ServerTravel("/Game/Map/LobyMap?Game=ALoby_GameModeBase");
 	}
 	else {
+		UE_LOG(LogTemp, Warning, TEXT("ReStart"));
 		RestartGame();
 	}
 }

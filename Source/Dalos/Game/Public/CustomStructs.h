@@ -22,6 +22,8 @@ struct FPlayerInfo
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int settingID = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString playerName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UTexture2D* playerImage;
