@@ -29,6 +29,12 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void ChangeTeam(FPlayerInfo Setting, bool RedCheck); // 팀 상태 바꾸기
 	void ChangeTeam_Implementation(FPlayerInfo Setting, bool RedCheck);
+	UFUNCTION(BlueprintNativeEvent)
+	void ChangeGameSetting(FGameSetting Setting); // 추가로 들어오는 플레이어를 리스트에 추가
+	void ChangeGameSetting_Implementation(FGameSetting Setting);
+	UFUNCTION(BlueprintNativeEvent)
+	void UpdateChat(const FString& SenderText, const FString& SenderName); // Ready상태 바꾸기
+	void UpdateChat_Implementation(const FString& SenderText, const FString& SenderName);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")

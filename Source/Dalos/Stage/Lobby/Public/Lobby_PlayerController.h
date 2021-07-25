@@ -40,17 +40,32 @@ public:
 	void Server_SendPlayerSetting_Implementation(FPlayerInfo Setting);
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_ChangeAllPlayerInfo(int Index, int Category, const FString& Change);
+	void Server_ChangeAllPlayerInfo(int Index, int Category, const FString& Change); // 바뀐 세팅 서버에 전달
 	bool Server_ChangeAllPlayerInfo_Validate(int Index, int Category, const FString& Change);
 	void Server_ChangeAllPlayerInfo_Implementation(int Index, int Category, const FString& Change);
 
 	UFUNCTION(Client, Reliable, WithValidation)
-	void Client_ChangePlayerInfo(FPlayerInfo Setting, int Category, const FString& Change);
+	void Client_ChangePlayerInfo(FPlayerInfo Setting, int Category, const FString& Change); // 바뀐 세팅 각 클라이언트(개인)에게 전달
 	bool Client_ChangePlayerInfo_Validate(FPlayerInfo Setting, int Category, const FString& Change);
 	void Client_ChangePlayerInfo_Implementation(FPlayerInfo Setting, int Category, const FString& Change);
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_ChangeGameSetting(FGameSetting Setting); // 바뀐 게임 세팅 서버에 전달
+	bool Server_ChangeGameSetting_Validate(FGameSetting Setting);
+	void Server_ChangeGameSetting_Implementation(FGameSetting Setting);
+
+	UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable)
+	void GetChatMessage(const FString& TextToSend); // 서버에 채팅 내용 전달
+	bool GetChatMessage_Validate(const FString& TextToSend);
+	void GetChatMessage_Implementation(const FString& TextToSend);
+	UFUNCTION(Client, Reliable, WithValidation) // 모든 플레이어 컨트롤러에게 체팅 업데이트
+	void UpdateText(const FString& SenderText, const FString& SenderName);
+	bool UpdateText_Validate(const FString& SenderText, const FString& SenderName);
+	void UpdateText_Implementation(const FString& SenderText, const FString& SenderName);
+
 	void LoginPlayer(const FString& TeamName, const FString& State); // (서버용, 리슨 서버) 위젯이 없으면 만들고, 만약 있다면 초기 정보를 넣고 리스트에 올리기
 	void PlayerListAdd(FPlayerInfo Setting);
+	void ChangeGameSetting();
 
 	int GetSettingID() { return SettingID; }
 	void SetInitSetting(FString Team, FString Room, int FirstID);  // 서버에서 동작

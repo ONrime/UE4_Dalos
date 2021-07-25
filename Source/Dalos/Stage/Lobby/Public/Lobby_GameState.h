@@ -32,6 +32,8 @@ public:
 	int CurrentPlayers = 0;
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = ServerSettings)
 	int AddPlayerInfoCount = 0;
+	UPROPERTY(EditAnywhere, ReplicatedUsing=OnRep_GameSettingChange, BlueprintReadWrite, Category = ServerSettings)
+	FGameSetting GameSetting;
 
 	UFUNCTION(NetMultiCast, Reliable, WithValidation)
 	void NetMultiCast_ChangePlayerInfo(int Index, int Category, const FString& Change);
@@ -40,6 +42,8 @@ public:
 
 	UFUNCTION()
 	void OnRep_AllPlayerInfoChange();
+	UFUNCTION()
+	void OnRep_GameSettingChange();
 	
 	int AddPlayerInfoNum = 0;
 

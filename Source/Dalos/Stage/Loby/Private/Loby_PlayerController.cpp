@@ -170,7 +170,8 @@ void ALoby_PlayerController::UpdateText_Implementation(const FString& sender_Tex
 	if (LobbyMenu_WB->UpdateChat.IsBound()) {
 		LobbyMenu_WB->UpdateChat.Broadcast(sender_Name, sender_Text);
 	}
-}bool ALoby_PlayerController::UpdateNumberOfPlayers_Validate(int16 CurrentPlayers, int16 MaxPlayers)
+}
+bool ALoby_PlayerController::UpdateNumberOfPlayers_Validate(int16 CurrentPlayers, int16 MaxPlayers)
 {
 	return true;
 }

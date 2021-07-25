@@ -43,17 +43,20 @@ void ULobby_Menu_UserWidget::PlayerClickTeamButton(bool RedCheck)
 
 void ULobby_Menu_UserWidget::FirstInPlayerList_Implementation(const TArray<FPlayerInfo>& Settings)
 {
-	UE_LOG(LogTemp, Warning, TEXT("FirstInPlayerList"));
 }
-
 void ULobby_Menu_UserWidget::AddPlayerList_Implementation(FPlayerInfo Setting)
 {
 }
-
 void ULobby_Menu_UserWidget::ChangeReady_Implementation(int FirstID, const FString& Change)
 {
 }
-
 void ULobby_Menu_UserWidget::ChangeTeam_Implementation(FPlayerInfo Setting, bool RedCheck)
+{
+}
+void ULobby_Menu_UserWidget::ChangeGameSetting_Implementation(FGameSetting Setting)
+{
+}
+
+void ULobby_Menu_UserWidget::UpdateChat_Implementation(const FString& SenderText, const FString& SenderName)
 {
 }

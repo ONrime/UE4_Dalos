@@ -52,14 +52,15 @@ void ALobby_GameState::OnRep_AllPlayerInfoChange()
 		UE_LOG(LogTemp, Warning, TEXT("PlayerDel"));
 		AddPlayerInfoNum = AllPlayerInfo.Num();
 	}
-	else { // 내용만 변경이 되었을 때
-		for (int i = 0; i < AllPlayerInfo.Num(); i++) {
-			if (AllPlayerInfo[i].playerReadyStatus == "Ready") {
+	
 
-			}
-		}
-	}
+}
 
+void ALobby_GameState::OnRep_GameSettingChange()
+{
+	UE_LOG(LogTemp, Warning, TEXT("OnRep_GameSettingChange"));
+	ALobby_PlayerController* Ctrl = Cast<ALobby_PlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+	Ctrl->ChangeGameSetting();
 }
 
 void ALobby_GameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
@@ -73,5 +74,6 @@ void ALobby_GameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& O
 	DOREPLIFETIME(ALobby_GameState, MaxPlayers);
 	DOREPLIFETIME(ALobby_GameState, CurrentPlayers);
 	DOREPLIFETIME(ALobby_GameState, AddPlayerInfoCount);
+	DOREPLIFETIME(ALobby_GameState, GameSetting);
 
 }

@@ -32,6 +32,7 @@ void ALobby_PlayerController::BeginPlay()
 			LobbyMenu_Widget->FirstInPlayerList(State->AllPlayerInfo); // 자기 화면에 리스트 전달
 			LobbyMenu_Widget->AddToViewport();
 			SetShowMouseCursor(true);
+			if (HasAuthority()) State->OnRep_GameSettingChange();
 		}
 	}
 }
@@ -87,6 +88,7 @@ void ALobby_PlayerController::Server_SendPlayerSetting_Implementation(FPlayerInf
 	State->AddPlayerInfoCount = State->AddPlayerInfoCount + 1;
 	State->AllPlayerInfo.Add(Setting);
 	State->OnRep_AllPlayerInfoChange();
+
 	//State->NetMultiCast_AddAllPlayerInfo(Setting); // 게임 스테이트에 세이브 추가
 }
 
@@ -115,6 +117,41 @@ void ALobby_PlayerController::Client_ChangePlayerInfo_Implementation(FPlayerInfo
 	}
 }
 
+bool ALobby_PlayerController::Server_ChangeGameSetting_Validate(FGameSetting Setting)
+{
+	return true;
+}
+void ALobby_PlayerController::Server_ChangeGameSetting_Implementation(FGameSetting Setting)
+{
+	ALobby_GameState* State = Cast<ALobby_GameState>(UGameplayStatics::GetGameState(this));
+	State->GameSetting = Setting;
+}
+
+bool ALobby_PlayerController::GetChatMessage_Validate(const FString& TextToSend)
+{
+	return true;
+}
+void ALobby_PlayerController::GetChatMessage_Implementation(const FString& TextToSend)
+{
+	UE_LOG(LogTemp, Warning, TEXT("GetChatMessage"));
+	auto State = Cast<ALobby_GameState>(UGameplayStatics::GetGameState(this));
+	for (int i = 0; i < State->AllPlayerController.Num(); i++) {
+		auto Ctrl = Cast<ALobby_PlayerController>(State->AllPlayerController[i]);
+		Ctrl->UpdateText(TextToSend, PlayerSetting.playerName);
+	}
+}
+bool ALobby_PlayerController::UpdateText_Validate(const FString& SenderText, const FString& SenderName)
+{
+	return true;
+}
+void ALobby_PlayerController::UpdateText_Implementation(const FString& SenderText, const FString& SenderName)
+{
+	UE_LOG(LogTemp, Warning, TEXT("UpdateText"));
+	if (LobbyMenu_Widget) {
+		LobbyMenu_Widget->UpdateChat(SenderText, SenderName);
+	}
+}
+
 void ALobby_PlayerController::LoginPlayer(const FString& Team, const FString& State) // 삭제
 {
 	if (HasAuthority()) {
@@ -129,6 +166,15 @@ void ALobby_PlayerController::PlayerListAdd(FPlayerInfo Setting)
 {
 	if (IsLocalController()) {
 		LobbyMenu_Widget->AddPlayerList(Setting);
+	}
+}
+
+void ALobby_PlayerController::ChangeGameSetting()
+{
+	if (IsLocalController()) {
+		UE_LOG(LogTemp, Warning, TEXT("ChangeGameSetting: Ctrl"));
+		ALobby_GameState* State = Cast<ALobby_GameState>(UGameplayStatics::GetGameState(this));
+		LobbyMenu_Widget->ChangeGameSetting(State->GameSetting);
 	}
 }
 

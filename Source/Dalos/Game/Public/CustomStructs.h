@@ -40,6 +40,23 @@ public:
 };
 
 USTRUCT(Atomic, BlueprintType)
+struct FGameSetting
+{
+	GENERATED_USTRUCT_BODY();
+	
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString MapName = "";
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString GameModeName = "";
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int MatchCount = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int MatchTime = 0;
+	
+};
+
+USTRUCT(Atomic, BlueprintType)
 struct FPlayerTeamInfo
 {
 	GENERATED_USTRUCT_BODY()

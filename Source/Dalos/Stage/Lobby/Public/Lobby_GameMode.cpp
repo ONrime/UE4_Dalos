@@ -4,6 +4,7 @@
 #include "Dalos/Stage/Lobby/Public/Lobby_GameMode.h"
 #include "Dalos/Stage/Lobby/Public/Lobby_GameState.h"
 #include "Dalos/Stage/Lobby/Public/Lobby_PlayerController.h"
+#include "Dalos/Game/Public/CustomStructs.h"
 #include "Dalos/Game/Public/GameInfo_Instance.h"
 #include "Dalos/DalosCharacter.h"
 
@@ -46,7 +47,14 @@ void ALobby_GameMode::PostLogin(APlayerController* NewPlayer)
 	if (!IsHost) {
 		IsHost = true;
 		HostName = "Host";
-	}else HostName = "Guest";// 초기화 및 세이브 게임 정보 확인하고 서버에 업데이트 하기
+
+		FGameSetting Setting; // 세팅 초기화
+		Setting.MapName = "TestMap";
+		Setting.GameModeName = "2 VS 2";
+		Setting.MatchCount = 3;
+		Setting.MatchTime = 20;
+		State->GameSetting = Setting;
+	}// 초기화 및 세이브 게임 정보 확인하고 서버에 업데이트 하기
 
 	GiveID++;
 	Ctrl->SetInitSetting(TeamName, HostName, GiveID);
