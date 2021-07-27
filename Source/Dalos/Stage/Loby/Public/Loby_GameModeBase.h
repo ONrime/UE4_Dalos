@@ -37,7 +37,7 @@ public:
 	void RespawnPlayer_Implementation(class APlayerController* controller);
 
 	UFUNCTION(BlueprintCallable)
-	void LaunchTheGame	();
+	void LaunchTheGame();
 	void LaunchCheck();
 
 protected:

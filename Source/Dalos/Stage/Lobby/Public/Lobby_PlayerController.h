@@ -21,7 +21,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
 	class ULobby_Menu_UserWidget* LobbyMenu_Widget = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerInfo", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerInfo", Replicated)
 	FPlayerInfo PlayerSetting;
 
 	TSubclassOf<class ULobby_Menu_UserWidget> Lobby_Menu_Class;
@@ -62,6 +62,15 @@ public:
 	void UpdateText(const FString& SenderText, const FString& SenderName);
 	bool UpdateText_Validate(const FString& SenderText, const FString& SenderName);
 	void UpdateText_Implementation(const FString& SenderText, const FString& SenderName);
+
+	UFUNCTION(Client, Reliable, WithValidation)
+	void StartCountDown();
+	bool StartCountDown_Validate();
+	void StartCountDown_Implementation();
+	UFUNCTION(Client, Reliable, WithValidation)
+	void StopCountDown();
+	bool StopCountDown_Validate();
+	void StopCountDown_Implementation();
 
 	void LoginPlayer(const FString& TeamName, const FString& State); // (서버용, 리슨 서버) 위젯이 없으면 만들고, 만약 있다면 초기 정보를 넣고 리스트에 올리기
 	void PlayerListAdd(FPlayerInfo Setting);

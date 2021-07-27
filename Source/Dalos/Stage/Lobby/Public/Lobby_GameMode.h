@@ -21,7 +21,9 @@ public:
 	// 로그인 이후 이벤트를 발동 - 플레이어 컨트롤러에서 로비를 구성하고 플레이어 스폰
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
-	
+	void StopCountDown();
+	void StartCountDown();
+
 protected:
 
 private:
@@ -31,5 +33,9 @@ private:
 	int BlueTeamCount = 0;
 	bool IsHost = false;
 	int GiveID = 0;
+
+	FTimerHandle CountDownTimer;
+	void MinCount();
+	int CountNum = 5;
 
 };

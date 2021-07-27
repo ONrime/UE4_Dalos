@@ -103,6 +103,10 @@ public:
 
 	TArray<FOnlineSessionSearchResult> Results;
 
+	FString PlayerTeamName = "";
+	int MatchCount = 0;
+	int MatchTime = 0;
+
 private:
 	FName lobbyName = "LobyMap";
 	FString playerSettingsSave = "PlayerSettingsSave";
@@ -121,6 +125,5 @@ private:
 	FString NetErrorToString(ENetworkFailure::Type FailureType);
 	UFUNCTION(BlueprintPure)
 	FString TravelErrorToString(ETravelFailure::Type FailureType);
-
 
 };

@@ -35,14 +35,20 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void UpdateChat(const FString& SenderText, const FString& SenderName); // Ready상태 바꾸기
 	void UpdateChat_Implementation(const FString& SenderText, const FString& SenderName);
+	UFUNCTION(BlueprintNativeEvent)
+	void InitWidget(); // 블루 프린트에 있는 위젯과 연결(초기화)한다
+	void InitWidget_Implementation();
+
+	void StartCountDown();
+	void StopCountDown();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
 	class ULobby_PlayerList_UserWidget* PlayerList_Widget = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	class ULobbyCount_UserWidget* StateAndCountDown_Widget = nullptr;
 
-	UFUNCTION(BlueprintNativeEvent)
-	void InitWidget(); // 블루 프린트에 있는 위젯과 연결(초기화)한다
-	void InitWidget_Implementation();
+	
 
 	UFUNCTION(BlueprintCallable)
 	void PlayerClickReadyButton();

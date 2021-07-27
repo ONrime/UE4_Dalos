@@ -27,6 +27,10 @@ public:
 	void CountBeginPlayer();
 	void CountPlayerDead(FString Team);
 
+	void CountWin();
+
+	int GetRedTeamWinCount() { return RedTeamWinCount; } int GetBlueTeamWinCount() { return BlueTeamWinCount; }
+
 protected:
 
 private:
@@ -35,9 +39,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ServerSettings, meta = (AllowPrivateAccess = "true"))
 	int32 BlueTeamCount = 0;
 	UPROPERTY()
-	int16 RedTeamWinCount = 0;
+	int RedTeamWinCount = 0;
 	UPROPERTY()
-	int16 BlueTeamWinCount = 0;
+	int BlueTeamWinCount = 0;
 	int BeginPlayer = 0;
 	int WinEnd = 2;
 
@@ -45,5 +49,9 @@ private:
 
 	FTimerHandle WinResultTimer;
 	void WinResultEnd();
+	FTimerHandle StartCountTimer;
+	void StartCountEnd();
+	FTimerHandle GameCountTimer;
+	void GameCountEnd();
 
 };

@@ -5,8 +5,10 @@
 #include "Dalos/Stage/TwoVersus/Public/TwoVersus_GameMode.h"
 #include "Dalos/Character/Public/Player/MultiPlayerBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 #include "Dalos/Widget/Public/LobbyCount_UserWidget.h"
 #include "Dalos/Widget/Public/WinResult_UserWidget.h"
+#include "Dalos/Widget/Public/MatchState_UserWidget.h"
 #include "Dalos/Widget/Public/MultiPlayer_HUD.h"
 
 ATwoVersus_PlayerController::ATwoVersus_PlayerController()
@@ -15,6 +17,8 @@ ATwoVersus_PlayerController::ATwoVersus_PlayerController()
 	if (COUNTDOWN_WIDGET.Succeeded()) Count_Class = COUNTDOWN_WIDGET.Class;
 	static ConstructorHelpers::FClassFinder<UWinResult_UserWidget>WINCOUNT_WIDGET(TEXT("WidgetBlueprint'/Game/UI/Levels/WinCount.WinCount_C'"));
 	if (COUNTDOWN_WIDGET.Succeeded()) WinCount_Class = WINCOUNT_WIDGET.Class;
+	static ConstructorHelpers::FClassFinder<UMatchState_UserWidget>MATCHSTATE_WIDGET(TEXT("WidgetBlueprint'/Game/UI/Player/MatchState.MatchState_C'"));
+	if (MATCHSTATE_WIDGET.Succeeded()) MatchCount_Class = MATCHSTATE_WIDGET.Class;
 }
 
 void ATwoVersus_PlayerController::BeginPlay()
@@ -37,6 +41,12 @@ void ATwoVersus_PlayerController::BeginPlay()
 			});
 		Count_WB->AddToViewport();
 		WinCount_WB = CreateWidget<UWinResult_UserWidget>(this, WinCount_Class);
+		MatchState_WB = CreateWidget<UMatchState_UserWidget>(this, MatchCount_Class);
+		if (MatchState_WB) {
+			MatchState_WB->AddToViewport();
+			MatchState_WB->RedTeamWinCount = RedTeamWinCount;
+			MatchState_WB->BlueTeamWinCount = BlueTeamWinCount;
+		}
 	}
 	
 }
@@ -104,4 +114,33 @@ void ATwoVersus_PlayerController::NetMulticast_EndWinResult_Implementation()
 		WinCount_WB->ResultTextVis = ESlateVisibility::Hidden;
 		WinCount_WB->RemoveFromParent();
 	}
+}
+
+bool ATwoVersus_PlayerController::Client_StartMatchCount_Validate(float EndTime)
+{
+	return true;
+}
+void ATwoVersus_PlayerController::Client_StartMatchCount_Implementation(float EndTime)
+{
+	if (MatchState_WB) {
+		UE_LOG(LogTemp, Warning, TEXT("Client_StartMatchCount"));
+		MatchState_WB->StartTimer(EndTime);
+	}
+}
+bool ATwoVersus_PlayerController::Server_EndMatch_Validate()
+{
+	return true;
+}
+void ATwoVersus_PlayerController::Server_EndMatch_Implementation() 
+{
+	ATwoVersus_GameMode* GameMode = Cast<ATwoVersus_GameMode>(UGameplayStatics::GetGameMode(this));
+	GameMode->CountWin();
+}
+
+void ATwoVersus_PlayerController::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ATwoVersus_PlayerController, RedTeamWinCount);
+	DOREPLIFETIME(ATwoVersus_PlayerController, BlueTeamWinCount);
 }
