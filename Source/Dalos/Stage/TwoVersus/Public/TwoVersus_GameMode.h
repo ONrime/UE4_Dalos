@@ -30,6 +30,8 @@ public:
 	void CountWin();
 
 	int GetRedTeamWinCount() { return RedTeamWinCount; } int GetBlueTeamWinCount() { return BlueTeamWinCount; }
+	void SetRedTeamCount(int Set) { RedTeamCount = Set; } void SetBlueTeamCount(int Set) { BlueTeamCount = Set; }
+	int GetRedTeamCount() { return RedTeamCount; } int GetBlueTeamCount() { return BlueTeamCount; }
 
 protected:
 

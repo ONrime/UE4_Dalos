@@ -76,12 +76,12 @@ void AProjectileBase::OnOverlapBegin_Body(UPrimitiveComponent* OverlappedComp, A
 				UGameplayStatics::ApplyPointDamage(OtherActor, projectileDamage, GetActorForwardVector(), SweepResult, nullptr, GetOwner(), nullptr);
 			}
 			//UE_LOG(LogTemp, Warning, TEXT("bulletLoc2: %f, %f, %f"), GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z);
-			//UE_LOG(LogTemp, Warning, TEXT("Projectil: Player Hit"));
+			UE_LOG(LogTemp, Warning, TEXT("Projectil: Player Hit"));
 		}
 		else {
-			//UE_LOG(LogTemp, Warning, TEXT("Projectil: Hit"));
+			UE_LOG(LogTemp, Warning, TEXT("Projectil: Hit"));
 		}
-		Destroy();
+		this->Destroy();
 	}
 }
 

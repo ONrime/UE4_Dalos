@@ -103,9 +103,10 @@ public:
 
 	TArray<FOnlineSessionSearchResult> Results;
 
-	FString PlayerTeamName = "";
-	int MatchCount = 0;
-	int MatchTime = 0;
+	FString PlayerTeamName = "Blue";
+	FString PlayerStateName = "";
+	int MatchCount = 3;
+	int MatchTime = 20;
 
 private:
 	FName lobbyName = "LobyMap";

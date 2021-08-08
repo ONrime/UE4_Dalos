@@ -83,5 +83,6 @@ void ATwoVersus_PlayerState::GetLifetimeReplicatedProps(TArray< FLifetimePropert
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ATwoVersus_PlayerState, playerHP);
+	DOREPLIFETIME(ATwoVersus_PlayerState, TeamName);
 
 }

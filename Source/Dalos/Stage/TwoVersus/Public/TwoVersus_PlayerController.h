@@ -31,6 +31,15 @@ public:
 	FTwoVersusControllerCheckDelegate CountDownStartCheck;
 	FTwoVersusControllerCheckDelegate PlayerDeadCheck;
 
+	UFUNCTION(Client, Reliable, WithValidation)
+	void Client_GetTeamName();
+	bool Client_GetTeamName_Validate();
+	void Client_GetTeamName_Implementation();
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_GetTeamName(const FString& Team);
+	bool Server_GetTeamName_Validate(const FString& Team);
+	void Server_GetTeamName_Implementation(const FString& Team);
+
 	UFUNCTION(NetMulticast, Reliable, WithValidation)
 	void NetMulticast_SendWinResult(int Red, int Blue, const FString& WinTeam);
 	bool NetMulticast_SendWinResult_Validate(int Red, int Blue, const FString& WinTeam);
@@ -60,12 +69,19 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void PostInitializeComponents() override;
 
+	UPROPERTY(Replicated)
 	FString TeamName = "";
+	UPROPERTY(Replicated)
+	FString PlayerStateName = "";
+	UPROPERTY(Replicated)
+	int MatchCount = 0;
+	UPROPERTY(Replicated)
+	int MatchTime = 0;
 	TSubclassOf<class ULobbyCount_UserWidget> Count_Class;
 	TSubclassOf<class UWinResult_UserWidget> WinCount_Class;
 	TSubclassOf<class UMatchState_UserWidget> MatchCount_Class;
 
-	UFUNCTION(NetMulticast, Reliable, WithValidation)
+	UFUNCTION(Client, Reliable, WithValidation)
 	void StartCountDown();
 	bool StartCountDown_Validate();
 	void StartCountDown_Implementation();
@@ -77,7 +93,9 @@ protected:
 
 public:
 	FString GetTeamName() { return TeamName; } void SetTeamName(FString Set) { TeamName = Set; }
-	
+	FString GetPlayerStateName() { return PlayerStateName; } void SetPlayerStateName(FString Set) { PlayerStateName = Set; }
+	int GetMatchTime() { return MatchTime; } int GetMatchCount() { return MatchCount; }
+	void SetMatchInfo(int Count, int Time);
 
 private:
 

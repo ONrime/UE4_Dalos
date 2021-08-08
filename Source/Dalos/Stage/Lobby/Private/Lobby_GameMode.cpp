@@ -59,7 +59,7 @@ void ALobby_GameMode::PostLogin(APlayerController* NewPlayer)
 
 	GiveID++;
 	Ctrl->SetInitSetting(TeamName, HostName, GiveID);
-	Ctrl->Client_LoginPlayer(TeamName, HostName, GiveID); // 클라이언트에 전달
+	//Ctrl->Client_LoginPlayer(TeamName, HostName, GiveID); // 클라이언트에 전달
 
 	 // 각 컨트롤(클라이언트)에 플레이어 수 업데이트 및 플레이어 인포 전달
 	//if (!Ctrl->IsLocalController()) Ctrl->SetupLobbyMenu(gameState->serverName); // 각 클라이언트의 로비 메뉴 활성화
@@ -104,11 +104,16 @@ void ALobby_GameMode::MinCount()
 		GetWorld()->GetTimerManager().ClearTimer(CountDownTimer);
 		auto gameState = Cast<ALobby_GameState>(GameState);
 		UE_LOG(LogTemp, Warning, TEXT("LaunchTheGame: %d"), gameState->AllPlayerController.Num());
-		for (int i = 0; i < gameState->AllPlayerController.Num(); i++) {
+		/*for (int i = 0; i < gameState->AllPlayerController.Num(); i++) {
 			ALobby_PlayerController* Ctrl = Cast<ALobby_PlayerController>(gameState->AllPlayerController[i]);
 			//Ctrl->ClearWidget();
 			UE_LOG(LogTemp, Warning, TEXT("ClearWidget"));
-		}
+		}*/
+		UGameInfo_Instance* Ins = Cast<UGameInfo_Instance>(GetGameInstance());
+		ALobby_PlayerController* Ctrl = Cast<ALobby_PlayerController>(gameState->AllPlayerController[0]);
+		Ins->MatchCount= gameState->GameSetting.MatchCount;
+		Ins->MatchTime= gameState->GameSetting.MatchTime;
+		UE_LOG(LogTemp, Warning, TEXT("LaunchTheGame: MatchCount %d"), Ins->MatchCount);
 		//GetWorld()->ServerTravel("/Game/Map/TestMap?Game=ATwoVersus_GameMode");
 		GetWorld()->ServerTravel("/Game/Map/TestMap?Game=ATwoVersus_GameMode");
 	}

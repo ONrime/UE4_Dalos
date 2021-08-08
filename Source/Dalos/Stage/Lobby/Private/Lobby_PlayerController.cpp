@@ -168,9 +168,11 @@ void ALobby_PlayerController::StartCountDown_Implementation()
 		LobbyMenu_Widget->StartCountDown();
 		UGameInfo_Instance* Ins = Cast<UGameInfo_Instance>(GetGameInstance());
 		ALobby_GameState* State = Cast<ALobby_GameState>(UGameplayStatics::GetGameState(this));
-		Ins->PlayerTeamName = PlayerSetting.playerTeamStatus;
+		Ins->PlayerTeamName = TeamState;
 		Ins->MatchCount = State->GameSetting.MatchCount;
 		Ins->MatchTime = State->GameSetting.MatchTime;
+		Ins->PlayerStateName = RoomState;
+		UE_LOG(LogTemp, Warning, TEXT("StartCountDown: Ctrl, %s"), *(Ins->PlayerTeamName));
 	}
 }
 bool ALobby_PlayerController::StopCountDown_Validate()
@@ -215,6 +217,7 @@ void ALobby_PlayerController::SetInitSetting(FString Team, FString Room, int Fir
 	TeamState = Team;
 	RoomState = Room;
 	SettingID = FirstID;
+	SaveGameCheck(TeamState, RoomState, FirstID); // 플레이어가 가지고 있는 세이브 불러오기
 }
 
 bool ALobby_PlayerController::Server_ChangeAllPlayerInfo_Validate(int Index, int Category, const FString& Change)
@@ -229,6 +232,7 @@ void ALobby_PlayerController::Server_ChangeAllPlayerInfo_Implementation(int Inde
 		State->AllPlayerInfo[Index].playerReadyStatus = Change;
 		PlayerSetting.playerReadyStatus = Change;
 		int ReadyCount = 0;
+		ALobby_GameMode* GameMode = Cast<ALobby_GameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 		for (int i = 0; i < State->AllPlayerInfo.Num(); i++) {
 			if (State->AllPlayerInfo[i].playerReadyStatus == "Ready") {
 				ReadyCount++;
@@ -236,8 +240,10 @@ void ALobby_PlayerController::Server_ChangeAllPlayerInfo_Implementation(int Inde
 		}
 		if (ReadyCount >= State->AllPlayerInfo.Num()) {
 			// 카운트 다운
-			ALobby_GameMode* GameMode = Cast<ALobby_GameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 			GameMode->StartCountDown();
+		}
+		else {
+			GameMode->StopCountDown();
 		}
 	}
 	else {

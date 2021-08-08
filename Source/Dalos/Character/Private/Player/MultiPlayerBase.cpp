@@ -18,6 +18,8 @@
 #include "Dalos/Stage/TwoVersus/Public/TwoVersus_PlayerState.h"
 #include "Dalos/Stage/TwoVersus/Public/TwoVersus_GameMode.h"
 #include "Dalos/Stage/TwoVersus/Public/TwoVersus_PlayerController.h"
+#include "Dalos/Stage/TwoVersus/Public/TwoVersus_PlayerStart.h"
+#include "Dalos/Game/Public/GameInfo_Instance.h"
 #include "Dalos/Widget/Public/MultiPlayer_HUD.h"
 #include "Components/PostProcessComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -130,9 +132,9 @@ float AMultiPlayerBase::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 				hud->PlyaerHitLocCheck.Execute(DamageCauser->GetActorLocation() + DamageCauser->GetActorForwardVector() * 50.0f);
 			}
 			if (HasAuthority()) {
-				playerstate->StopHeal();
-				GetWorldTimerManager().ClearTimer(healTimer);
-				GetWorldTimerManager().SetTimer(healTimer, this, &AMultiPlayerBase::StratAutoHeal, 4.0f, false);
+				//playerstate->StopHeal();
+				//GetWorldTimerManager().ClearTimer(healTimer);
+				//GetWorldTimerManager().SetTimer(healTimer, this, &AMultiPlayerBase::StratAutoHeal, 4.0f, false);
 				NetMulticast_SendPlayerHit(damage, DamageCauser->GetActorForwardVector(), point->HitInfo, DamageCauser);
 			}
 			CheckPlayerHP(currentHP);
@@ -143,6 +145,8 @@ float AMultiPlayerBase::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 void AMultiPlayerBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if(IsLocallyControlled()) Server_SetPlayerStartLoc();
 
 	IsPlayerCameraTurn = false;
 	IsMove = false;
@@ -923,10 +927,11 @@ void AMultiPlayerBase::StopClimb()
 void AMultiPlayerBase::StratAutoHeal()
 {
 	UE_LOG(LogTemp, Warning, TEXT("StratAutoHeal"));
-	ATwoVersus_PlayerState* state = Cast<ATwoVersus_PlayerState>(GetPlayerState());
+	FollowCamera->PostProcessBlendWeight = 0.0f;
+	/*ATwoVersus_PlayerState* state = Cast<ATwoVersus_PlayerState>(GetPlayerState());
 	if (state) {
 		state->StartHeal();
-	}
+	}*/
 }
 
 void AMultiPlayerBase::TurnAtRate(float Rate)
@@ -1031,12 +1036,15 @@ void AMultiPlayerBase::FireBullet(FVector muzzleLoc, FRotator muzzleRot, FVector
 
 void AMultiPlayerBase::CheckPlayerHP(float hp)
 {
-	if (hp <= 40.0f && hp > 0) {
+	if (hp <= 40.0f && hp > 0 && FollowCamera->PostProcessBlendWeight != 1.0f) {
 		UE_LOG(LogTemp, Warning, TEXT("Gray"));
 		FollowCamera->PostProcessBlendWeight = 1.0f;
+		GetWorldTimerManager().ClearTimer(healTimer);
+		GetWorldTimerManager().SetTimer(healTimer, this, &AMultiPlayerBase::StratAutoHeal, 4.0f, false);
 	}
 	else if (hp <= 0.0f) {
 		UE_LOG(LogTemp, Warning, TEXT("Dead"));
+		FollowCamera->PostProcessBlendWeight = 1.0f;
 		IsDead = true;
 		PlayerDead();
 	}
@@ -1342,6 +1350,37 @@ void AMultiPlayerBase::NetMulticast_SendPlayerStart_Implementation()
 {
 	IsPlayerCameraTurn = true;
 	IsMove = true;
+}
+
+bool AMultiPlayerBase::Server_SetPlayerStartLoc_Validate()
+{
+	return true;
+}
+void AMultiPlayerBase::Server_SetPlayerStartLoc_Implementation()
+{
+	ATwoVersus_GameState* State = Cast<ATwoVersus_GameState>(UGameplayStatics::GetGameState(this));
+	ATwoVersus_GameMode* GameMode = Cast<ATwoVersus_GameMode>(UGameplayStatics::GetGameMode(this));
+	ATwoVersus_PlayerController* Ctrl = Cast<ATwoVersus_PlayerController>(GetController());
+	ATwoVersus_PlayerState* PState = Cast<ATwoVersus_PlayerState>(GetPlayerState());
+	PState->TeamName = Ctrl->GetTeamName();
+	for (int i = 0; i < State->AllPlayerStart.Num(); i++) {
+		ATwoVersus_PlayerStart* PlayerStart = Cast<ATwoVersus_PlayerStart>(State->AllPlayerStart[i]);
+		UE_LOG(LogTemp, Warning, TEXT("TeamName_P: %s"), *(PlayerStart->TeamName));
+		UE_LOG(LogTemp, Warning, TEXT("TeamName_C: %s"), *(Ctrl->GetTeamName()));
+		if (Ctrl->GetTeamName() == PlayerStart->TeamName && !(PlayerStart->IsUse)) {
+			UE_LOG(LogTemp, Warning, TEXT("index: %d"), i);
+			PlayerStart->IsUse = true;
+			SetActorLocation(PlayerStart->GetActorLocation());
+			break;
+		}
+		/*if (Ctrl->GetTeamName() == "Red") {
+			GameMode->SetRedTeamCount(GameMode->GetRedTeamCount() + 1);
+		}
+		else {
+			GameMode->SetBlueTeamCount(GameMode->GetBlueTeamCount() + 1);
+		}*/
+	}
+
 }
 
 void AMultiPlayerBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const

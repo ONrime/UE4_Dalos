@@ -261,6 +261,11 @@ public:
 	bool NetMulticast_SendPlayerStart_Validate();
 	void NetMulticast_SendPlayerStart_Implementation();
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SetPlayerStartLoc();
+	bool Server_SetPlayerStartLoc_Validate();
+	void Server_SetPlayerStartLoc_Implementation();
+
 	bool IsMove = true;
 	bool IsPlayerCameraTurn = true;
 	bool IsPlayerRotationYawSpeedSlow = false;

@@ -21,6 +21,8 @@ public:
 	int RedTeamWinCount = 0;
 	UPROPERTY(BlueprintReadOnly)
 	int BlueTeamWinCount = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ESlateVisibility WidgetVis = ESlateVisibility::Hidden;
 
 	void StartTimer(float Time);
 	void StopTimer();

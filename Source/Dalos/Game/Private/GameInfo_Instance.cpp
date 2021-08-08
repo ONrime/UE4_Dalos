@@ -254,6 +254,7 @@ void UGameInfo_Instance::FindServer(bool LanCheck, bool DedicatedCheck)
 			//SessionSearch->PingBucketSize = 50;
 			//sessionSearch->QuerySettings.Set(SEARCH_SECURE_SERVERS_ONLY, true, EOnlineComparisonOp::Equals);
 			sessionSearch->QuerySettings.Set(SEARCH_DEDICATED_ONLY, DedicatedCheck, EOnlineComparisonOp::Equals);
+			sessionSearch->QuerySettings.Set(SEARCH_NONEMPTY_SERVERS_ONLY, true, EOnlineComparisonOp::Equals);
 			//sessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 
 			TSharedRef<FOnlineSessionSearch> SearchSettingsRef = sessionSearch.ToSharedRef();

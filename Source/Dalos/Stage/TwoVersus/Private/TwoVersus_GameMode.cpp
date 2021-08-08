@@ -39,7 +39,10 @@ void ATwoVersus_GameMode::RestartPlayer(AController* NewPlayer)
 		UE_LOG(LogTemp, Warning, TEXT("AllPlayerController: %d"), AllPlayerController.Num());
 	}
 	UGameInfo_Instance* Ins = Cast<UGameInfo_Instance>(GetGameInstance());
-	if (Ins->PlayerTeamName == "") {
+	Controller->Client_GetTeamName();
+	FString TeamName = Controller->GetTeamName();
+	/*if (TeamName == "") {
+		UE_LOG(LogTemp, Warning, TEXT("Team Empty"));
 		if (RedTeamCount <= BlueTeamCount) {
 			Controller->SetTeamName("Red");
 			RedTeamCount++;
@@ -52,7 +55,7 @@ void ATwoVersus_GameMode::RestartPlayer(AController* NewPlayer)
 		}
 	}
 	else { // 인스텐스(로비)에 따른 팀 나누기
-		if (Ins->PlayerTeamName == "Red") {
+		if (TeamName == "Red") {
 			Controller->SetTeamName("Red");
 			RedTeamCount++;
 		}
@@ -60,20 +63,32 @@ void ATwoVersus_GameMode::RestartPlayer(AController* NewPlayer)
 			Controller->SetTeamName("Blue");
 			BlueTeamCount++;
 		}
+	}*/
+
+	Controller->Client_GetTeamName();
+	Controller->SetTeamName("Red");
+	Controller->SetMatchInfo(Ins->MatchCount, Ins->MatchTime);
+	UE_LOG(LogTemp, Warning, TEXT("RestartPlayer: MatchTime: %d"), Ins->MatchTime);
+	/*if (RedTeamCount <= BlueTeamCount) {
+		Controller->SetTeamName("Red");
+		//RedTeamCount++;
+		UE_LOG(LogTemp, Warning, TEXT("Red"));
 	}
+	else {
+		Controller->SetTeamName("Blue");
+		//BlueTeamCount++;
+		UE_LOG(LogTemp, Warning, TEXT("Blue"));
+	}*/
 	Controller->RedTeamWinCount = RedTeamWinCount;
 	Controller->BlueTeamWinCount = BlueTeamWinCount;
 	
 	// 스폰하기
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ATwoVersus_PlayerStart::StaticClass(), AllPlayerStart);
 	State->AllPlayerStart = AllPlayerStart;
+	State->AllPlayerController.Add(Controller);
 	for (int i = 0; i < AllPlayerStart.Num(); i++) {
 		ATwoVersus_PlayerStart* PlayerStart = Cast<ATwoVersus_PlayerStart>(AllPlayerStart[i]);
 		if (Controller->GetTeamName() == PlayerStart->TeamName && !(PlayerStart->IsUse)) {
-			UE_LOG(LogTemp, Warning, TEXT("TeamName_P: %s"), *(PlayerStart->TeamName) );
-			UE_LOG(LogTemp, Warning, TEXT("TeamName_C: %s"), *(Controller->GetTeamName()));
-			UE_LOG(LogTemp, Warning, TEXT("index: %d"), i);
-			PlayerStart->IsUse = true;
 			NewPlayer->Possess(SpawnDefaultPawnAtTransform(NewPlayer, PlayerStart->GetTransform()));
 			break;
 		}
@@ -163,13 +178,19 @@ void ATwoVersus_GameMode::WinResultEnd()
 void ATwoVersus_GameMode::StartCountEnd()
 {
 	UGameInfo_Instance* Ins = Cast<UGameInfo_Instance>(GetGameInstance());
-	float TimeEnd = Ins->MatchTime;
+	float TimeEnd = 0.0f;
+	for (int i = 0; i < AllPlayerController.Num(); i++) {
+		if (AllPlayerController[i]->GetPlayerStateName() == "Host") {
+			TimeEnd = AllPlayerController[i]->GetMatchTime();
+		}
+	}
 	if (TimeEnd == 0.0f) TimeEnd = 40.0f;
 	GetWorldTimerManager().SetTimer(GameCountTimer, this, &ATwoVersus_GameMode::GameCountEnd, TimeEnd, true);
 	for (int i = 0; i < AllPlayerController.Num(); i++) {
 		ATwoVersus_PlayerController* Ctrl = Cast<ATwoVersus_PlayerController>(AllPlayerController[i]);
-		UE_LOG(LogTemp, Warning, TEXT("StartCountEnddd"));
-		Ctrl->Client_StartMatchCount(TimeEnd);
+		UE_LOG(LogTemp, Warning, TEXT("StartCountEnddd: %d"), Ins->MatchCount);
+		WinEnd = Ins->MatchCount;
+		Ctrl->Client_StartMatchCount(Ins->MatchTime);
 	}
 	GetWorldTimerManager().ClearTimer(StartCountTimer);
 }
