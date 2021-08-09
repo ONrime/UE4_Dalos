@@ -87,7 +87,7 @@ AMultiPlayerBase::AMultiPlayerBase()
 	BodyMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -97.0f));
 	BodyMesh->SetRelativeRotation(FRotator(0.0f, 270.0f, 0.0f));
 	BodyMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-	BodyMesh->SetCollisionProfileName("BodyMesh");
+	BodyMesh->SetCollisionProfileName("EBodyMesh");
 	//BodyMesh->OnComponentBeginOverlap.AddDynamic(this, &AMultiPlayerBase::OnOverlapBegin_Mesh);
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>LEGBODY_SKELETALMESH(TEXT("SkeletalMesh'/Game/Mannequin/Character/Mesh/SK_Mannequin.SK_Mannequin'"));
 	if (LEGBODY_SKELETALMESH.Succeeded()) { BodyMesh->SetSkeletalMesh(LEGBODY_SKELETALMESH.Object); }
@@ -111,6 +111,7 @@ AMultiPlayerBase::AMultiPlayerBase()
 
 float AMultiPlayerBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
+	UE_LOG(LogTemp, Warning, TEXT("TakeDamage"));
 	float damage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	float currentHP = 0.0f;
 	if (!IsDead) {
@@ -1323,6 +1324,9 @@ bool AMultiPlayerBase::NetMulticast_SendPlayerHit_Validate(float Damage, FVector
 }
 void AMultiPlayerBase::NetMulticast_SendPlayerHit_Implementation(float Damage, FVector Dir, FHitResult Hit, AActor* DamageCauser)
 {
+	if (IsLocallyControlled()) {
+		
+	}
 	if (!HasAuthority()) {
 		UE_LOG(LogTemp, Warning, TEXT("NetMulticast_SendPlayerHit: %f"), Damage);
 		float cd = Damage;
