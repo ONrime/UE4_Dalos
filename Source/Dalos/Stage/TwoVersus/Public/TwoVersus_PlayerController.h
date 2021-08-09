@@ -27,9 +27,12 @@ public:
 	class UWinResult_UserWidget* WinCount_WB = nullptr;
 	UPROPERTY()
 	class UMatchState_UserWidget* MatchState_WB = nullptr;
+	UPROPERTY()
+	class UMatchHealth_UserWidget* MatchHP_WB = nullptr;
 
 	FTwoVersusControllerCheckDelegate CountDownStartCheck;
 	FTwoVersusControllerCheckDelegate PlayerDeadCheck;
+	FTwoVersusControllerCheckDelegate UpdateMatchHPCheck;
 
 	UFUNCTION(Client, Reliable, WithValidation)
 	void Client_GetTeamName();
@@ -80,6 +83,7 @@ protected:
 	TSubclassOf<class ULobbyCount_UserWidget> Count_Class;
 	TSubclassOf<class UWinResult_UserWidget> WinCount_Class;
 	TSubclassOf<class UMatchState_UserWidget> MatchCount_Class;
+	TSubclassOf<class UMatchHealth_UserWidget> MatchHP_Class;
 
 	UFUNCTION(Client, Reliable, WithValidation)
 	void StartCountDown();

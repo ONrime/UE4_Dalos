@@ -37,6 +37,7 @@ public:
 	int loadedAmmo = 0;
 	UPROPERTY(Transient)
 	int equipAmmo = 0;
+	UPROPERTY(Replicated)
 	FString TeamName = "";
 
 	virtual void BeginPlay() override;

@@ -93,6 +93,7 @@ void ATwoVersus_GameMode::RestartPlayer(AController* NewPlayer)
 			break;
 		}
 	}
+	MatchEnd = false;
 	UE_LOG(LogTemp, Warning, TEXT("RestartPlayer"));
 
 }
@@ -153,10 +154,30 @@ void ATwoVersus_GameMode::CountPlayerDead(FString Team)
 void ATwoVersus_GameMode::CountWin()
 {
 	// 체력 바 만들기
-	for (int i = 0; i < AllPlayerController.Num(); i++) {
-		AllPlayerController[i]->NetMulticast_SendWinResult(RedTeamWinCount, BlueTeamWinCount, "");
+	if (!MatchEnd) {
+		MatchEnd = true;
+		GameEnd = true;
+		FString EndWinTeam = "";
+		ATwoVersus_GameState* State = Cast<ATwoVersus_GameState>(GameState);
+		if (State->GetRedTeamHP() > State->GetBlueTeamHP()) {
+			RedTeamWinCount++;
+			if (WinEnd == RedTeamWinCount) {
+				EndWinTeam = "RED";
+				GameEnd = true;
+			}
+		}
+		else if (State->GetRedTeamHP() < State->GetBlueTeamHP()) {
+			BlueTeamWinCount++;
+			if (WinEnd == BlueTeamWinCount) {
+				EndWinTeam = "BLUE";
+				GameEnd = true;
+			}
+		}
+		for (int i = 0; i < AllPlayerController.Num(); i++) {
+			AllPlayerController[i]->NetMulticast_SendWinResult(RedTeamWinCount, BlueTeamWinCount, EndWinTeam);
+		}
+		GetWorld()->GetTimerManager().SetTimer(WinResultTimer, this, &ATwoVersus_GameMode::WinResultEnd, 4.0f, true);
 	}
-	GetWorld()->GetTimerManager().SetTimer(WinResultTimer, this, &ATwoVersus_GameMode::WinResultEnd, 4.0f, true);
 }
 
 void ATwoVersus_GameMode::WinResultEnd()
@@ -177,6 +198,8 @@ void ATwoVersus_GameMode::WinResultEnd()
 
 void ATwoVersus_GameMode::StartCountEnd()
 {
+	ATwoVersus_GameState* State = Cast<ATwoVersus_GameState>(GameState);
+	State->ChangeTeamHPCheck.Execute();
 	UGameInfo_Instance* Ins = Cast<UGameInfo_Instance>(GetGameInstance());
 	float TimeEnd = 0.0f;
 	for (int i = 0; i < AllPlayerController.Num(); i++) {

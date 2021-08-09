@@ -9,6 +9,9 @@
 /**
  * 
  */
+
+DECLARE_DELEGATE(FGameStateCheckDelegate)
+
 UCLASS()
 class DALOS_API ATwoVersus_GameState : public AGameState
 {
@@ -16,13 +19,21 @@ class DALOS_API ATwoVersus_GameState : public AGameState
 	
 public:
 	ATwoVersus_GameState();
+	virtual void PostInitializeComponents() override;
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = ServerSettings, meta = (AllowPrivateAccess = "true"))
 	TArray<class APlayerController*> AllPlayerController;
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = ServerSettings, meta = (AllowPrivateAccess = "true"))
 	TArray<class AActor*> AllPlayerStart;
 
+	FGameStateCheckDelegate ChangeTeamHPCheck;
+	int GetRedTeamHP() { return RedTeamHP; } int GetBlueTeamHP() { return BlueTeamHP; }
+
 protected:
+	UPROPERTY(Replicated)
+	int RedTeamHP = 0;
+	UPROPERTY(Replicated)
+	int BlueTeamHP = 0;
 
 public:
 	int16 redTeamWin = 0;

@@ -11,6 +11,7 @@
 #include "Dalos/Widget/Public/LobbyCount_UserWidget.h"
 #include "Dalos/Widget/Public/WinResult_UserWidget.h"
 #include "Dalos/Widget/Public/MatchState_UserWidget.h"
+#include "Dalos/Widget/Public/MatchHealth_UserWidget.h"
 #include "Dalos/Widget/Public/MultiPlayer_HUD.h"
 #include "Dalos/Game/Public/GameInfo_Instance.h"
 
@@ -22,6 +23,8 @@ ATwoVersus_PlayerController::ATwoVersus_PlayerController()
 	if (COUNTDOWN_WIDGET.Succeeded()) WinCount_Class = WINCOUNT_WIDGET.Class;
 	static ConstructorHelpers::FClassFinder<UMatchState_UserWidget>MATCHSTATE_WIDGET(TEXT("WidgetBlueprint'/Game/UI/Player/MatchState.MatchState_C'"));
 	if (MATCHSTATE_WIDGET.Succeeded()) MatchCount_Class = MATCHSTATE_WIDGET.Class;
+	static ConstructorHelpers::FClassFinder<UMatchHealth_UserWidget>MATCHHP_WIDGET(TEXT("WidgetBlueprint'/Game/UI/Player/MatchHP.MatchHP_C'"));
+	if (MATCHHP_WIDGET.Succeeded()) MatchHP_Class = MATCHHP_WIDGET.Class;
 }
 
 void ATwoVersus_PlayerController::BeginPlay()
@@ -61,6 +64,13 @@ void ATwoVersus_PlayerController::PostInitializeComponents()
 			ATwoVersus_GameMode* GameMode = Cast<ATwoVersus_GameMode>(UGameplayStatics::GetGameMode(this));
 			GameMode->CountPlayerDead(TeamName);
 		}
+		});
+	UpdateMatchHPCheck.BindLambda([this]()-> void {
+		ATwoVersus_GameState* GameState = Cast<ATwoVersus_GameState>(UGameplayStatics::GetGameState(this));
+		GameState->ChangeTeamHPCheck.Execute();
+		MatchHP_WB->RedTeamHP = GameState->GetRedTeamHP();
+		MatchHP_WB->BlueTeamHP = GameState->GetBlueTeamHP();
+		UE_LOG(LogTemp, Warning, TEXT("UpdateMatchHPCheck"));
 		});
 }
 bool ATwoVersus_PlayerController::Client_GetTeamName_Validate()
@@ -161,12 +171,14 @@ void ATwoVersus_PlayerController::Client_StartMatchCount_Implementation(float En
 		UE_LOG(LogTemp, Warning, TEXT("Client_StartMatchCount: %d"), MatchTime);
 	}
 	// 만들기 체력 ui
-	ATwoVersus_GameState* GameState = Cast<ATwoVersus_GameState>(UGameplayStatics::GetGameState(this));
-	for (int i = 0; i < GameState->PlayerArray.Num(); i++) {
-		ATwoVersus_PlayerState* State = Cast<ATwoVersus_PlayerState>(GameState->PlayerArray[i]);
-		State->GetPlyaerHP();
+	MatchHP_WB = CreateWidget<UMatchHealth_UserWidget>(this, MatchHP_Class);
+	if (MatchHP_WB) {
+		MatchHP_WB->AddToViewport();
+		ATwoVersus_GameState* GameState = Cast<ATwoVersus_GameState>(UGameplayStatics::GetGameState(this));
+		GameState->ChangeTeamHPCheck.Execute();
+		MatchHP_WB->RedTeamHP = GameState->GetRedTeamHP();
+		MatchHP_WB->BlueTeamHP = GameState->GetBlueTeamHP();
 	}
-	
 }
 bool ATwoVersus_PlayerController::Server_EndMatch_Validate()
 {

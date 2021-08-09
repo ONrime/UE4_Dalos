@@ -48,6 +48,7 @@ private:
 	int WinEnd = 2;
 
 	bool GameEnd = false;
+	bool MatchEnd = false;
 
 	FTimerHandle WinResultTimer;
 	void WinResultEnd();

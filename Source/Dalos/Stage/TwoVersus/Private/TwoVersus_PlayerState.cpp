@@ -19,6 +19,7 @@ ATwoVersus_PlayerState::ATwoVersus_PlayerState()
 void ATwoVersus_PlayerState::DamageToHP(float damage)
 {
 	playerHP = playerHP - damage;
+	if (playerHP < 0.0f) playerHP = 0.0f;
 }
 
 void ATwoVersus_PlayerState::BeginPlay()

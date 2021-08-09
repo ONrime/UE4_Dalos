@@ -123,13 +123,20 @@ float AMultiPlayerBase::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 			
 			UE_LOG(LogTemp, Warning, TEXT("PlayerHP: %f"), currentHP);
 
-			// 히트 표시를 할때 로컬 컨트롤을 쓰면 될 것 같다
 			AMultiPlayer_HUD* hud = Cast<AMultiPlayer_HUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
-			if (!IsLocallyControlled() && DamageCauser == GetWorld()->GetFirstPlayerController()->GetPawn() && hud) hud->HitRedCheck.Execute(false);
-			
+			if (GetWorld()->GetFirstPlayerController()->GetPawn() && hud) {
+				ATwoVersus_PlayerController* Ctrl = Cast<ATwoVersus_PlayerController>(GetWorld()->GetFirstPlayerController());
+				if (Ctrl) Ctrl->UpdateMatchHPCheck.Execute();
+			}
+			// 히트 표시를 할때 로컬 컨트롤을 쓰면 될 것 같다
+			if (!IsLocallyControlled() && DamageCauser == GetWorld()->GetFirstPlayerController()->GetPawn() && hud) {
+				hud->HitRedCheck.Execute(false);
+			}
 			// 상대방의 데미지가 깍일때 히트 표시를 하자
 			if (IsLocallyControlled() && hud) {
 				hud->PlyaerHitLocCheck.Execute(DamageCauser->GetActorLocation() + DamageCauser->GetActorForwardVector() * 50.0f);
+				/*ATwoVersus_PlayerController* Ctrl = Cast<ATwoVersus_PlayerController>(GetController());
+				Ctrl->UpdateMatchHPCheck.Execute();*/
 			}
 			if (HasAuthority()) {
 				//playerstate->StopHeal();
@@ -1320,6 +1327,10 @@ void AMultiPlayerBase::NetMulticast_SendPlayerHit_Implementation(float Damage, F
 		UE_LOG(LogTemp, Warning, TEXT("NetMulticast_SendPlayerHit: %f"), Damage);
 		float cd = Damage;
 		UGameplayStatics::ApplyPointDamage(this, cd, Dir, Hit, nullptr, DamageCauser, nullptr);
+	}
+	else {
+		ATwoVersus_GameState* State = Cast<ATwoVersus_GameState>(UGameplayStatics::GetGameState(this));
+		if (State) State->ChangeTeamHPCheck.Execute();
 	}
 }
 
