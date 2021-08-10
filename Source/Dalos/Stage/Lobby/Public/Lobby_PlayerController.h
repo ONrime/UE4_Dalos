@@ -79,11 +79,13 @@ public:
 	int GetSettingID() { return SettingID; }
 	void SetInitSetting(FString Team, FString Room, int FirstID);  // 서버에서 동작
 
+	void SetTeamState(FString Set);
+
 protected:
 	void SaveGameCheck(const FString& Team, const FString& State, int FirstID); // 처음에 세이브 확인하기
 
 	UPROPERTY(Replicated)
-	FString TeamState = "";
+	FString TeamState	 = "";
 	UPROPERTY(ReplicatedUsing = OnRep_UpdateClinetFirstPlayerList)
 	FString RoomState = "";
 	UPROPERTY(Replicated)

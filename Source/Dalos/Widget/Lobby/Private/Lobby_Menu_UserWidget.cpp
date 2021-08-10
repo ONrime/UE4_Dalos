@@ -30,16 +30,16 @@ void ULobby_Menu_UserWidget::PlayerClickReadyButton()
 void ULobby_Menu_UserWidget::PlayerClickTeamButton(bool RedCheck)
 {
 	ALobby_PlayerController* Ctrl = Cast<ALobby_PlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+	FString TeamName = "";
 	if (RedCheck) { // Blue로 바꾸기
-		Ctrl->Server_ChangeAllPlayerInfo(Ctrl->GetSettingID() - 1, 1, "Blue");
-		FString s = "Blue";
-		UE_LOG(LogTemp, Warning, TEXT("PlayerClickTeamButton: %s"), *s);
+		TeamName = "Blue";
 	}
 	else { // Red로 바꾸기
-		Ctrl->Server_ChangeAllPlayerInfo(Ctrl->GetSettingID() - 1, 1, "Red");
-		FString s = "Red";
-		UE_LOG(LogTemp, Warning, TEXT("PlayerClickTeamButton: %s"), *s);
+		TeamName = "Red";
 	}
+	Ctrl->SetTeamState(TeamName);
+	Ctrl->Server_ChangeAllPlayerInfo(Ctrl->GetSettingID() - 1, 1, TeamName);
+	UE_LOG(LogTemp, Warning, TEXT("PlayerClickTeamButton: %s"), *TeamName);
 }
 
 void ULobby_Menu_UserWidget::FirstInPlayerList_Implementation(const TArray<FPlayerInfo>& Settings)

@@ -220,6 +220,12 @@ void ALobby_PlayerController::SetInitSetting(FString Team, FString Room, int Fir
 	SaveGameCheck(TeamState, RoomState, FirstID); // 플레이어가 가지고 있는 세이브 불러오기
 }
 
+void ALobby_PlayerController::SetTeamState(FString Set)
+{
+	TeamState = Set;
+
+}
+
 bool ALobby_PlayerController::Server_ChangeAllPlayerInfo_Validate(int Index, int Category, const FString& Change)
 {
 	return true;
@@ -249,6 +255,7 @@ void ALobby_PlayerController::Server_ChangeAllPlayerInfo_Implementation(int Inde
 	else {
 		State->AllPlayerInfo[Index].playerTeamStatus = Change;
 		PlayerSetting.playerTeamStatus = Change;
+		TeamState = Change;
 	}
 	for (int i = 0; i < State->AllPlayerController.Num(); i++) {
 		ALobby_PlayerController* Ctrl = Cast<ALobby_PlayerController>(State->AllPlayerController[i]);
@@ -263,7 +270,7 @@ bool ALobby_PlayerController::Client_LoginPlayer_Validate(const FString& TeamNam
 void ALobby_PlayerController::Client_LoginPlayer_Implementation(const FString& TeamName, const FString& State, int FirstID)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Client_LoginPlayer: %d"), FirstID);
-	TeamState = TeamName;
+	SetTeamState(TeamName);
 	RoomState = State;
 	SettingID = FirstID;
 	SaveGameCheck(TeamState, RoomState, FirstID); // 플레이어가 가지고 있는 세이브 불러오기

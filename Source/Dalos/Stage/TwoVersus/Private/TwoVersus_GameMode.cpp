@@ -151,12 +151,10 @@ void ATwoVersus_GameMode::CountPlayerDead(FString Team)
 	GetWorld()->GetTimerManager().SetTimer(WinResultTimer, this, &ATwoVersus_GameMode::WinResultEnd, 4.0f, true);
 }
 
-void ATwoVersus_GameMode::CountWin()
+void ATwoVersus_GameMode::CountWin() // 타이머가 끝난뒤 승패 결정
 {
-	// 체력 바 만들기
 	if (!MatchEnd) {
 		MatchEnd = true;
-		GameEnd = true;
 		FString EndWinTeam = "";
 		ATwoVersus_GameState* State = Cast<ATwoVersus_GameState>(GameState);
 		if (State->GetRedTeamHP() > State->GetBlueTeamHP()) {
