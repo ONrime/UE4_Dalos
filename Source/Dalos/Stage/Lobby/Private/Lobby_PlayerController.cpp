@@ -54,11 +54,11 @@ void ALobby_PlayerController::SaveGameCheck(const FString& TeamName, const FStri
 	LoadGameInstance = Cast<UPlayerInfo_SaveGame>(UGameplayStatics::LoadGameFromSlot("PlayerSettingsSave", 0));
 	if (LoadGameInstance)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("SaveGameCheck"));
 		PlayerSetting = LoadGameInstance->S_playerInfo;
 		PlayerSetting.playerTeamStatus = TeamName;
 		PlayerSetting.playerStatus = State;
 		PlayerSetting.settingID = FirstID;
+		UE_LOG(LogTemp, Warning, TEXT("SaveGameCheck: %s"), *(PlayerSetting.playerName));
 		Server_SendPlayerSetting(PlayerSetting); // 서버에 세이브 전달, 게임 스테이트에 전달(전체)
 	}
 	// 만약 없으면 세이브 하는 기능?
@@ -90,7 +90,7 @@ void ALobby_PlayerController::Server_SendPlayerSetting_Implementation(FPlayerInf
 	UE_LOG(LogTemp, Warning, TEXT("Server_SendPlayerSetting"));
 	PlayerSetting = Setting; // 서버에 설정 전달
 	ALobby_GameState* State = Cast<ALobby_GameState>(UGameplayStatics::GetGameState(this));
-	State->AddPlayerInfoCount = State->AddPlayerInfoCount + 1;
+	//State->AddPlayerInfoCount = State->AddPlayerInfoCount + 1;
 	State->AllPlayerInfo.Add(Setting);
 	State->OnRep_AllPlayerInfoChange();
 
@@ -217,7 +217,8 @@ void ALobby_PlayerController::SetInitSetting(FString Team, FString Room, int Fir
 	TeamState = Team;
 	RoomState = Room;
 	SettingID = FirstID;
-	SaveGameCheck(TeamState, RoomState, FirstID); // 플레이어가 가지고 있는 세이브 불러오기
+	Client_LoginPlayer(TeamState, RoomState, SettingID); // 클라이언트에 전달
+	//SaveGameCheck(TeamState, RoomState, FirstID); // 플레이어가 가지고 있는 세이브 불러오기
 }
 
 void ALobby_PlayerController::SetTeamState(FString Set)
@@ -270,10 +271,7 @@ bool ALobby_PlayerController::Client_LoginPlayer_Validate(const FString& TeamNam
 void ALobby_PlayerController::Client_LoginPlayer_Implementation(const FString& TeamName, const FString& State, int FirstID)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Client_LoginPlayer: %d"), FirstID);
-	SetTeamState(TeamName);
-	RoomState = State;
-	SettingID = FirstID;
-	SaveGameCheck(TeamState, RoomState, FirstID); // 플레이어가 가지고 있는 세이브 불러오기
+	SaveGameCheck(TeamName, State, FirstID); // 플레이어가 가지고 있는 세이브 불러오기
 }
 void ALobby_PlayerController::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {

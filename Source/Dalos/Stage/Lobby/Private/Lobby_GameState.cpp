@@ -35,19 +35,24 @@ void ALobby_GameState::NetMultiCast_ChangePlayerInfo_Implementation(int Index, i
 
 void ALobby_GameState::OnRep_AllPlayerInfoChange()
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnRep_AllPlayerInfoChange"));
+	UE_LOG(LogTemp, Warning, TEXT("OnRep_AllPlayerInfoChange:%d "), AddPlayerInfoNum);
 	ALobby_PlayerController* Ctrl = Cast<ALobby_PlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
 	if (HasAuthority()) {
 		UE_LOG(LogTemp, Warning, TEXT("HasAuthority"));
 	}
 	if (AddPlayerInfoNum == 0) {
 		AddPlayerInfoNum = AllPlayerInfo.Num();
+		UE_LOG(LogTemp, Warning, TEXT("AddPlayerInfoNum: %d"), AddPlayerInfoNum);
 		return;
 	}
 	if (AddPlayerInfoNum < AllPlayerInfo.Num()) { // 추가(플레이어가 들어올 때)
-		UE_LOG(LogTemp, Warning, TEXT("PlayerAdd"));
 		AddPlayerInfoNum = AllPlayerInfo.Num();
-		Ctrl->PlayerListAdd(AllPlayerInfo[AddPlayerInfoNum -1]);
+		Ctrl->PlayerListAdd(AllPlayerInfo[AddPlayerInfoNum - 1]); // 0812문제 ?Ctrl->GetSettingID() - 1
+		UE_LOG(LogTemp, Warning, TEXT("PlayerAdd: %s"), *(AllPlayerInfo[AddPlayerInfoNum - 1].playerName));
+		UE_LOG(LogTemp, Warning, TEXT("PlayerAdd1: %s"), *(AllPlayerInfo[0].playerName));
+		UE_LOG(LogTemp, Warning, TEXT("PlayerAdd2: %s"), *(AllPlayerInfo[1].playerName));
+		UE_LOG(LogTemp, Warning, TEXT("PlayerAdd3: %d"), AddPlayerInfoNum - 1);
+		UE_LOG(LogTemp, Warning, TEXT("PlayerAdd4: %d"), Ctrl->GetSettingID() - 1);
 	}
 	else if (AddPlayerInfoNum > AllPlayerInfo.Num()) { // 삭제(플레이어가 나갈 때)
 		UE_LOG(LogTemp, Warning, TEXT("PlayerDel"));
@@ -74,7 +79,7 @@ void ALobby_GameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& O
 	DOREPLIFETIME(ALobby_GameState, ServerName);
 	DOREPLIFETIME(ALobby_GameState, MaxPlayers);
 	DOREPLIFETIME(ALobby_GameState, CurrentPlayers);
-	DOREPLIFETIME(ALobby_GameState, AddPlayerInfoCount);
+	//DOREPLIFETIME(ALobby_GameState, AddPlayerInfoNum);
 	DOREPLIFETIME(ALobby_GameState, GameSetting);
 
 }

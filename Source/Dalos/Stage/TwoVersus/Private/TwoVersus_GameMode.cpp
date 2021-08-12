@@ -41,6 +41,9 @@ void ATwoVersus_GameMode::RestartPlayer(AController* NewPlayer)
 	UGameInfo_Instance* Ins = Cast<UGameInfo_Instance>(GetGameInstance());
 	Controller->Client_GetTeamName();
 	FString TeamName = Controller->GetTeamName();
+	//FString TeamName = "";
+
+	
 	/*if (TeamName == "") {
 		UE_LOG(LogTemp, Warning, TEXT("Team Empty"));
 		if (RedTeamCount <= BlueTeamCount) {
@@ -53,19 +56,8 @@ void ATwoVersus_GameMode::RestartPlayer(AController* NewPlayer)
 			BlueTeamCount++;
 			UE_LOG(LogTemp, Warning, TEXT("Blue"));
 		}
-	}
-	else { // 인스텐스(로비)에 따른 팀 나누기
-		if (TeamName == "Red") {
-			Controller->SetTeamName("Red");
-			RedTeamCount++;
-		}
-		else {
-			Controller->SetTeamName("Blue");
-			BlueTeamCount++;
-		}
 	}*/
 
-	Controller->Client_GetTeamName();
 	Controller->SetTeamName("Red");
 	Controller->SetMatchInfo(Ins->MatchCount, Ins->MatchTime);
 	UE_LOG(LogTemp, Warning, TEXT("RestartPlayer: MatchTime: %d"), Ins->MatchTime);
@@ -79,8 +71,8 @@ void ATwoVersus_GameMode::RestartPlayer(AController* NewPlayer)
 		//BlueTeamCount++;
 		UE_LOG(LogTemp, Warning, TEXT("Blue"));
 	}*/
-	Controller->RedTeamWinCount = RedTeamWinCount;
-	Controller->BlueTeamWinCount = BlueTeamWinCount;
+	Controller->RedTeamWinCount = Ins->GetRedTeamWinCount();///
+	Controller->BlueTeamWinCount = Ins->GetBlueTeamWinCount();///
 	
 	// 스폰하기
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ATwoVersus_PlayerStart::StaticClass(), AllPlayerStart);
@@ -95,7 +87,6 @@ void ATwoVersus_GameMode::RestartPlayer(AController* NewPlayer)
 	}
 	MatchEnd = false;
 	UE_LOG(LogTemp, Warning, TEXT("RestartPlayer"));
-
 }
 
 
@@ -115,36 +106,42 @@ void ATwoVersus_GameMode::CountBeginPlayer()
 void ATwoVersus_GameMode::CountPlayerDead(FString Team)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Match End WinEnd: %d"), WinEnd);
+	GetWorldTimerManager().ClearTimer(GameCountTimer);
+	UGameInfo_Instance* Ins = Cast<UGameInfo_Instance>(GetGameInstance());
 	FString EndWinTeam = "";
 	if (Team == "Red") {
 		RedTeamCount--;
+		UE_LOG(LogTemp, Warning, TEXT("Match End RedTeamCount: %d"), RedTeamCount);
 		if (RedTeamCount == 0) {
 			// 매치 앤드
-			BlueTeamWinCount++;
-			UE_LOG(LogTemp, Warning, TEXT("Match End Blue: %d"), BlueTeamWinCount);
-			if (WinEnd == BlueTeamWinCount) {
-				EndWinTeam = "RED";
+			Ins->SetBlueTeamWinCount(Ins->GetBlueTeamWinCount() + 1);
+			//BlueTeamWinCount++;
+			UE_LOG(LogTemp, Warning, TEXT("Match End Blue: %d"), Ins->GetBlueTeamWinCount());
+			UE_LOG(LogTemp, Warning, TEXT("Match End Blue: %d"), Ins->GetRedTeamWinCount());
+			if (WinEnd == Ins->GetBlueTeamWinCount()) {
+				EndWinTeam = "BLUE";
 				GameEnd = true;
 			}
-			
 			for (int i = 0; i < AllPlayerController.Num(); i++) {
-				AllPlayerController[i]->NetMulticast_SendWinResult(RedTeamWinCount, BlueTeamWinCount, EndWinTeam);
+				AllPlayerController[i]->NetMulticast_SendWinResult(Ins->GetRedTeamWinCount(), Ins->GetBlueTeamWinCount(), EndWinTeam);
 			}
 		}
 	}
 	else {
 		BlueTeamCount--;
+		UE_LOG(LogTemp, Warning, TEXT("Match End BlueTeamCount: %d"), BlueTeamCount);
 		if (BlueTeamCount == 0) {
 			// 매치 앤드
-			RedTeamWinCount++;
-			UE_LOG(LogTemp, Warning, TEXT("Match End Red: %d"), RedTeamWinCount);
-			if (WinEnd == RedTeamWinCount) {
-				EndWinTeam = "BLUE";
+			Ins->SetRedTeamWinCount(Ins->GetRedTeamWinCount() + 1);
+			//RedTeamWinCount++;
+			UE_LOG(LogTemp, Warning, TEXT("Match End Red: %d"), Ins->GetRedTeamWinCount());
+			UE_LOG(LogTemp, Warning, TEXT("Match End Red: %d"), Ins->GetBlueTeamWinCount());
+			if (WinEnd == Ins->GetRedTeamWinCount()) {
+				EndWinTeam = "RED";
 				GameEnd = true;
 			}
-
 			for (int i = 0; i < AllPlayerController.Num(); i++) {
-				AllPlayerController[i]->NetMulticast_SendWinResult(RedTeamWinCount, BlueTeamWinCount, EndWinTeam);
+				AllPlayerController[i]->NetMulticast_SendWinResult(Ins->GetRedTeamWinCount(), Ins->GetBlueTeamWinCount(), EndWinTeam);
 			}
 		}
 	}
@@ -153,26 +150,31 @@ void ATwoVersus_GameMode::CountPlayerDead(FString Team)
 
 void ATwoVersus_GameMode::CountWin() // 타이머가 끝난뒤 승패 결정
 {
+	UGameInfo_Instance* Ins = Cast<UGameInfo_Instance>(GetGameInstance());
 	if (!MatchEnd) {
 		MatchEnd = true;
 		FString EndWinTeam = "";
 		ATwoVersus_GameState* State = Cast<ATwoVersus_GameState>(GameState);
 		if (State->GetRedTeamHP() > State->GetBlueTeamHP()) {
-			RedTeamWinCount++;
-			if (WinEnd == RedTeamWinCount) {
+			//RedTeamWinCount++;
+			Ins->SetRedTeamWinCount(Ins->GetRedTeamWinCount() + 1);
+			UE_LOG(LogTemp, Warning, TEXT("Match End Red: %d"), Ins->GetRedTeamWinCount());
+			if (WinEnd == Ins->GetRedTeamWinCount()) {
 				EndWinTeam = "RED";
 				GameEnd = true;
 			}
 		}
 		else if (State->GetRedTeamHP() < State->GetBlueTeamHP()) {
-			BlueTeamWinCount++;
-			if (WinEnd == BlueTeamWinCount) {
+			//BlueTeamWinCount++;
+			Ins->SetBlueTeamWinCount(Ins->GetBlueTeamWinCount() + 1);
+			UE_LOG(LogTemp, Warning, TEXT("Match End Blue: %d"), Ins->GetBlueTeamWinCount());
+			if (WinEnd == Ins->GetBlueTeamWinCount()) {
 				EndWinTeam = "BLUE";
 				GameEnd = true;
 			}
 		}
 		for (int i = 0; i < AllPlayerController.Num(); i++) {
-			AllPlayerController[i]->NetMulticast_SendWinResult(RedTeamWinCount, BlueTeamWinCount, EndWinTeam);
+			AllPlayerController[i]->NetMulticast_SendWinResult(Ins->GetRedTeamWinCount(), Ins->GetBlueTeamWinCount(), EndWinTeam);
 		}
 		GetWorld()->GetTimerManager().SetTimer(WinResultTimer, this, &ATwoVersus_GameMode::WinResultEnd, 4.0f, true);
 	}
@@ -210,7 +212,7 @@ void ATwoVersus_GameMode::StartCountEnd()
 	for (int i = 0; i < AllPlayerController.Num(); i++) {
 		ATwoVersus_PlayerController* Ctrl = Cast<ATwoVersus_PlayerController>(AllPlayerController[i]);
 		UE_LOG(LogTemp, Warning, TEXT("StartCountEnddd: %d"), Ins->MatchCount);
-		WinEnd = Ins->MatchCount;
+		WinEnd = FMath::CeilToInt((float)Ins->MatchCount / 2.0f);
 		Ctrl->Client_StartMatchCount(Ins->MatchTime);
 	}
 	GetWorldTimerManager().ClearTimer(StartCountTimer);

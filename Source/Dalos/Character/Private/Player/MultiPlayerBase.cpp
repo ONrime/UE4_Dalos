@@ -793,6 +793,7 @@ void AMultiPlayerBase::PlayerDead()
 	//GetMesh()->SetCollisionProfileName(TEXT("PhysicsActor"));
 	BodyMesh->SetSimulatePhysics(true);
 
+	UE_LOG(LogTemp, Warning, TEXT("PlayerDead"));
 	ATwoVersus_PlayerController* Ctrl = Cast<ATwoVersus_PlayerController>(GetController());
 	if(Ctrl && Ctrl->PlayerDeadCheck.IsBound()) Ctrl->PlayerDeadCheck.Execute();
 

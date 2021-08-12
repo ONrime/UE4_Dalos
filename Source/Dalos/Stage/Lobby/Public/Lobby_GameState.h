@@ -30,8 +30,8 @@ public:
 	int MaxPlayers;
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = ServerSettings)
 	int CurrentPlayers = 0;
-	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = ServerSettings)
-	int AddPlayerInfoCount = 0;
+	//UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = ServerSettings)
+	//int AddPlayerInfoCount = 0;
 	UPROPERTY(EditAnywhere, ReplicatedUsing=OnRep_GameSettingChange, BlueprintReadWrite, Category = ServerSettings)
 	FGameSetting GameSetting;
 
@@ -45,6 +45,7 @@ public:
 	UFUNCTION()
 	void OnRep_GameSettingChange();
 	
+	//UPROPERTY(Replicated)
 	int AddPlayerInfoNum = 0;
 
 protected:

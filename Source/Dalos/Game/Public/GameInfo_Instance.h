@@ -108,6 +108,9 @@ public:
 	int MatchCount = 3;
 	int MatchTime = 20;
 
+	int GetRedTeamWinCount() { return RedTeamWinCount; } int GetBlueTeamWinCount() { return BlueTeamWinCount; }
+	void SetRedTeamWinCount(int Set) { RedTeamWinCount = Set; } void SetBlueTeamWinCount(int Set) { BlueTeamWinCount = Set; }
+
 private:
 	FName lobbyName = "LobyMap";
 	FString playerSettingsSave = "PlayerSettingsSave";
@@ -126,5 +129,8 @@ private:
 	FString NetErrorToString(ENetworkFailure::Type FailureType);
 	UFUNCTION(BlueprintPure)
 	FString TravelErrorToString(ETravelFailure::Type FailureType);
+
+	int RedTeamWinCount = 0;
+	int BlueTeamWinCount = 0;
 
 };

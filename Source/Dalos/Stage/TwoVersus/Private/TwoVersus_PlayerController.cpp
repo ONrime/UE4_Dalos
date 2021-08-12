@@ -44,8 +44,6 @@ void ATwoVersus_PlayerController::BeginPlay()
 		MatchState_WB = CreateWidget<UMatchState_UserWidget>(this, MatchCount_Class);
 		if (MatchState_WB) {
 			MatchState_WB->AddToViewport();
-			MatchState_WB->RedTeamWinCount = RedTeamWinCount;
-			MatchState_WB->BlueTeamWinCount = BlueTeamWinCount;
 		}
 	}
 	
@@ -101,6 +99,8 @@ void ATwoVersus_PlayerController::Server_GetTeamName_Implementation(const FStrin
 	}else{ GameMode->SetBlueTeamCount(GameMode->GetBlueTeamCount() + 1); }
 
 	UE_LOG(LogTemp, Warning, TEXT("Server_GetTeamName: %s"), *TeamName);
+	UE_LOG(LogTemp, Warning, TEXT("Server_GetTeamName:RedTeamCount %d"), GameMode->GetRedTeamCount());
+	UE_LOG(LogTemp, Warning, TEXT("Server_GetTeamName:BlueTeamCount %d"), GameMode->GetBlueTeamCount());
 }
 
 bool ATwoVersus_PlayerController::StartCountDown_Validate()
@@ -167,6 +167,8 @@ void ATwoVersus_PlayerController::Client_StartMatchCount_Implementation(float En
 	if (MatchState_WB) {
 		MatchState_WB->Count = (float)MatchTime;
 		MatchState_WB->StartTimer(EndTime);
+		MatchState_WB->RedTeamWinCount = RedTeamWinCount;
+		MatchState_WB->BlueTeamWinCount = BlueTeamWinCount;
 		UE_LOG(LogTemp, Warning, TEXT("Client_StartMatchCount: %f"), MatchState_WB->Count);
 		UE_LOG(LogTemp, Warning, TEXT("Client_StartMatchCount: %d"), MatchTime);
 	}
